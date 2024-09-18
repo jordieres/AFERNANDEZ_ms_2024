@@ -21,10 +21,11 @@ class InfluxDB:
         # Consulta con rango limitado (últimos 30 días)
         query = f'''
         from(bucket: "{self.bucket}")
-        |> range(start: -30d)
+        |> range(start: -100d)
         |> filter(fn: (r) => r._measurement == "Gait")
         |> map(fn: (r) => ({{r with _value: float(v: r._value)}}))
-        |> keep(columns: ["_time", "_value"])
+        |> keep(columns: ["_time", "_value", "_measurement", "_field"])
+        |> limit(n: 5)
     '''
 
         # Realizar la consulta
