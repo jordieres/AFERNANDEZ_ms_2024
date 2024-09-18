@@ -1,0 +1,3 @@
+Para activar entorno virtual:           venv\Scripts\activate
+Ejecución de archivo en el venv:        python consulta_influxdb.py
+Verificación de conectividad de red:    ping 138.100.82.178
