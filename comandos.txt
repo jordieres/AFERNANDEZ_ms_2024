@@ -1,3 +1,19 @@
 - Para activar entorno virtual:           venv\Scripts\activate
 - Ejecución de archivo en el venv:        python consulta_influxdb.py
 - Verificación de conectividad de red:    ping 138.100.82.178
+- verbose				  python3 script.py --from_time "2024-10-13 00:00:00" --until "2024-10-13 23:59:59"
+
+
+
+- para generar enlace de documentacion Sphinx a otra carpeta con archivos .py 
+    sphinx-apidoc -o source/ C:/Users/Gliglo/OneDrive - Universidad Politécnica de Madrid/Documentos/UPM/TFG/Proyecto_TFG/AFERNANDEZ_ms_2024/nombreCarpeta
+- Para cada archivo en el que haya funciones tengo q poner lo siguiente en modules.rst 
+
+                conexionBBDD.DbClassInflux
+                ==============================
+
+                .. automodule:: conexionBBDD.DbClassInflux
+                    :members:
+                    :undoc-members:
+                    :show-inheritance:
+
