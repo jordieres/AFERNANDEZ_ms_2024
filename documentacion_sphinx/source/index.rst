@@ -13,6 +13,8 @@ Welcome to AFERNANDEZ_MS_2024's documentation!
    conexionBBDD/DbClassInflux
    conexionBBDD/fecha_verbose
 
+
+
 Indices and tables
 ==================
 
