@@ -1,19 +1,21 @@
 .. AFERNANDEZ_MS_2024 documentation master file, created by
-   sphinx-quickstart on Wed Sep 18 18:45:30 2024.
+   sphinx-quickstart on Sat Oct 19 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-AFERNANDEZ_MS_2024 documentation
-================================
-
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+Welcome to AFERNANDEZ_MS_2024's documentation!
+===============================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   modules
-   conexionBBDD/modules
+   conexionBBDD/DbClassInflux
+   conexionBBDD/fecha_verbose
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

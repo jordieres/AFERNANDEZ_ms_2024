@@ -49,12 +49,12 @@ class InfluxDB:
 
         # La consulta ya estaba bien generada, pero el problema está en los tipos de tiempo.
         query = f'''
-        from(bucket: "{self.bucket}")
-        |> range(start: {from_date!r}, stop: {to_date!r})
-        |> filter(fn: (r) => r._measurement == "{self.measurement}")
-        |> filter(fn: (r) => {metrics_str})
-        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        |> keep(columns: ["_time", {columns_str}])
+            from(bucket: "Gait/autogen")
+            |> range(start: '2023-01-01T00:00:00Z', stop: '2023-02-01T00:00:00Z')
+            |> filter(fn: (r) => r._measurement == "Gait")
+            |> filter(fn: (r) => contains(value: r._field, set: ["Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"]))
+            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            |> keep(columns: ["_time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
         '''
         print(f"Consulta generada: {query}")
 
