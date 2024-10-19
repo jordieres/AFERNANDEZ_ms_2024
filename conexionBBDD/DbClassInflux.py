@@ -15,7 +15,7 @@ class InfluxDB:
 
         :param bucketv2: Nombre del bucket en InfluxDB.
         :type bucketv2: str
-        :param orgv2: Organización de InfluxDB.
+        :param orgv2: Organización de InfluxDB. 
         :type orgv2: str
         :param tokenv2: Token de autenticación para InfluxDB.
         :type tokenv2: str
@@ -47,17 +47,17 @@ class InfluxDB:
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
-        # La consulta ya estaba bien generada, pero el problema está en los tipos de tiempo.
+        
         query = f'''
             from(bucket: "Gait/autogen")
-            |> range(start: '2023-01-01T00:00:00Z', stop: '2023-02-01T00:00:00Z')
+            |> range(start: 2023-01-01T00:00:00Z, stop: 2023-02-01T00:00:00Z)
             |> filter(fn: (r) => r._measurement == "Gait")
-            |> filter(fn: (r) => contains(value: r._field, set: ["Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"]))
+            |> filter(fn: (r) => r._field in ["Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
+
         '''
         print(f"Consulta generada: {query}")
-
         try:
             result = self.client.query_api().query(org=self.org, query=query)
         except Exception as e:

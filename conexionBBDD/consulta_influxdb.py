@@ -1,23 +1,28 @@
+import yaml
 from DbClassInflux import InfluxDB
 
-# Parámetros de conexión
-bucket = "Gait/autogen"
-org = "UPM"
-token = "Zx2jR8PD6h3YlS7HVsY5Han1SzF_iz7uk8n5z9BYRZ5q50lk8r1L18N-nFZiGCa57oowLgl8656pVpCig-GANg=="
-url = "https://138.100.82.178:8086"  
+# Leer la configuración desde el archivo YAML
+with open('conexionBBDD\config_db.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
-# Inicializar cliente
+# Obtener los parámetros de conexión
+bucket = config['influxdb']['bucket']
+org = config['influxdb']['org']
+token = config['influxdb']['token']
+url = config['influxdb']['url']
+
+# Inicializar el cliente
 influx = InfluxDB(bucket, org, token, url)
 
-# Realizar la consulta pasando las fechas desde/hasta
+# Realizar la consulta con las fechas de:  desde/hasta
 from_date = "2023-01-01T00:00:00Z"
 to_date = "2023-02-01T00:00:00Z"
 
-# Consulta básica
+# Consulta de influx
 df = influx.query_data(from_date, to_date)
 print(df)
 
 # Consulta con agregación
-window_size = "10m"  # Ejemplo de ventana de agregación de 10 minutos
-df_agg = influx.query_with_aggregate_window(from_date, to_date, window_size)
-print(df_agg)
+# window_size = "10m"  
+# df_agg = influx.query_with_aggregate_window(from_date, to_date, window_size)
+# print(df_agg)
