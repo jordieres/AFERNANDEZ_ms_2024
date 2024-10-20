@@ -30,10 +30,9 @@ class InfluxDB:
         
         # Asignar measurement según el formato del bucket
         if '/' in self.bucket:
-            self.measurement = self.bucket.split("/")[0]  # Lo que está antes del '/'
+            self.measurement = self.bucket.split("/")[0]  
         else:
-            self.measurement = self.bucket  # Toda la cadena si no tiene '/'
-
+            self.measurement = self.bucket  
     def query_data(self, from_date: str, to_date: str) -> pd.DataFrame:
         """
         Consulta datos en InfluxDB, pivotando los resultados para obtener las métricas en columnas.
