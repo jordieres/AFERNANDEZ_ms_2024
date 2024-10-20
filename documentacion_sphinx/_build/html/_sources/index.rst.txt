@@ -10,8 +10,8 @@ Welcome to AFERNANDEZ_MS_2024's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   DbClassInflux
-   fecha_verbose
+   conexionBBDD/DbClassInflux
+   conexionBBDD/fecha_verbose
 
 
 

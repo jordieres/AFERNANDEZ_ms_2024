@@ -8,8 +8,10 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../conexionBBDD/DbClassInflux.py'))
-sys.path.insert(0, os.path.abspath('../../conexionBBDD/fecha_verbose.py'))
+
+sys.path.insert(0, 'C:/Users/Gliglo/OneDrive - Universidad Politécnica de Madrid/Documentos/UPM/TFG/Proyecto_TFG/AFERNANDEZ_ms_2024/conexionBBDD')
+
+
 # Cuando cree otra carpeta con archivos de python tengo que añadir otro enlace y Generar archivos .rst para todas las carpetas
 #sys.path.insert(0, os.path.abspath('C:/Users/Gliglo/OneDrive - Universidad Politécnica de Madrid/Documentos/UPM/TFG/Proyecto_TFG/AFERNANDEZ_ms_2024/carpeta1'))
 
@@ -34,6 +36,3 @@ exclude_patterns = []
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
-
-
-print("PYTHONPATH:", sys.path)
