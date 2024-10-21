@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from influxdb_client import InfluxDBClient
 from datetime import datetime
+
 import urllib3
 
 # Desactivar las advertencias de SSL (solo para desarrollo)
@@ -51,11 +52,14 @@ class InfluxDB:
             from(bucket: "Gait/autogen")
             |> range(start: 2023-01-01T00:00:00Z, stop: 2023-02-01T00:00:00Z)
             |> filter(fn: (r) => r._measurement == "Gait")
-            |> filter(fn: (r) => r._field in ["Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
+            |> filter(fn: (r) => r._field == "Ax" or r._field == "Ay" or r._field == "Az" or r._field == "Gx" or r._field == "Gy" or r._field == "Gz" or r._field == "Mx" or r._field == "My" or r._field == "Mz" or r._field == "S0" or r._field == "S1" or r._field == "S2")
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
 
         '''
+
+
+
         print(f"Consulta generada: {query}")
         try:
             result = self.client.query_api().query(org=self.org, query=query)

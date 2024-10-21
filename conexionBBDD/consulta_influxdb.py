@@ -15,8 +15,10 @@ url = config['influxdb']['url']
 influx = InfluxDB(bucket, org, token, url)
 
 # Realizar la consulta con las fechas de:  desde/hasta
-from_date = "2023-01-01T00:00:00Z"
-to_date = "2023-02-01T00:00:00Z"
+# from_date = "2023-01-01T00:00:00Z"
+# to_date = "2023-02-01T00:00:00Z"
+from_date = "2024-10-01T00:00:00Z"
+to_date = "2024-10-21T00:00:00Z"
 
 # Consulta de influx
 df = influx.query_data(from_date, to_date)
