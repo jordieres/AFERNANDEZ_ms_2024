@@ -48,7 +48,7 @@ def main():
     """
     args = parse_args()
 
-    # Fechas de entrada (ya son objetos datetime)
+    # Fechas de entrada (objetos datetime)
     from_time = args.from_time
     until_time = args.until
 
