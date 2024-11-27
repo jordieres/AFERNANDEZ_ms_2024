@@ -38,6 +38,8 @@ def parse_args():
     parser.add_argument('-f', '--from_time', type=parse_datetime, default=default_from, help='Fecha inicio (ISO 8601)')
     parser.add_argument('-u', '--until', type=parse_datetime, default=default_until, help='Fecha fin (ISO 8601)')
     parser.add_argument('-p', '--path', type=str, default='InfluxDBms/config_db.yaml', help='Path al archivo de configuración')
+    parser.add_argument('-v', '--verbose', action='count', default=0, help='Nivel de verbosidad')
+
     return parser.parse_args()
 
 # Función principal
@@ -52,7 +54,7 @@ def main():
     from_time = args.from_time
     until_time = args.until
 
-    # Leer la configuración desde el archivo YAML
+    # Lee la configuración desde el archivo YAML
     config_path = Path(args.path)
     if not config_path.exists():
         raise FileNotFoundError(f"No se encontró el archivo de configuración en la ruta: {config_path}")
@@ -66,7 +68,7 @@ def main():
     token = config['influxdb']['token']
     url = config['influxdb']['url']
 
-    # Crear instancia de InfluxDB
+    # Crea instancia de InfluxDB
     iDB = cInfluxDB(bucket, org, token, url)
 
     # Realizar consulta
