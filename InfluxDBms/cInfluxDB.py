@@ -2,33 +2,35 @@ import pandas as pd
 from influxdb_client import InfluxDBClient
 from datetime import datetime
 import urllib3
+import yaml
 
 # Desactiva las advertencias de SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class cInfluxDB:
-    def __init__(self, bucket: str, org: str, token: str, url: str, timeout: int = 500_000):
+    def __init__(self, config_path: str, timeout: int = 500_000):
         """
-        
-        Initialises the InfluxDB class with the necessary parameters to connect to the database.
+        Initializes the connection to InfluxDB using a YAML configuration file.
 
-        :param bucket: Name of the bucket in InfluxDB.
-        type bucket: str
-        :param org: InfluxDB organisation. 
-        :type org: str
-        :param token: Authentication token for InfluxDB.
-        :type token: str
-        :param url: InfluxDB server URL.
-        :type url: str
+        :param config_path: Path to the YAML configuration file.
+        :type config_path: str
         :param timeout: Connection timeout in milliseconds.
         :type timeout: int
 
         """
+        # Carga la configuración desde el archivo YAML
+        with open(config_path, 'r') as file:
+            config = yaml.safe_load(file)
 
-        self.bucket = bucket
-        self.org = org
-        self.client = InfluxDBClient(url=url, token=token, org=self.org, verify_ssl=False, timeout=timeout)
-        self.measurement = self.bucket.split("/")[0] if '/' in self.bucket else self.bucket  
+        # Extrae los valores necesarios
+        self.bucket = config['influxdb']['bucket']
+        self.org = config['influxdb']['org']
+        self.token = config['influxdb']['token']
+        self.url = config['influxdb']['url']
+
+        # Inicializa el cliente de InfluxDB
+        self.client = InfluxDBClient(url=self.url, token=self.token, org=self.org, verify_ssl=False, timeout=timeout)
+        self.measurement = self.bucket.split("/")[0] if '/' in self.bucket else self.bucket
 
     def query_data(self, from_date: datetime, to_date: datetime) -> pd.DataFrame:
         
@@ -50,9 +52,9 @@ class cInfluxDB:
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
-        #from(bucket: "{self.bucket}")
-        #|> filter(fn: (r) => r._measurement == "{self.measurement}")
-        #|> filter(fn: (r) => {metrics_str})
+        # from(bucket: "{self.bucket}")
+        # |> filter(fn: (r) => r._measurement == "{self.measurement}")
+        # |> filter(fn: (r) => {metrics_str})
         query = f'''
         from(bucket: "Gait/autogen") 
         |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
@@ -62,6 +64,7 @@ class cInfluxDB:
         |> keep(columns: ["_time", {columns_str}])
         '''
         print(f"Query generated: {query}")
+
 
         try:
             result = self.client.query_api().query(org=self.org, query=query)
@@ -81,51 +84,62 @@ class cInfluxDB:
 
         return pd.DataFrame(data)
 
-#     def query_with_aggregate_window(self, from_date: str, to_date: str, window_size: str) -> pd.DataFrame:
-#         """        
-#         Query aggregated data in time windows to optimise queries when there are large date ranges.
 
-#         :param from_date: Start date in ISO 8601 format.
-#         :param to_date: End date in ISO 8601 format.
-#         :param window_size: Size of the aggregation window (e.g. '10m' for 10 minutes).
-#         :return: DataFrame with the aggregated data.
-#         """
-#         metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
-#         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
-#         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
+    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, window_size: str = "1d") -> pd.DataFrame:
+        """
+        Query data in InfluxDB, pivoting the results to get the metrics in columns.
+        Handles cases where there are no data points by using `aggregateWindow`.
 
-#         query = f'''
-#         from(bucket: "{self.bucket}")
-#         |> range(start: "{from_date}", stop: "{to_date}")
-#         |> filter(fn: (r) => r._measurement == "{self.measurement}")
-#         |> filter(fn: (r) => {metrics_str})
-#         |> aggregateWindow(every: {window_size}, fn: mean, createEmpty: false)
-#         |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-#         |> keep(columns: ["_time", {columns_str}])
-#         '''
-#         print(f"Query generated with aggregate window: {query}")
-        
-#         try:
-#             result = self.client.query_api().query(org=self.org, query=query)
-#         except Exception as e:
-#             print(f"Error in the query: {str(e)}")
-#             raise
+        :param from_date: Start date (ISO 8601 format: 'YYYY-MM-DDTHH:MM:SSZ').
+        :type from_date: datetime
+        :param to_date: End date (ISO 8601 format: 'YYYY-MM-DDTHH:MM:SSZ').
+        :type to_date: datetime
+        :param window_size: Aggregation window size (e.g., '1s', '1d').
+        :type window_size: str
+        :return: DataFrame with the metrics pivoted on columns.
+        :rtype: pd.DataFrame
+        """
+        from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')  # UTC con 'Z'
+        to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-#         data = []
-#         for table in result:
-#             for record in table.records:
-#                 # Usamos get_field() y get_value() para acceder a '_field' y '_value'
-#                 field = record.get_field()
-#                 value = record.get_value()
-                
-#                 # Solo procedemos si el campo está en métricas y el valor no es None
-#                 if field in metrics and value is not None:
-#                     row = {
-#                         "Time": record.get_time(),
-#                         field: value
-#                     }
-#                     data.append(row)
+        metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+        metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
+        columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
+        query = f'''
+        from(bucket: "{self.bucket}")
+        |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
+        |> filter(fn: (r) => r._measurement == "{self.measurement}")
+        |> filter(fn: (r) => {metrics_str})
+        |> group(columns: ["_field"])
+        |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
+        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+        |> keep(columns: ["_time", {columns_str}])
+        '''
+        print(f"Query generated with aggregate window: {query}")
 
-#         df = pd.DataFrame(data)
-#         return df
+        try:
+            result = self.client.query_api().query(org=self.org, query=query)
+        except Exception as e:
+            print(f"Error in the query: {str(e)}")
+            raise
+
+        # Process the results into a DataFrame
+        data = []
+        for table in result:
+            for record in table.records:
+                row = {"Time": record.get_time()}
+                for field in metrics:
+                    if field == record.get_field():
+                        row[field] = record.get_value()
+                data.append(row)
+
+        # Convert the data to a DataFrame
+        df = pd.DataFrame(data)
+
+        # Ensure all required columns are present
+        for col in ["Time"] + metrics:
+            if col not in df:
+                df[col] = None  # Fill missing columns with None
+
+        return df

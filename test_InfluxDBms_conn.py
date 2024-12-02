@@ -5,11 +5,12 @@ Module: Test_DB_Connenction to InflixDB for Gait
 """
 
 import argparse
-import yaml
 from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
-from pathlib import Path
-from InfluxDBms import *
+
+
+from InfluxDBms.cInfluxDB import cInfluxDB
+from InfluxDBms.fecha_verbose import BatchProcess, VAction
 
 # Función para convertir cadenas a objetos datetime
 def parse_datetime(value):
@@ -54,27 +55,20 @@ def main():
     from_time = args.from_time
     until_time = args.until
 
-    # Lee la configuración desde el archivo YAML
-    config_path = Path(args.path)
-    if not config_path.exists():
-        raise FileNotFoundError(f"No se encontró el archivo de configuración en la ruta: {config_path}")
+    try:
+        iDB = cInfluxDB(config_path=args.path)
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return
+    except Exception as e:
+        print(f"Error al inicializar cInfluxDB: {e}")
+        return
 
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-
-    # Configuración de conexión a InfluxDB
-    bucket = config['influxdb']['bucket']
-    org = config['influxdb']['org']
-    token = config['influxdb']['token']
-    url = config['influxdb']['url']
-
-    # Crea instancia de InfluxDB
-    iDB = cInfluxDB(bucket, org, token, url)
 
     # Realizar consulta
     try:
-        df = iDB.query_data(from_time, until_time)
-        print("Resultados del query:")
+        df = iDB.query_with_aggregate_window(from_time, until_time, window_size="1d")
+        print("Resulados de la consulta:")
         print(df)
     except Exception as e:
         print(f"Error al consultar datos: {e}")
