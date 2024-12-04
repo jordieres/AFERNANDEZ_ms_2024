@@ -31,6 +31,10 @@ class cInfluxDB:
         # Inicializa el cliente de InfluxDB
         self.client = InfluxDBClient(url=self.url, token=self.token, org=self.org, verify_ssl=False, timeout=timeout)
         self.measurement = self.bucket.split("/")[0] if '/' in self.bucket else self.bucket
+        # self.qtok = None
+        # self.pie = None
+        self.qtok = "JOM20240407-104"  
+        self.pie = "Left"      
 
     def query_data(self, from_date: datetime, to_date: datetime) -> pd.DataFrame:
         
@@ -85,7 +89,7 @@ class cInfluxDB:
         return pd.DataFrame(data)
 
 
-    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, window_size: str = "1d") -> pd.DataFrame:
+    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, window_size: str = "1d", qtok: str = "JOM20241031-104", pie: str = "Right") -> pd.DataFrame:
         """
         Query data in InfluxDB, pivoting the results to get the metrics in columns.
         Handles cases where there are no data points by using `aggregateWindow`.
@@ -111,11 +115,15 @@ class cInfluxDB:
         |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
         |> filter(fn: (r) => r._measurement == "{self.measurement}")
         |> filter(fn: (r) => {metrics_str})
+        |> filter(fn: (r) => r["CodeID"] == "{self.qtok}" and r["type"] == "SCKS" and r["Foot"] == "{self.pie}")
         |> group(columns: ["_field"])
         |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
         |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
         |> keep(columns: ["_time", {columns_str}])
         '''
+        
+
+        
         print(f"Query generated with aggregate window: {query}")
 
         try:
