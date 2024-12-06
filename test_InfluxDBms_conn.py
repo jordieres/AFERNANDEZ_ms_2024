@@ -38,8 +38,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Ejecución de procesos en batch.')
     parser.add_argument('-f', '--from_time', type=parse_datetime, default=default_from, help='Fecha inicio (ISO 8601)')
     parser.add_argument('-u', '--until', type=parse_datetime, default=default_until, help='Fecha fin (ISO 8601)')
-    parser.add_argument('-q', '--qtok', type=str, default="JOM20240407-104", help='CodeID')
-    parser.add_argument('-pi', '--pie', type=str, default="Left", help='Elección de Pie Izquierdo o Derecho')
+    parser.add_argument('-q', '--qtok', type=str, required=True, help='CodeID')
+    parser.add_argument('-pi', '--pie', type=str, required=True,choices=['Left', 'Right'], help='Elección de Pie Izquierdo o Derecho')
     parser.add_argument('-p', '--path', type=str, default='InfluxDBms/config_db.yaml', help='Path al archivo de configuración')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Nivel de verbosidad')
 
@@ -56,6 +56,9 @@ def main():
     # Fechas de entrada (objetos datetime)
     from_time = args.from_time
     until_time = args.until
+    qtok = args.qtok
+    pie = args.pie
+
 
     try:
         iDB = cInfluxDB(config_path=args.path)
@@ -69,7 +72,7 @@ def main():
 
     # Realizar consulta
     try:
-        df = iDB.query_with_aggregate_window(from_time, until_time, window_size="1d", qtok= args.qtok , pie=args.pie )
+        df = iDB.query_with_aggregate_window(from_time, until_time, window_size="1d", qtok= qtok , pie=pie )
         print("Resulados de la consulta:")
         print(df)
     except Exception as e:

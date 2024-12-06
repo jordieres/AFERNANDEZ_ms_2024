@@ -31,10 +31,8 @@ class cInfluxDB:
         # Inicializa el cliente de InfluxDB
         self.client = InfluxDBClient(url=self.url, token=self.token, org=self.org, verify_ssl=False, timeout=timeout)
         self.measurement = self.bucket.split("/")[0] if '/' in self.bucket else self.bucket
-        # self.qtok = None
-        # self.pie = None
-        self.qtok = "JOM20240407-104"  
-        self.pie = "Left"      
+
+    
 
     def query_data(self, from_date: datetime, to_date: datetime) -> pd.DataFrame:
         
@@ -51,6 +49,7 @@ class cInfluxDB:
 
         from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')  # UTC con 'Z'
         to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 
         metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
@@ -89,7 +88,7 @@ class cInfluxDB:
         return pd.DataFrame(data)
 
 
-    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, window_size: str = "1d", qtok: str = "JOM20241031-104", pie: str = "Right") -> pd.DataFrame:
+    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, window_size: str = "1d", qtok: str = None , pie: str = None) -> pd.DataFrame:
         """
         Query data in InfluxDB, pivoting the results to get the metrics in columns.
         Handles cases where there are no data points by using `aggregateWindow`.
@@ -106,22 +105,36 @@ class cInfluxDB:
         from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')  # UTC con 'Z'
         to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
 
+        if not qtok or not pie:
+            raise ValueError("Los argumentos 'qtok' y 'pie' son obligatorios para esta consulta.")
+
         metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
-        query = f'''
-        from(bucket: "{self.bucket}")
-        |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
-        |> filter(fn: (r) => r._measurement == "{self.measurement}")
-        |> filter(fn: (r) => {metrics_str})
-        |> filter(fn: (r) => r["CodeID"] == "{self.qtok}" and r["type"] == "SCKS" and r["Foot"] == "{self.pie}")
-        |> group(columns: ["_field"])
-        |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
-        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        |> keep(columns: ["_time", {columns_str}])
+        # query = f'''
+        # from(bucket: "{self.bucket}")
+        #     |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
+        #     |> filter(fn: (r) => r._measurement == "{self.measurement}")
+        #     |> filter(fn: (r) => {metrics_str})
+        #     |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
+        #     |> group(columns: ["_field"])
+        #     |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
+        #     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+        #     |> keep(columns: ["_time", {columns_str}])
+        # '''
+        query= f'''
+        from(bucket: "Gait/autogen")
+            |> range(start: 2024-11-02T15:08:45Z, stop: 2024-11-02T20:50:00Z)
+            |> filter(fn: (r) => r._measurement == "Gait")
+            |> filter(fn: (r) => r._field == "Ax" or r._field == "Ay" or r._field == "Az" or r._field == "Gx" or r._field == "Gy" or r._field == "Gz" or r._field == "Mx" or r._field == "My" or r._field == "Mz" or r._field == "S0" or r._field == "S1" or r._field == "S2")
+            |> filter(fn: (r) => r["CodeID"] == "JOM20241031-104" and r["type"] == "SCKS" and r["Foot"] == "Left")
+            |> group(columns: ["_field"])
+            |> aggregateWindow(every: 20ms, fn: last, createEmpty: true)
+            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            |> keep(columns: ["_time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
         '''
-        
+
 
         
         print(f"Query generated with aggregate window: {query}")
