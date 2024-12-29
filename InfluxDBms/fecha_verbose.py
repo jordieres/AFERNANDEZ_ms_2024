@@ -98,7 +98,7 @@ class BatchProcess:
         """
         verbose = self.args.verbose
         if verbose >= 1:
-            print(f"Ejecutando BatchProcess con verbosidad: {verbose}")
+            print(f"Running BatchProcess with verbosity: {verbose}")
         self.main_process()
 
     def main_process(self):
@@ -111,11 +111,11 @@ class BatchProcess:
         """
         verbose = self.args.verbose
         if verbose >= 1:
-            print("Iniciando proceso principal...")
+            print("Starting main process...")
         for i in range(3):
             if verbose >= 2:
-                print(f"Iteración {i} en el proceso principal.")
+                print(f"Iteration {i} in the main process.")
             if verbose >= 3:
-                print(f"Detalles internos en iteración {i}: {{'clave': 'valor'}}")
+                print(f"Internal details in iteration {i}: {{'key': 'value'}}")
         if verbose >= 1:
-            print("Proceso principal completado.")
+            print("Main process completed.")
