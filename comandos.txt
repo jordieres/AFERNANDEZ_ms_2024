@@ -3,6 +3,7 @@
 - Verificación de conectividad de red:    ping 138.100.82.178
 - verbose				  python3 script.py --from_time "2024-10-13 00:00:00" --until "2024-10-13 23:59:59"
 
+- EJECUCION DE CONSULTA     python  test_InfluxDBms_conn.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Right"
 
 
 - para generar enlace de documentacion Sphinx a otra carpeta con archivos .py 
