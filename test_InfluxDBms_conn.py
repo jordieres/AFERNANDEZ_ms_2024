@@ -12,6 +12,10 @@ from dateutil.parser import parse as parse_date
 from InfluxDBms.cInfluxDB import cInfluxDB
 from InfluxDBms.fecha_verbose import BatchProcess, VAction
 
+import matplotlib.pyplot as plt
+import pandas as pd
+from typing import List
+
 # Function to convert strings to datetime objects
 def parse_datetime(value):
     try:
@@ -43,6 +47,107 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Level of verbosity')
 
     return parser.parse_args()
+
+def plot_data(df: pd.DataFrame, columns: List[str] = None, title: str = "Data Visualization"):
+    """
+    Plot selected columns from a DataFrame against time.
+
+    :param df: DataFrame containing the data to plot. Must include a '_time' column.
+    :param columns: List of columns to plot. If None, all numerical columns except '_time' are plotted.
+    :param title: Title of the plot.
+    """
+    if '_time' not in df.columns:
+        raise ValueError("The DataFrame must contain a '_time' column.")
+
+    # Convert '_time' to datetime if it isn't already
+    if not pd.api.types.is_datetime64_any_dtype(df['_time']):
+        df['_time'] = pd.to_datetime(df['_time'])
+
+    # Select columns to plot
+    if columns is None:
+        columns = [col for col in df.columns if col != '_time' and pd.api.types.is_numeric_dtype(df[col])]
+
+    if not columns:
+        raise ValueError("No valid columns to plot.")
+
+    plt.figure(figsize=(14, 8))
+    for column in columns:
+        plt.plot(df['_time'], df[column], label=column, alpha=0.8)
+
+    plt.title(title, fontsize=16)
+    plt.xlabel("Time", fontsize=14)
+    plt.ylabel("Values", fontsize=14)
+    plt.legend(title="Metrics", fontsize=12)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def plot_individual_variables(df: pd.DataFrame, columns: List[str] = None, title_prefix: str = "Variable Plot"):
+    """
+    Plot each variable in a DataFrame individually against time.
+
+    :param df: DataFrame containing the data to plot. Must include a '_time' column.
+    :param columns: List of columns to plot. If None, all numerical columns except '_time' are plotted.
+    :param title_prefix: Prefix for the title of each individual plot.
+    """
+    if '_time' not in df.columns:
+        raise ValueError("The DataFrame must contain a '_time' column.")
+
+    # Convert '_time' to datetime if it isn't already
+    if not pd.api.types.is_datetime64_any_dtype(df['_time']):
+        df['_time'] = pd.to_datetime(df['_time'])
+
+    # Select columns to plot
+    if columns is None:
+        columns = [col for col in df.columns if col != '_time' and pd.api.types.is_numeric_dtype(df[col])]
+
+    if not columns:
+        raise ValueError("No valid columns to plot.")
+
+    for column in columns:
+        plt.figure(figsize=(10, 6))
+        plt.plot(df['_time'], df[column], label=column, color='b', alpha=0.8)
+        plt.title(f"{title_prefix}: {column}", fontsize=16)
+        plt.xlabel("Time", fontsize=14)
+        plt.ylabel(column, fontsize=14)
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+        plt.tight_layout()
+        plt.show()
+
+
+def plot_4d(df: pd.DataFrame, time_col: str, x_col: str, y_col: str, z_col: str, title: str = "4D Visualization"):
+    """
+    Create a 3D plot with time as color (4th dimension).
+
+    :param df: DataFrame containing the data to plot.
+    :param time_col: Name of the column representing time.
+    :param x_col: Name of the column for the x-axis.
+    :param y_col: Name of the column for the y-axis.
+    :param z_col: Name of the column for the z-axis.
+    :param title: Title of the plot.
+    """
+    if time_col not in df.columns or x_col not in df.columns or y_col not in df.columns or z_col not in df.columns:
+        raise ValueError("One or more specified columns are not in the DataFrame.")
+
+    # Convert time column to numeric values for color mapping
+    df[time_col] = pd.to_datetime(df[time_col])
+    time_numeric = (df[time_col] - df[time_col].min()).dt.total_seconds()
+
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    sc = ax.scatter(df[x_col], df[y_col], df[z_col], c=time_numeric, cmap='viridis', alpha=0.8)
+    plt.colorbar(sc, label="Time (seconds since start)")
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel(x_col, fontsize=12)
+    ax.set_ylabel(y_col, fontsize=12)
+    ax.set_zlabel(z_col, fontsize=12)
+
+    plt.tight_layout()
+    plt.show()
+
+
 
 # Función principal
 def main():
@@ -76,6 +181,11 @@ def main():
         print("Results of the query:")
         print(df)
         print(df.shape)
+    
+        #plot_data(df, columns=['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz'], title="Sensor Data Visualization")
+        #plot_individual_variables(df, columns=['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz'], title_prefix="Sensor Variable")
+        plot_4d(df, time_col='_time', x_col='Ax', y_col='Ay', z_col='Az', title="4D Plot: Ax, Ay, Az vs Time")
+
     except Exception as e:
         print(f"Error when querying data: {e}")
         return
