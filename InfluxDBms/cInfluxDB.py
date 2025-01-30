@@ -35,8 +35,8 @@ class cInfluxDB:
                            self.bucket
     
 
-    def query_data(self, from_date: datetime, to_date: datetime, qtok: str, pie: str) -> pd.DataFrame:
-        
+    def query_data(self, from_date: datetime, to_date: datetime, qtok: str, pie: str, 
+                   metrics=None) -> pd.DataFrame:
         """
         Query data in InfluxDB, pivoting the results to get the metrics in columns.
 
@@ -48,16 +48,19 @@ class cInfluxDB:
         :type qtok: str
         :param pie: Left or Right foot ('Right', 'Left')
         :type pie: str
+        :param metrics: List of metrics to query (default: predefined set)
+        :type metrics: list[str], optional
 
-        :return: DataFrame with the metrics pivoted on columns.
-        rtype pd.DataFrame
+        :return: DataFrame with the metrics pivoted on columns, ordered by _time descending.
+        :rtype: pd.DataFrame
         """
-
         from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')  # UTC con 'Z'
         to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-
-        metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+        # Default metrics
+        if metrics is None:
+            metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+        
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
@@ -83,8 +86,8 @@ class cInfluxDB:
             for record in table.records:
                 data.append(record.values)
 
-        return(pd.DataFrame(data).drop(['result','table'],axis=1))
-
+        df = pd.DataFrame(data).drop(['result', 'table'], axis=1)
+        return df.sort_values(by="_time", ascending=False).reset_index(drop=True)
 
     def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, \
                                     window_size: str = "1d", qtok: str = None , \
