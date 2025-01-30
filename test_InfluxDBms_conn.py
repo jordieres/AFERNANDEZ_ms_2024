@@ -45,6 +45,8 @@ def parse_args():
     parser.add_argument('-l', '--leg', type=str, required=True,choices=['Left', 'Right'], help='Choice of Left or Right Foot')
     parser.add_argument('-p', '--path', type=str, default='InfluxDBms/config_db.yaml', help='Path to the configuration file')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Level of verbosity')
+    parser.add_argument("-m", "--metrics", help="Comma-separated list of metrics", default=None)
+
 
     return parser.parse_args()
 
@@ -156,10 +158,12 @@ def main():
     Main module that executes an InfluxDB query to obtain a Dataframe with the requested data.    
     """
     args = parse_args()
+    metrics = args.metrics.split(",") if args.metrics else None
 
     # Entry dates (datetime objects)
     from_time = args.from_time
     until_time = args.until
+
     qtok = args.qtok
     pie = args.leg
 
@@ -177,14 +181,14 @@ def main():
     # Make an enquiry
     try:
         #df = iDB.query_with_aggregate_window(from_time, until_time, window_size="1d", qtok= qtok , pie=pie )
-        df = iDB.query_data(from_time, until_time, qtok= qtok , pie=pie )
+        df = iDB.query_data(from_time, until_time, qtok= qtok , pie=pie, metrics=metrics )
         print("Results of the query:")
         print(df)
         print(df.shape)
     
         #plot_data(df, columns=['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz'], title="Sensor Data Visualization")
         #plot_individual_variables(df, columns=['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz'], title_prefix="Sensor Variable")
-        plot_4d(df, time_col='_time', x_col='Ax', y_col='Ay', z_col='Az', title="4D Plot: Ax, Ay, Az vs Time")
+        #plot_4d(df, time_col='_time', x_col='Ax', y_col='Ay', z_col='Az', title="4D Plot: Ax, Ay, Az vs Time")
 
     except Exception as e:
         print(f"Error when querying data: {e}")
