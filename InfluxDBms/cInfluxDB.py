@@ -89,84 +89,70 @@ class cInfluxDB:
         df = pd.DataFrame(data).drop(['result', 'table'], axis=1)
         return df.sort_values(by="_time", ascending=False).reset_index(drop=True)
 
-    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, \
-                                    window_size: str = "1d", qtok: str = None , \
-                                    pie: str = None) -> pd.DataFrame:
-        """
-        Query data in InfluxDB, pivoting the results to get the metrics in columns.
-        Handles cases where there are no data points by using `aggregateWindow`.
+   
 
-        :param from_date: Start date (ISO 8601 format: 'YYYY-MM-DDTHH:MM:SSZ').
+    def query_with_aggregate_window(self, from_date: datetime, to_date: datetime, window_size: str = "20ms", qtok: str = None, pie: str = None, metrics=None) -> pd.DataFrame:
+        """
+        Query data in InfluxDB with aggregateWindow, pivoting the results to get metrics as columns.
+
+        :param from_date: Start datetime (ISO 8601 format: 'YYYY-MM-DDTHH:MM:SSZ').
         :type from_date: datetime
-        :param to_date: End date (ISO 8601 format: 'YYYY-MM-DDTHH:MM:SSZ').
+        :param to_date: End datetime (ISO 8601 format: 'YYYY-MM-DDTHH:MM:SSZ').
         :type to_date: datetime
-        :param window_size: Aggregation window size (e.g., '1s', '1d').
+        :param window_size: Aggregation window size (default: '20ms').
         :type window_size: str
-        :param qtok: CodeID 
+        :param qtok: CodeID (required).
         :type qtok: str
-        :param pie: Left or Right foot ('Right', 'Left')
+        :param pie: Left or Right foot ('Right', 'Left') (required).
         :type pie: str
-        :return: DataFrame with the metrics pivoted on columns.
+        :param metrics: List of metrics to query (default: predefined set).
+        :type metrics: list[str], optional
+        :return: DataFrame with metrics as columns, ordered by _time.
         :rtype: pd.DataFrame
         """
-        from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')  # UTC con 'Z'
-        to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         if not qtok or not pie:
-            raise ValueError("Los argumentos 'qtok' y 'pie' son obligatorios " +\
-                             "para esta consulta.")
+            raise ValueError("Los argumentos 'qtok' y 'pie' son obligatorios para esta consulta.")
 
-        metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+        from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+        to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        # Default metrics
+        if metrics is None:
+            metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
-        # query = f'''
-        # from(bucket: "{self.bucket}")
-        #     |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
-        #     |> filter(fn: (r) => r._measurement == "{self.measurement}")
-        #     |> filter(fn: (r) => {metrics_str})
-        #     |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
-        #     |> group(columns: ["_field"])
-        #     |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
-        #     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        #     |> keep(columns: ["_time", {columns_str}])
-        # '''
-        query= f'''
-        from(bucket: "Gait/autogen")
-            |> range(start: 2024-11-02T15:08:45Z, stop: 2024-11-02T20:50:00Z)
-            |> filter(fn: (r) => r._measurement == "Gait")
-            |> filter(fn: (r) => r._field == "Ax" or r._field == "Ay" or r._field == "Az" or r._field == "Gx" or r._field == "Gy" or r._field == "Gz" or r._field == "Mx" or r._field == "My" or r._field == "Mz" or r._field == "S0" or r._field == "S1" or r._field == "S2")
-            |> filter(fn: (r) => r["CodeID"] == "JOM20241031-104" and r["type"] == "SCKS" and r["Foot"] == "Left")
+        query = f'''
+        from(bucket: "{self.bucket}")
+            |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
+            |> filter(fn: (r) => r._measurement == "{self.measurement}")
+            |> filter(fn: (r) => {metrics_str})
+            |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
             |> group(columns: ["_field"])
-            |> aggregateWindow(every: 20ms, fn: last, createEmpty: true)
+            |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-            |> keep(columns: ["_time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz", "S0", "S1", "S2"])
+            |> keep(columns: ["_time", {columns_str}])
         '''
-
-        # print(f"Query generated with aggregate window: {query}")
 
         try:
             result = self.client.query_api().query(org=self.org, query=query)
         except Exception as e:
-            print(f"Error in the query: {str(e)}")
+            print(f"Error en la consulta: {str(e)}")
             raise
 
-        # Process the results into a DataFrame
+        # Procesar los resultados en un DataFrame
         data = []
         for table in result:
             for record in table.records:
-                row = {"Time": record.get_time()}
-                for field in metrics:
-                    if field == record.get_field():
-                        row[field] = record.get_value()
-                data.append(row)
+                data.append(record.values)
 
-        # Convert the data to a DataFrame
-        df = pd.DataFrame(data)
+        df = pd.DataFrame(data).drop(['result', 'table'], axis=1)
 
-        # Ensure all required columns are present
-        for col in ["Time"] + metrics:
+        # Asegurar que todas las métricas están presentes en el DataFrame
+        for col in ["_time"] + metrics:
             if col not in df:
-                df[col] = None  # Fill missing columns with None
+                df[col] = None  # Rellenar con None si falta alguna columna
 
-        return df
+        return df.sort_values(by="_time", ascending=False).reset_index(drop=True)
