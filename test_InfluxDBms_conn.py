@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument('-p', '--path', type=str, default='InfluxDBms/config_db.yaml', help='Path to the configuration file')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Level of verbosity')
     parser.add_argument('-m', '--metrics', help="Comma-separated list of metrics", default=None)
+    parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
     
     return parser.parse_args()
 
@@ -46,6 +47,7 @@ def main():
     until_time = args.until
     qtok = args.qtok
     pie = args.leg
+    window_size = args.window_size
 
     try:
         iDB = cInfluxDB(config_path=args.path)
@@ -58,13 +60,13 @@ def main():
 
     # Realizar consulta
     try:
-        df = iDB.query_with_aggregate_window(from_time, until_time, window_size="1d", qtok=qtok, pie=pie, metrics=metrics)
+        df = iDB.query_with_aggregate_window(from_time, until_time, window_size=window_size, qtok=qtok, pie=pie, metrics=metrics)
         #df = iDB.query_data(from_time, until_time, qtok= qtok , pie=pie, metrics=metrics )
         print("Results of the query:")
         print(df)
         print(df.shape)
 
-        # Seleccionar la gráfica en función de las métricas
+        # Seleccionar la gráfica en función de las métricas ---MEJORAR---
         if len(metrics) == 1:
             plot_2d(df, "_time", metrics[0], None, f"Time Series Plot of {metrics[0]}")
         elif len(metrics) == 2:

@@ -142,7 +142,7 @@ class cInfluxDB:
             print(f"Error en la consulta: {str(e)}")
             raise
 
-        # Procesar los resultados en un DataFrame
+        # Process the results in a DataFrame
         data = []
         for table in result:
             for record in table.records:
@@ -150,9 +150,9 @@ class cInfluxDB:
 
         df = pd.DataFrame(data).drop(['result', 'table'], axis=1)
 
-        # Asegurar que todas las métricas están presentes en el DataFrame
+        # Make sure that all the metrics are in the DataFrame
         for col in ["_time"] + metrics:
             if col not in df:
-                df[col] = None  # Rellenar con None si falta alguna columna
+                df[col] = None  
 
         return df.sort_values(by="_time", ascending=False).reset_index(drop=True)
