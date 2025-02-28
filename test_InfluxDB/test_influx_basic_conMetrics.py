@@ -1,6 +1,10 @@
 """
 Module: Test_DB_Connection to InfluxDB for Gait
 """
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import argparse
 from datetime import datetime, timedelta, timezone
@@ -31,10 +35,10 @@ def parse_args():
     parser.add_argument('-u', '--until', type=parse_datetime, default=default_until, help='End date (ISO 8601)')
     parser.add_argument('-q', '--qtok', type=str, required=True, help='CodeID')
     parser.add_argument('-l', '--leg', type=str, required=True, choices=['Left', 'Right'], help='Choice of Left or Right Foot')
-    parser.add_argument('-p', '--path', type=str, default='InfluxDBms/config_db.yaml', help='Path to the configuration file')
+    parser.add_argument('-p', '--path', type=str, default='../InfluxDBms/config_db.yaml', help='Path to the configuration file')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Level of verbosity')
     parser.add_argument('-m', '--metrics', help="Comma-separated list of metrics", default=None)
-    parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
+    # parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
     
     return parser.parse_args()
 
@@ -47,7 +51,7 @@ def main():
     until_time = args.until
     qtok = args.qtok
     pie = args.leg
-    window_size = args.window_size
+    # window_size = args.window_size
 
     try:
         iDB = cInfluxDB(config_path=args.path)
@@ -59,26 +63,14 @@ def main():
         return
 
     # Realizar consulta
-    try:
-        df = iDB.query_with_aggregate_window(from_time, until_time, window_size=window_size, qtok=qtok, pie=pie, metrics=metrics)
-        #df = iDB.query_data(from_time, until_time, qtok= qtok , pie=pie, metrics=metrics )
+    try: 
+        # df = iDB.query_with_aggregate_window(from_time, until_time, qtok=qtok, pie=pie, metrics=metrics) # sin window size
+        # df = iDB.query_with_aggregate_window(from_time, until_time, window_size=window_size, qtok=qtok, pie=pie, metrics=metrics)
+        df = iDB.query_data(from_time, until_time, qtok= qtok , pie=pie, metrics=metrics ) # con metrics
+        
         print("Results of the query:")
         print(df)
         print(df.shape)
-
-        # Seleccionar la gráfica en función de las métricas ---MEJORAR---
-        if len(metrics) == 1:
-            plot_2d(df, "_time", metrics[0], None, f"Time Series Plot of {metrics[0]}")
-        elif len(metrics) == 2:
-            plot_2d(df, "_time", metrics[0], metrics[1], "2D Time Series Plot")
-        elif len(metrics) == 3:
-            plot_3d(df, "_time", metrics[0], metrics[1], metrics[2], "3D Visualization")
-        elif len(metrics) == 4 and set(metrics).issuperset({"Ax", "Ay", "Gx", "Gy"}):
-            plot_dual_3d(df, "_time", ["Ax", "Ay"], ["Gx", "Gy"], "Ax, Ay vs Gx, Gy in 3D")
-
-            #  ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
-        else:
-            print("Unsupported combination of metrics for plotting.")
     
     except Exception as e:
         print(f"Error querying data: {e}")

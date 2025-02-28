@@ -119,3 +119,59 @@ class BatchProcess:
                 print(f"Internal details in iteration {i}: {{'key': 'value'}}")
         if verbose >= 1:
             print("Main process completed.")
+
+
+# import argparse
+# from datetime import datetime, timedelta
+
+# class VAction(argparse.Action):
+#     """
+#     Custom class to handle the verbosity argument.
+
+#     This class allows counting the number of times the `-v` or `--verbose` 
+#     argument is used, as well as receiving an optional numeric value. 
+#     """
+
+#     def __init__(self, option_strings, dest, nargs=None, const=None,
+#                  default=None, type=None, choices=None, required=False,
+#                  help=None, metavar=None):
+#         super(VAction, self).__init__(option_strings, dest, nargs, const,
+#                                       default, type, choices, required,
+#                                       help, metavar)
+#         self.values = 0
+
+#     def __call__(self, parser, args, values, option_string=None):
+#         """
+#         Processes the argument value and updates the verbosity counter.
+#         """
+#         if values is None:
+#             self.values += 1
+#         else:
+#             try:
+#                 self.values = int(values)
+#             except ValueError:
+#                 self.values = values.count('v') + 1
+#         setattr(args, self.dest, self.values)
+
+# def main():
+#     parser = argparse.ArgumentParser(description="Extract data with verbosity levels.")
+#     parser.add_argument("-v", "--verbose", nargs="?", action=VAction, default=0, help="Set verbosity level")
+#     args = parser.parse_args()
+
+#     verbose = args.verbose
+#     if verbose >= 1:
+#         print(f"Extracting data with verbosity level: {verbose}")
+
+#     # Simulating data extraction process
+#     if verbose >= 1:
+#         print("Starting extraction process...")
+#     for i in range(3):
+#         if verbose >= 2:
+#             print(f"Processing batch {i}...")
+#         if verbose >= 3:
+#             print(f"Detailed debug info for batch {i}: {{'key': 'value'}}")
+#     if verbose >= 1:
+#         print("Extraction process completed.")
+
+# if __name__ == "__main__":
+#     main()
