@@ -64,14 +64,23 @@ class cInfluxDB:
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
+        # query = f'''
+        # from(bucket: "{self.bucket}")
+        # |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
+        # |> filter(fn: (r) => r._measurement == "{self.measurement}")
+        # |> filter(fn: (r) => {metrics_str})
+        # |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
+        # |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+        # |> keep(columns: ["_time", {columns_str}])
+        # '''
         query = f'''
         from(bucket: "{self.bucket}")
-        |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
-        |> filter(fn: (r) => r._measurement == "{self.measurement}")
-        |> filter(fn: (r) => {metrics_str})
-        |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
-        |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        |> keep(columns: ["_time", {columns_str}])
+            |> range(start: {from_date_str}, stop: {to_date_str})
+            |> filter(fn: (r) => r._measurement == "{self.measurement}")
+            |> filter(fn: (r) => {metrics_str})
+            |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
+            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            |> keep(columns: ["_time", {columns_str}])
         '''
 
         try:
@@ -135,6 +144,7 @@ class cInfluxDB:
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", {columns_str}])
         '''
+        
 
         try:
             result = self.client.query_api().query(org=self.org, query=query)
