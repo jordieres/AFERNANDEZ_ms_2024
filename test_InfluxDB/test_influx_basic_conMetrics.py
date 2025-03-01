@@ -15,20 +15,44 @@ from InfluxDBms.cInfluxDB import cInfluxDB
 from InfluxDBms.fecha_verbose import BatchProcess, VAction
 from InfluxDBms.plot_functions_InfluxDB import *
 
-# Función para convertir cadenas en objetos datetime
+# Function to convert strings to datetime objects
 def parse_datetime(value):
+
+    """
+    Converts a string into a datetime object.
+    
+    :param value: String representation of a date/time.
+    :type value: str
+    :return: Parsed datetime object.
+    :rtype: datetime
+    :raises argparse.ArgumentTypeError: If the date format is invalid.
+    """
     try:
         return parse_date(value)  
     except ValueError as e:
         raise argparse.ArgumentTypeError(f"Invalid date: {value}. Error: {e}")
 
-# Obtener fechas predeterminadas
+# Get default dates
 def get_default_dates():
+
+    """
+    Retrieves the default start and end dates for querying.
+    
+    :return: Tuple with start and end date in ISO 8601 format.
+    :rtype: tuple[str, str]
+    """
     now = datetime.now(timezone.utc)
     return now.isoformat() + "Z", (now + timedelta(minutes=30)).isoformat() + "Z"
 
-# Argumentos del programa
+# Parse command-line arguments
 def parse_args():
+
+    """
+    Parses command-line arguments for batch processing.
+    
+    :return: Parsed arguments.
+    :rtype: argparse.Namespace
+    """
     default_from, default_until = get_default_dates()
     parser = argparse.ArgumentParser(description='Execution of batch processes.')
     parser.add_argument('-f', '--from_time', type=parse_datetime, default=default_from, help='Start date (ISO 8601)')
@@ -38,12 +62,20 @@ def parse_args():
     parser.add_argument('-p', '--path', type=str, default='../InfluxDBms/config_db.yaml', help='Path to the configuration file')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Level of verbosity')
     parser.add_argument('-m', '--metrics', help="Comma-separated list of metrics", default=None)
-    # parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
     
     return parser.parse_args()
 
-# Función principal
+# Main Function
 def main():
+
+    """
+    Main function to execute InfluxDB queries and batch processing.
+    
+    - Parses command-line arguments.
+    - Connects to InfluxDB.
+    - Queries data based on provided parameters.
+    - Runs batch processing.
+    """
     args = parse_args()
     metrics = args.metrics.split(",") if args.metrics else []
 
@@ -51,7 +83,6 @@ def main():
     until_time = args.until
     qtok = args.qtok
     pie = args.leg
-    # window_size = args.window_size
 
     try:
         iDB = cInfluxDB(config_path=args.path)
@@ -62,10 +93,7 @@ def main():
         print(f"Error initializing cInfluxDB: {e}")
         return
 
-    # Realizar consulta
     try: 
-        # df = iDB.query_with_aggregate_window(from_time, until_time, qtok=qtok, pie=pie, metrics=metrics) # sin window size
-        # df = iDB.query_with_aggregate_window(from_time, until_time, window_size=window_size, qtok=qtok, pie=pie, metrics=metrics)
         df = iDB.query_data(from_time, until_time, qtok= qtok , pie=pie, metrics=metrics ) # con metrics
         
         print("Results of the query:")
@@ -76,7 +104,7 @@ def main():
         print(f"Error querying data: {e}")
         return
 
-    # Ejecutar batch process
+    # Execute batch process
     bp = BatchProcess(args)
     bp.run()
 
