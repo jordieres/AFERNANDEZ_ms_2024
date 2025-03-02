@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="test_InfluxDBmodule" href="test_InfluxDB.html" />
+    <link rel="next" title="test_InfluxDB module" href="test_InfluxDB.html" />
     <link rel="prev" title="AFERNANDEZ_ms_2024" href="modules.html" /> 
 </head>
 
@@ -47,19 +47,21 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">AFERNANDEZ_ms_2024</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">InfluxDBms package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-InfluxDBms.cInfluxDB">InfluxDBms.cInfluxDB module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-cinfluxdb-class">The <code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code> class</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#InfluxDBms.cInfluxDB.cInfluxDB"><code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-InfluxDBms.fecha_verbose">InfluxDBms.fecha_verbose module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#InfluxDBms.fecha_verbose.BatchProcess"><code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-vaction-class">The <code class="docutils literal notranslate"><span class="pre">VAction</span></code> class</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#InfluxDBms.fecha_verbose.VAction"><code class="docutils literal notranslate"><span class="pre">VAction</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-InfluxDBms">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-batchprocess-class">The <code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#InfluxDBms.fecha_verbose.BatchProcess"><code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDBmodule</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a></li>
 </ul>
 </li>
 </ul>
@@ -94,8 +96,8 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="module-InfluxDBms.cInfluxDB">
-<span id="influxdbms-cinfluxdb-module"></span><h2>InfluxDBms.cInfluxDB module<a class="headerlink" href="#module-InfluxDBms.cInfluxDB" title="Link to this heading"></a></h2>
+<section id="the-cinfluxdb-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code> class<a class="headerlink" href="#the-cinfluxdb-class" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="InfluxDBms.cInfluxDB.cInfluxDB">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">InfluxDBms.cInfluxDB.</span></span><span class="sig-name descname"><span class="pre">cInfluxDB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/InfluxDBms/cInfluxDB.html#cInfluxDB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#InfluxDBms.cInfluxDB.cInfluxDB" title="Link to this definition"></a></dt>
@@ -150,8 +152,48 @@
 </dd></dl>
 
 </section>
-<section id="module-InfluxDBms.fecha_verbose">
-<span id="influxdbms-fecha-verbose-module"></span><h2>InfluxDBms.fecha_verbose module<a class="headerlink" href="#module-InfluxDBms.fecha_verbose" title="Link to this heading"></a></h2>
+<section id="the-vaction-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">VAction</span></code> class<a class="headerlink" href="#the-vaction-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="InfluxDBms.fecha_verbose.VAction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">InfluxDBms.fecha_verbose.</span></span><span class="sig-name descname"><span class="pre">VAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option_strings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/InfluxDBms/fecha_verbose.html#VAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#InfluxDBms.fecha_verbose.VAction" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
+<p>Custom class to handle the verbosity argument.</p>
+<p>This class allows counting the number of times the <cite>-v</cite> or <cite>–verbose</cite>
+argument is used, as well as receiving an optional numeric value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>option_strings</strong> (<em>list</em>) – list of option strings that correspond # to this action.</p></li>
+<li><p><strong>action.</strong> (<em>to this</em>)</p></li>
+<li><p><strong>dest</strong> (<em>str</em>) – Name of the attribute to which the value will be # assigned.</p></li>
+<li><p><strong>nargs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of arguments to consume. Default is None.</p></li>
+<li><p><strong>const</strong> (<em>any</em><em>, </em><em>optional</em>) – Constant value to use if nargs is <cite>?</cite>.</p></li>
+<li><p><strong>default</strong> (<em>any</em><em>, </em><em>optional</em>) – Default value to use if not given.</p></li>
+<li><p><strong>type</strong> (<em>type</em><em>, </em><em>optional</em>) – Type of argument expected.</p></li>
+<li><p><strong>choices</strong> (<em>list</em><em>, </em><em>optional</em>) – Valid options for the argument.</p></li>
+<li><p><strong>required</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the argument is required.</p></li>
+<li><p><strong>help</strong> (<em>str</em><em>, </em><em>optional</em>) – Help description for the argument.</p></li>
+<li><p><strong>metavar</strong> (<em>str</em><em>, </em><em>optional</em>) – Name to use in the help message.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="InfluxDBms.fecha_verbose.VAction.values">
+<span class="sig-name descname"><span class="pre">values</span></span><a class="headerlink" href="#InfluxDBms.fecha_verbose.VAction.values" title="Link to this definition"></a></dt>
+<dd><p>Verbosity level counter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-batchprocess-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code> class<a class="headerlink" href="#the-batchprocess-class" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="InfluxDBms.fecha_verbose.BatchProcess">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">InfluxDBms.fecha_verbose.</span></span><span class="sig-name descname"><span class="pre">BatchProcess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/InfluxDBms/fecha_verbose.html#BatchProcess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#InfluxDBms.fecha_verbose.BatchProcess" title="Link to this definition"></a></dt>
@@ -201,46 +243,6 @@ additional operations as required.</p>
 
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="InfluxDBms.fecha_verbose.VAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">InfluxDBms.fecha_verbose.</span></span><span class="sig-name descname"><span class="pre">VAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option_strings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/InfluxDBms/fecha_verbose.html#VAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#InfluxDBms.fecha_verbose.VAction" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
-<p>Custom class to handle the verbosity argument.</p>
-<p>This class allows counting the number of times the <cite>-v</cite> or <cite>–verbose</cite>
-argument is used, as well as receiving an optional numeric value.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>option_strings</strong> (<em>list</em>) – list of option strings that correspond # to this action.</p></li>
-<li><p><strong>action.</strong> (<em>to this</em>)</p></li>
-<li><p><strong>dest</strong> (<em>str</em>) – Name of the attribute to which the value will be # assigned.</p></li>
-<li><p><strong>nargs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of arguments to consume. Default is None.</p></li>
-<li><p><strong>const</strong> (<em>any</em><em>, </em><em>optional</em>) – Constant value to use if nargs is <cite>?</cite>.</p></li>
-<li><p><strong>default</strong> (<em>any</em><em>, </em><em>optional</em>) – Default value to use if not given.</p></li>
-<li><p><strong>type</strong> (<em>type</em><em>, </em><em>optional</em>) – Type of argument expected.</p></li>
-<li><p><strong>choices</strong> (<em>list</em><em>, </em><em>optional</em>) – Valid options for the argument.</p></li>
-<li><p><strong>required</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the argument is required.</p></li>
-<li><p><strong>help</strong> (<em>str</em><em>, </em><em>optional</em>) – Help description for the argument.</p></li>
-<li><p><strong>metavar</strong> (<em>str</em><em>, </em><em>optional</em>) – Name to use in the help message.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="InfluxDBms.fecha_verbose.VAction.values">
-<span class="sig-name descname"><span class="pre">values</span></span><a class="headerlink" href="#InfluxDBms.fecha_verbose.VAction.values" title="Link to this definition"></a></dt>
-<dd><p>Verbosity level counter.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-InfluxDBms">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-InfluxDBms" title="Link to this heading"></a></h2>
 </section>
 </section>
 
@@ -249,7 +251,7 @@ argument is used, as well as receiving an optional numeric value.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="modules.html" class="btn btn-neutral float-left" title="AFERNANDEZ_ms_2024" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="test_InfluxDB.html" class="btn btn-neutral float-right" title="test_InfluxDBmodule" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="test_InfluxDB.html" class="btn btn-neutral float-right" title="test_InfluxDB module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

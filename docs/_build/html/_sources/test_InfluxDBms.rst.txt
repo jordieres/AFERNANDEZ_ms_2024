@@ -1,7 +1,0 @@
-test\_InfluxDBms\ module
-========================
-
-.. automodule:: test_InfluxDBms
-   :members:
-   :undoc-members:
-   :show-inheritance:
