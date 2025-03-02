@@ -137,14 +137,13 @@ class cInfluxDB:
         from(bucket: "{self.bucket}")
             |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
             |> filter(fn: (r) => r._measurement == "{self.measurement}")
-            |> filter(fn: (r) => {metrics_str})
             |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
+            |> filter(fn: (r) => {metrics_str})
             |> group(columns: ["_field"])
-            |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
+            |> aggregateWindow(every: {window_size}, fn: last, createEmpty: false)
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", {columns_str}])
         '''
-        
 
         try:
             result = self.client.query_api().query(org=self.org, query=query)

@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "InfluxDBms"
+version = "0.1.0"
+description = "Package to deal with InfluxDB measurements of Gait in Multiple Sclerosis"
+authors = ["Angela Fernandez <angela.fernandez@alumnos.upm.es>"]
+packages = [{ include = "InfluxDBms" }]
+license = "GPL 3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+influxdb_client = "^1.48.0"
+matplotlib = "^3.10.1"
+pandas = "^2.2.3"
+numpy = "^2.1"
+PyYAML = "^6.0.2"
+setuptools = "^75.8.0"
+urllib3 = "^2.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

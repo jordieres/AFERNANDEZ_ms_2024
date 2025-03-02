@@ -1,14 +1,12 @@
 """
-Module: Test_DB_Connection to InfluxDB for Gait
+extract_data.py : Test_DB_Connection to InfluxDB for Gait
+                  2025-03-02  JOM
 """
 
-import sys
-import os
+import sys, os, argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-import argparse
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 from dateutil.parser import parse as parse_date
@@ -18,12 +16,9 @@ from InfluxDBms.cInfluxDB import cInfluxDB
 from InfluxDBms.fecha_verbose import BatchProcess, VAction
 from InfluxDBms.plot_functions_InfluxDB import *
 
-
-
-
+#
 # Function to convert strings to datetime objects
 def parse_datetime(value):
-
     """
     Converts a string into a datetime object.
     
@@ -40,7 +35,6 @@ def parse_datetime(value):
 
 # Get default dates
 def get_default_dates():
-
     """
     Retrieves the default start and end dates for querying.
     
@@ -52,7 +46,6 @@ def get_default_dates():
 
 # Parse command-line arguments
 def parse_args():
-
     """
     Parses command-line arguments for batch processing.
     
@@ -75,7 +68,6 @@ def parse_args():
 
 # Main Function
 def main():
-    
     """
     Main function to execute the InfluxDB query, process the data, and save it to an Excel file.
     """
@@ -118,6 +110,7 @@ def main():
 
     # Save to Excel
     try:
+        df["_time"] = df["_time"].dt.tz_localize(None)
         df.to_excel(args.output, index=False)
         if args.verbose >= 1:
             print(f"Data successfully saved to {args.output}")
