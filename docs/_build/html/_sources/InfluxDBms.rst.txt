@@ -1,9 +1,6 @@
 InfluxDBms package
 ==================
 
-Submodules
-----------
-
 The ``cInfluxDB`` class
 -----------------------
 
