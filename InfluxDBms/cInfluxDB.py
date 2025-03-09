@@ -140,7 +140,7 @@ class cInfluxDB:
             |> filter(fn: (r) => {metrics_str})
             |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
             |> group(columns: ["_field"])
-            |> aggregateWindow(every: {window_size}, fn: last, createEmpty: true)
+            |> aggregateWindow(every: {window_size}, fn: last, createEmpty: false)
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
             |> keep(columns: ["_time", {columns_str}])
         '''
