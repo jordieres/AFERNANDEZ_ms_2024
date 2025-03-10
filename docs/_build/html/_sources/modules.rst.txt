@@ -5,4 +5,4 @@ AFERNANDEZ_ms_2024
    :maxdepth: 4
 
    InfluxDBms
-   test_InfluxDBms_conn
+   test_InfluxDB

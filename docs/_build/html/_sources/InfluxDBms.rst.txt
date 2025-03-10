@@ -1,29 +1,26 @@
 InfluxDBms package
 ==================
 
-Submodules
-----------
+The ``cInfluxDB`` class
+-----------------------
 
-InfluxDBms.cInfluxDB module
----------------------------
-
-.. automodule:: InfluxDBms.cInfluxDB
+.. autoclass:: InfluxDBms.cInfluxDB.cInfluxDB
    :members:
    :undoc-members:
    :show-inheritance:
 
-InfluxDBms.fecha\_verbose module
---------------------------------
+The ``VAction`` class
+---------------------
 
-.. automodule:: InfluxDBms.fecha_verbose
+.. autoclass:: InfluxDBms.fecha_verbose.VAction
    :members:
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+The ``BatchProcess`` class
+--------------------------
 
-.. automodule:: InfluxDBms
+.. autoclass:: InfluxDBms.fecha_verbose.BatchProcess
    :members:
    :undoc-members:
    :show-inheritance:

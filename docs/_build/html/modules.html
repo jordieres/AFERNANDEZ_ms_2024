@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="InfluxDBms package" href="InfluxDBms.html" />
-    <link rel="prev" title="Welcome to Gait-Measurement’s documentation!" href="index.html" /> 
+    <link rel="prev" title="Introduction" href="intro.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,9 +44,12 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#general-structure">General Structure</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">AFERNANDEZ_ms_2024</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDBms_conn.html">test_InfluxDBms_conn module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a></li>
 </ul>
 </li>
 </ul>
@@ -80,8 +83,7 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#module-InfluxDBms.cInfluxDB">InfluxDBms.cInfluxDB module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-cinfluxdb-class">The <code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code> class</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB"><code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.query_data"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.query_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.query_with_aggregate_window"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.query_with_aggregate_window()</span></code></a></li>
@@ -89,7 +91,14 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#module-InfluxDBms.fecha_verbose">InfluxDBms.fecha_verbose module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-vaction-class">The <code class="docutils literal notranslate"><span class="pre">VAction</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.VAction"><code class="docutils literal notranslate"><span class="pre">VAction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.VAction.values"><code class="docutils literal notranslate"><span class="pre">VAction.values</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-batchprocess-class">The <code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code> class</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess"><code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.config"><code class="docutils literal notranslate"><span class="pre">BatchProcess.config</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.get_cnf"><code class="docutils literal notranslate"><span class="pre">BatchProcess.get_cnf()</span></code></a></li>
@@ -97,20 +106,19 @@
 <li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.run"><code class="docutils literal notranslate"><span class="pre">BatchProcess.run()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.VAction"><code class="docutils literal notranslate"><span class="pre">VAction</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.VAction.values"><code class="docutils literal notranslate"><span class="pre">VAction.values</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#module-InfluxDBms">Module contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html#module-test_InfluxDB.extract_data">test_InfluxDB.extract_data module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.get_default_dates"><code class="docutils literal notranslate"><span class="pre">get_default_dates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.parse_datetime"><code class="docutils literal notranslate"><span class="pre">parse_datetime()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="test_InfluxDBms_conn.html">test_InfluxDBms_conn module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDBms_conn.html#test_InfluxDBms_conn.get_default_dates"><code class="docutils literal notranslate"><span class="pre">get_default_dates()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDBms_conn.html#test_InfluxDBms_conn.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDBms_conn.html#test_InfluxDBms_conn.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDBms_conn.html#test_InfluxDBms_conn.parse_datetime"><code class="docutils literal notranslate"><span class="pre">parse_datetime()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -121,7 +129,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Gait-Measurement’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intro.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="InfluxDBms.html" class="btn btn-neutral float-right" title="InfluxDBms package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
