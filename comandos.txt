@@ -5,6 +5,7 @@
 
 - EJECUCION DE CONSULTA     python  test_InfluxDBms_conn.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Right"
 
+- Para actualizar doc de sphinx .\make html
 
 - para generar enlace de documentacion Sphinx a otra carpeta con archivos .py 
     sphinx-apidoc -o source/ C:/Users/Gliglo/OneDrive - Universidad Politécnica de Madrid/Documentos/UPM/TFG/Proyecto_TFG/AFERNANDEZ_ms_2024/nombreCarpeta

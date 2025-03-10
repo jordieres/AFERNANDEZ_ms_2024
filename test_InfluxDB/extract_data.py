@@ -61,7 +61,7 @@ def parse_args():
     parser.add_argument('-p', '--path', type=str, default='../InfluxDBms/config_db.yaml', help='Path to the configuration file')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to the Excel file as output')
     parser.add_argument('-v', '--verbose', type=int, default=0, help='Verbosity level')
-    parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
+    # parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
     parser.add_argument('-m', '--metrics', help="Comma-separated list of metrics", default=None)
     
     return parser.parse_args()
@@ -75,7 +75,8 @@ def main():
     metrics = args.metrics.split(",") if args.metrics else []
     
     if args.verbose >= 1:
-        print(f"Parameters: from_time={args.from_time}, until={args.until}, qtok={args.qtok}, leg={args.leg}, window_size={args.window_size}")
+        # print(f"Parameters: from_time={args.from_time}, until={args.until}, qtok={args.qtok}, leg={args.leg}, window_size={args.window_size}")
+        print(f"Parameters: from_time={args.from_time}, until={args.until}, qtok={args.qtok}, leg={args.leg}")
 
     # Initialising connection to InfluxDB
     try:
@@ -88,8 +89,8 @@ def main():
         return
 
     try:
-        df = iDB.query_with_aggregate_window(args.from_time, args.until, window_size=args.window_size, qtok=args.qtok, pie=args.leg, metrics=metrics)
-        # df= iDB.query_data(args.from_time, args.until_time, qtok= args.qtok , pie=args.pie, metrics=metrics )
+        # df = iDB.query_with_aggregate_window(args.from_time, args.until, window_size=args.window_size, qtok=args.qtok, pie=args.leg, metrics=metrics)
+        df= iDB.query_data(args.from_time, args.until, qtok= args.qtok , pie=args.leg, metrics=metrics )
 
         if df.empty:
             print("No data retrieved from InfluxDB.")

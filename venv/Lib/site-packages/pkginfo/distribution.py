@@ -1,5 +1,6 @@
 import io
 from email.parser import Parser
+import warnings
 
 def _must_decode(value):
     if type(value) is bytes:
@@ -77,6 +78,11 @@ HEADER_ATTRS_2_2 = HEADER_ATTRS_2_1 + ( # PEP 643
 
 HEADER_ATTRS_2_3 = HEADER_ATTRS_2_2  # PEP 685
 
+HEADER_ATTRS_2_4 = HEADER_ATTRS_2_3 + ( # PEP 639
+    ('License-Expression', 'license_expression', False),
+    ('License-File', 'license_file', True),
+)
+
 HEADER_ATTRS = {
     '1.0': HEADER_ATTRS_1_0,
     '1.1': HEADER_ATTRS_1_1,
@@ -85,7 +91,40 @@ HEADER_ATTRS = {
     '2.1': HEADER_ATTRS_2_1,
     '2.2': HEADER_ATTRS_2_2,
     '2.3': HEADER_ATTRS_2_3,
+    '2.4': HEADER_ATTRS_2_4,
 }
+
+def _version_tuple(metadata_version):
+    if metadata_version is None:
+        return (0, 0)
+    return tuple(
+        [int(part) for part in metadata_version.split(".")]
+    )
+
+METADATA_VERSIONS = [
+    _version_tuple(key) for key in HEADER_ATTRS
+]
+
+MAX_METADATA_VERSION = max(METADATA_VERSIONS)
+# See: https://bugs.launchpad.net/bugs/2066340
+MAX_METADATA_VERSION_STR = ".".join(
+    str(element) for element in MAX_METADATA_VERSION
+)
+
+
+class UnknownMetadataVersion(UserWarning):
+    def __init__(self, metadata_version):
+        self.metadata_version = metadata_version
+        super().__init__(f"Unknown metadata version: {metadata_version}")
+
+
+class NewMetadataVersion(UserWarning):
+    def __init__(self, metadata_version):
+        self.metadata_version = metadata_version
+        super().__init__(
+            f"New metadata version ({metadata_version}) higher than "
+            f"latest supported version: parsing as {MAX_METADATA_VERSION_STR}"
+        )
 
 class Distribution(object):
     metadata_version = None
@@ -121,6 +160,9 @@ class Distribution(object):
     description_content_type = None
     # version 2.2
     dynamic = ()
+    # version 2.4
+    license_expression = None
+    license_file = ()
 
     def extractMetadata(self):
         data = self.read()
@@ -130,7 +172,22 @@ class Distribution(object):
         raise NotImplementedError
 
     def _getHeaderAttrs(self):
-        return HEADER_ATTRS.get(self.metadata_version, [])
+        found = HEADER_ATTRS.get(self.metadata_version)
+
+        if found is None:
+            try:
+                v_tuple = _version_tuple(self.metadata_version)
+            except ValueError:
+                warnings.warn(UnknownMetadataVersion(self.metadata_version))
+                return ()
+            if v_tuple > MAX_METADATA_VERSION:
+                warnings.warn(NewMetadataVersion(self.metadata_version))
+                return HEADER_ATTRS[MAX_METADATA_VERSION_STR]
+            else:
+                warnings.warn(UnknownMetadataVersion(self.metadata_version))
+                return ()
+
+        return found
 
     def parse(self, data):
         fp = io.StringIO(_must_decode(data))

@@ -1,3 +1,8 @@
 test_influx_basic.py                python test_influx_basic_conMetrics.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left"
 test_influx_basic_conMetrics.py     python test_influx_basic_conMetrics.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az"
 test_influx_aggWindoy.py            python test_influx_aggWindow.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az" -w "100ms"
+
+
+extract_data.py                     python extract_data.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q JOM20241031-104 -l Left -w 100s -p ../InfluxDBms/config_db.yaml 
+                                    -o "C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba3.xlsx" 
+                                    -v 2 -m Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz,S0,S1,S2
