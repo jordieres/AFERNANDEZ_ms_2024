@@ -5,7 +5,6 @@ extract_data.py : Test_DB_Connection to InfluxDB for Gait
 
 import sys, os, argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
 from datetime import datetime, timedelta, timezone
@@ -118,10 +117,6 @@ def main():
             print(f"Data successfully saved to {args.output}")
     except Exception as e:
         print(f"Error saving to Excel: {e}")
-
-    # # Execute batch process
-    # bp = BatchProcess(args)
-    # bp.run()
 
 if __name__ == "__main__":
     main() 

@@ -37,7 +37,7 @@ The test:influxDE folder contains test files for connecting to and querying data
 
     - Description: Extracts data from InfluxDB and saves it to an Excel file.
     - Execution command:
-        python extract_data.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -o "resultados_test/salida.xlsx" -w "20ms"
+        python extract_data.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q JOM20241031-104 -l Left  -p ../InfluxDBms/config_db.yaml -o "C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba6.xlsx" -v 2 -m Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz,S0,S1,S2
 
 ## resultados_test Folder
 
