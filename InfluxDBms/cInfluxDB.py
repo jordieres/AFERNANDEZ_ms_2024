@@ -77,10 +77,10 @@ class cInfluxDB:
         from(bucket: "{self.bucket}")
             |> range(start: {from_date_str}, stop: {to_date_str})
             |> filter(fn: (r) => r._measurement == "{self.measurement}")
-            |> filter(fn: (r) => {metrics_str})
+            |> filter(fn: (r) => {metrics_str} or r._field == "Latitude" or r._field == "Longitude")
             |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-            |> keep(columns: ["_time", {columns_str}])
+            |> keep(columns: ["_time", {columns_str}, "Latitude", "Longitude"])
         '''
 
         try:
@@ -93,9 +93,17 @@ class cInfluxDB:
         data = []
         for table in result:
             for record in table.records:
-                data.append(record.values)
+                val = record.values
+                # Extrae explícitamente lat/lon si existen
+                val["Latitude"] = val.get("Latitude", None)
+                val["Longitude"] = val.get("Longitude", None)
+                data.append(val)
 
-        df = pd.DataFrame(data).drop(['result', 'table'], axis=1)
+        df = pd.DataFrame(data)
+
+        # Elimina columnas internas que pueden molestar
+        df = df.drop(columns=[col for col in ['result', 'table'] if col in df.columns])
+
         return df.sort_values(by="_time", ascending=False).reset_index(drop=True)
 
    
@@ -134,15 +142,16 @@ class cInfluxDB:
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
         query = f'''
-        from(bucket: "{self.bucket}")
+            from(bucket: "{self.bucket}")
             |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
             |> filter(fn: (r) => r._measurement == "{self.measurement}")
-            |> filter(fn: (r) => {metrics_str})
+            |> filter(fn: (r) => {metrics_str} or r._field == "Latitude" or r._field == "Longitude")
             |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
             |> group(columns: ["_field"])
             |> aggregateWindow(every: {window_size}, fn: last, createEmpty: false)
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-            |> keep(columns: ["_time", {columns_str}])
+            |> keep(columns: ["_time", {columns_str}, "Latitude", "Longitude"])
+
         '''
         
 
@@ -166,3 +175,37 @@ class cInfluxDB:
                 df[col] = None  
 
         return df.sort_values(by="_time", ascending=False).reset_index(drop=True)
+
+
+    def debug_fields(self):
+        """
+        Prints all available field names (_field) in the bucket to check what can be queried.
+        """
+        query = f'''
+        import "influxdata/influxdb/schema"
+        schema.fieldKeys(bucket: "{self.bucket}")
+        '''
+        try:
+            result = self.client.query_api().query(org=self.org, query=query)
+            print("Available fields (_field) in the bucket:")
+            for table in result:
+                for record in table.records:
+                    print(f"- {record.get_value()}")
+        except Exception as e:
+            print(f"Error al listar los campos: {e}")
+    
+    def show_raw_sample(self, from_date, to_date, qtok, pie):
+        query = f'''
+        from(bucket: "{self.bucket}")
+        |> range(start: {from_date.strftime('%Y-%m-%dT%H:%M:%SZ')}, stop: {to_date.strftime('%Y-%m-%dT%H:%M:%SZ')})
+        |> filter(fn: (r) => r._measurement == "{self.measurement}")
+        |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["Foot"] == "{pie}" and r["type"] == "SCKS")
+        |> limit(n: 5)
+        '''
+        try:
+            result = self.client.query_api().query(org=self.org, query=query)
+            for table in result:
+                for record in table.records:
+                    print(record.values)
+        except Exception as e:
+            print(f"Error al ejecutar la consulta: {e}")
