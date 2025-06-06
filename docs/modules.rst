@@ -6,3 +6,4 @@ AFERNANDEZ_ms_2024
 
    InfluxDBms
    test_InfluxDB
+   gps_trajectory

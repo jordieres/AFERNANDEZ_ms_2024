@@ -41,6 +41,9 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
 </ul>
 
@@ -110,8 +113,8 @@
 
 <div class="viewcode-block" id="cInfluxDB.query_data">
 <a class="viewcode-back" href="../../InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.query_data">[docs]</a>
-    <span class="k">def</span> <span class="nf">query_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">to_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">qtok</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pie</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span>
+    <span class="k">def</span> <span class="nf">query_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">to_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">qtok</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pie</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                   <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Query data in InfluxDB, pivoting the results to get the metrics in columns.</span>
 
@@ -123,27 +126,31 @@
 <span class="sd">        :type qtok: str</span>
 <span class="sd">        :param pie: Left or Right foot (&#39;Right&#39;, &#39;Left&#39;)</span>
 <span class="sd">        :type pie: str</span>
+<span class="sd">        :param metrics: List of metrics to query (default: predefined set)</span>
+<span class="sd">        :type metrics: list[str], optional</span>
 
-<span class="sd">        :return: DataFrame with the metrics pivoted on columns.</span>
-<span class="sd">        rtype pd.DataFrame</span>
+<span class="sd">        :return: DataFrame with the metrics pivoted on columns, ordered by _time descending.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">from_date_str</span> <span class="o">=</span> <span class="n">from_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span>  <span class="c1"># UTC con &#39;Z&#39;</span>
         <span class="n">to_date_str</span> <span class="o">=</span> <span class="n">to_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span>
 
-
-        <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ax&#39;</span><span class="p">,</span> <span class="s1">&#39;Ay&#39;</span><span class="p">,</span> <span class="s1">&#39;Az&#39;</span><span class="p">,</span> <span class="s1">&#39;Gx&#39;</span><span class="p">,</span> <span class="s1">&#39;Gy&#39;</span><span class="p">,</span> <span class="s1">&#39;Gz&#39;</span><span class="p">,</span> <span class="s1">&#39;Mx&#39;</span><span class="p">,</span> <span class="s1">&#39;My&#39;</span><span class="p">,</span> <span class="s1">&#39;Mz&#39;</span><span class="p">,</span> <span class="s1">&#39;S0&#39;</span><span class="p">,</span> <span class="s1">&#39;S1&#39;</span><span class="p">,</span> <span class="s1">&#39;S2&#39;</span><span class="p">]</span>
+        <span class="c1"># Default metrics</span>
+        <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ax&#39;</span><span class="p">,</span> <span class="s1">&#39;Ay&#39;</span><span class="p">,</span> <span class="s1">&#39;Az&#39;</span><span class="p">,</span> <span class="s1">&#39;Gx&#39;</span><span class="p">,</span> <span class="s1">&#39;Gy&#39;</span><span class="p">,</span> <span class="s1">&#39;Gz&#39;</span><span class="p">,</span> <span class="s1">&#39;Mx&#39;</span><span class="p">,</span> <span class="s1">&#39;My&#39;</span><span class="p">,</span> <span class="s1">&#39;Mz&#39;</span><span class="p">,</span> <span class="s1">&#39;S0&#39;</span><span class="p">,</span> <span class="s1">&#39;S1&#39;</span><span class="p">,</span> <span class="s1">&#39;S2&#39;</span><span class="p">]</span>
+        
         <span class="n">metrics_str</span> <span class="o">=</span> <span class="s1">&#39; or &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;r._field == &quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">&quot;&#39;</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">])</span>
         <span class="n">columns_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">&quot;&#39;</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">])</span>
 
+
         <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">        from(bucket: &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="si">}</span><span class="s1">&quot;)</span>
-<span class="s1">        |&gt; range(start: time(v: &quot;</span><span class="si">{</span><span class="n">from_date_str</span><span class="si">}</span><span class="s1">&quot;), stop: time(v: &quot;</span><span class="si">{</span><span class="n">to_date_str</span><span class="si">}</span><span class="s1">&quot;))</span>
-<span class="s1">        |&gt; filter(fn: (r) =&gt; r._measurement == &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement</span><span class="si">}</span><span class="s1">&quot;)</span>
-<span class="s1">        |&gt; filter(fn: (r) =&gt; </span><span class="si">{</span><span class="n">metrics_str</span><span class="si">}</span><span class="s1">)</span>
-<span class="s1">        |&gt; filter(fn: (r) =&gt; r[&quot;CodeID&quot;] == &quot;</span><span class="si">{</span><span class="n">qtok</span><span class="si">}</span><span class="s1">&quot; and r[&quot;type&quot;] == &quot;SCKS&quot; and r[&quot;Foot&quot;] == &quot;</span><span class="si">{</span><span class="n">pie</span><span class="si">}</span><span class="s1">&quot;)</span>
-<span class="s1">        |&gt; pivot(rowKey:[&quot;_time&quot;], columnKey: [&quot;_field&quot;], valueColumn: &quot;_value&quot;)</span>
-<span class="s1">        |&gt; keep(columns: [&quot;_time&quot;, </span><span class="si">{</span><span class="n">columns_str</span><span class="si">}</span><span class="s1">])</span>
+<span class="s1">            |&gt; range(start: </span><span class="si">{</span><span class="n">from_date_str</span><span class="si">}</span><span class="s1">, stop: </span><span class="si">{</span><span class="n">to_date_str</span><span class="si">}</span><span class="s1">)</span>
+<span class="s1">            |&gt; filter(fn: (r) =&gt; r._measurement == &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">            |&gt; filter(fn: (r) =&gt; </span><span class="si">{</span><span class="n">metrics_str</span><span class="si">}</span><span class="s1"> or r._field == &quot;lat&quot; or r._field == &quot;lng&quot;)</span>
+<span class="s1">            |&gt; filter(fn: (r) =&gt; r[&quot;CodeID&quot;] == &quot;</span><span class="si">{</span><span class="n">qtok</span><span class="si">}</span><span class="s1">&quot; and r[&quot;type&quot;] == &quot;SCKS&quot; and r[&quot;Foot&quot;] == &quot;</span><span class="si">{</span><span class="n">pie</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">            |&gt; pivot(rowKey:[&quot;_time&quot;], columnKey: [&quot;_field&quot;], valueColumn: &quot;_value&quot;)</span>
+<span class="s1">            |&gt; keep(columns: [&quot;_time&quot;, </span><span class="si">{</span><span class="n">columns_str</span><span class="si">}</span><span class="s1">, &quot;lat&quot;, &quot;lng&quot;])</span>
 <span class="s1">        &#39;&#39;&#39;</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -156,95 +163,131 @@
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
-                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">values</span>
+                
+                <span class="n">val</span><span class="p">[</span><span class="s2">&quot;Latitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">val</span><span class="p">[</span><span class="s2">&quot;Longitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lng&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 
-        <span class="k">return</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;result&#39;</span><span class="p">,</span><span class="s1">&#39;table&#39;</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span></div>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Elimina columnas internas que pueden molestar</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;result&#39;</span><span class="p">,</span> <span class="s1">&#39;table&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;_time&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
+   
 
 <div class="viewcode-block" id="cInfluxDB.query_with_aggregate_window">
 <a class="viewcode-back" href="../../InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.query_with_aggregate_window">[docs]</a>
-    <span class="k">def</span> <span class="nf">query_with_aggregate_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">to_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> \
-                                    <span class="n">window_size</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;1d&quot;</span><span class="p">,</span> <span class="n">qtok</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span> <span class="p">,</span> \
-                                    <span class="n">pie</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">query_with_aggregate_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">to_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">window_size</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;20ms&quot;</span><span class="p">,</span> <span class="n">qtok</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">pie</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Query data in InfluxDB, pivoting the results to get the metrics in columns.</span>
-<span class="sd">        Handles cases where there are no data points by using `aggregateWindow`.</span>
+<span class="sd">        Query data in InfluxDB with aggregateWindow, pivoting the results to get metrics as columns.</span>
 
-<span class="sd">        :param from_date: Start date (ISO 8601 format: &#39;YYYY-MM-DDTHH:MM:SSZ&#39;).</span>
+<span class="sd">        :param from_date: Start datetime (ISO 8601 format: &#39;YYYY-MM-DDTHH:MM:SSZ&#39;).</span>
 <span class="sd">        :type from_date: datetime</span>
-<span class="sd">        :param to_date: End date (ISO 8601 format: &#39;YYYY-MM-DDTHH:MM:SSZ&#39;).</span>
+<span class="sd">        :param to_date: End datetime (ISO 8601 format: &#39;YYYY-MM-DDTHH:MM:SSZ&#39;).</span>
 <span class="sd">        :type to_date: datetime</span>
-<span class="sd">        :param window_size: Aggregation window size (e.g., &#39;1s&#39;, &#39;1d&#39;).</span>
+<span class="sd">        :param window_size: Aggregation window size (default: &#39;20ms&#39;).</span>
 <span class="sd">        :type window_size: str</span>
-<span class="sd">        :param qtok: CodeID </span>
+<span class="sd">        :param qtok: CodeID (required).</span>
 <span class="sd">        :type qtok: str</span>
-<span class="sd">        :param pie: Left or Right foot (&#39;Right&#39;, &#39;Left&#39;)</span>
+<span class="sd">        :param pie: Left or Right foot (&#39;Right&#39;, &#39;Left&#39;) (required).</span>
 <span class="sd">        :type pie: str</span>
-<span class="sd">        :return: DataFrame with the metrics pivoted on columns.</span>
+<span class="sd">        :param metrics: List of metrics to query (default: predefined set).</span>
+<span class="sd">        :type metrics: list[str], optional</span>
+<span class="sd">        :return: DataFrame with metrics as columns, ordered by _time.</span>
 <span class="sd">        :rtype: pd.DataFrame</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">from_date_str</span> <span class="o">=</span> <span class="n">from_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span>  <span class="c1"># UTC con &#39;Z&#39;</span>
-        <span class="n">to_date_str</span> <span class="o">=</span> <span class="n">to_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">qtok</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">pie</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Los argumentos &#39;qtok&#39; y &#39;pie&#39; son obligatorios &quot;</span> <span class="o">+</span>\
-                             <span class="s2">&quot;para esta consulta.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Los argumentos &#39;qtok&#39; y &#39;pie&#39; son obligatorios para esta consulta.&quot;</span><span class="p">)</span>
 
-        <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ax&#39;</span><span class="p">,</span> <span class="s1">&#39;Ay&#39;</span><span class="p">,</span> <span class="s1">&#39;Az&#39;</span><span class="p">,</span> <span class="s1">&#39;Gx&#39;</span><span class="p">,</span> <span class="s1">&#39;Gy&#39;</span><span class="p">,</span> <span class="s1">&#39;Gz&#39;</span><span class="p">,</span> <span class="s1">&#39;Mx&#39;</span><span class="p">,</span> <span class="s1">&#39;My&#39;</span><span class="p">,</span> <span class="s1">&#39;Mz&#39;</span><span class="p">,</span> <span class="s1">&#39;S0&#39;</span><span class="p">,</span> <span class="s1">&#39;S1&#39;</span><span class="p">,</span> <span class="s1">&#39;S2&#39;</span><span class="p">]</span>
+        <span class="n">from_date_str</span> <span class="o">=</span> <span class="n">from_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span>
+        <span class="n">to_date_str</span> <span class="o">=</span> <span class="n">to_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Default metrics</span>
+        <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ax&#39;</span><span class="p">,</span> <span class="s1">&#39;Ay&#39;</span><span class="p">,</span> <span class="s1">&#39;Az&#39;</span><span class="p">,</span> <span class="s1">&#39;Gx&#39;</span><span class="p">,</span> <span class="s1">&#39;Gy&#39;</span><span class="p">,</span> <span class="s1">&#39;Gz&#39;</span><span class="p">,</span> <span class="s1">&#39;Mx&#39;</span><span class="p">,</span> <span class="s1">&#39;My&#39;</span><span class="p">,</span> <span class="s1">&#39;Mz&#39;</span><span class="p">,</span> <span class="s1">&#39;S0&#39;</span><span class="p">,</span> <span class="s1">&#39;S1&#39;</span><span class="p">,</span> <span class="s1">&#39;S2&#39;</span><span class="p">]</span>
+
         <span class="n">metrics_str</span> <span class="o">=</span> <span class="s1">&#39; or &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;r._field == &quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">&quot;&#39;</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">])</span>
-        <span class="n">columns_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">&quot;&#39;</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">])</span>
+        <span class="n">columns_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">&quot;&#39;</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;Latitude&quot;</span><span class="p">,</span> <span class="s2">&quot;Longitude&quot;</span><span class="p">]])</span>
 
-        <span class="c1"># query = f&#39;&#39;&#39;</span>
-        <span class="c1"># from(bucket: &quot;{self.bucket}&quot;)</span>
-        <span class="c1">#     |&gt; range(start: time(v: &quot;{from_date_str}&quot;), stop: time(v: &quot;{to_date_str}&quot;))</span>
-        <span class="c1">#     |&gt; filter(fn: (r) =&gt; r._measurement == &quot;{self.measurement}&quot;)</span>
-        <span class="c1">#     |&gt; filter(fn: (r) =&gt; {metrics_str})</span>
-        <span class="c1">#     |&gt; filter(fn: (r) =&gt; r[&quot;CodeID&quot;] == &quot;{qtok}&quot; and r[&quot;type&quot;] == &quot;SCKS&quot; and r[&quot;Foot&quot;] == &quot;{pie}&quot;)</span>
-        <span class="c1">#     |&gt; group(columns: [&quot;_field&quot;])</span>
-        <span class="c1">#     |&gt; aggregateWindow(every: {window_size}, fn: last, createEmpty: true)</span>
-        <span class="c1">#     |&gt; pivot(rowKey:[&quot;_time&quot;], columnKey: [&quot;_field&quot;], valueColumn: &quot;_value&quot;)</span>
-        <span class="c1">#     |&gt; keep(columns: [&quot;_time&quot;, {columns_str}])</span>
-        <span class="c1"># &#39;&#39;&#39;</span>
-        <span class="n">query</span><span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
-<span class="s1">        from(bucket: &quot;Gait/autogen&quot;)</span>
-<span class="s1">            |&gt; range(start: 2024-11-02T15:08:45Z, stop: 2024-11-02T20:50:00Z)</span>
-<span class="s1">            |&gt; filter(fn: (r) =&gt; r._measurement == &quot;Gait&quot;)</span>
-<span class="s1">            |&gt; filter(fn: (r) =&gt; r._field == &quot;Ax&quot; or r._field == &quot;Ay&quot; or r._field == &quot;Az&quot; or r._field == &quot;Gx&quot; or r._field == &quot;Gy&quot; or r._field == &quot;Gz&quot; or r._field == &quot;Mx&quot; or r._field == &quot;My&quot; or r._field == &quot;Mz&quot; or r._field == &quot;S0&quot; or r._field == &quot;S1&quot; or r._field == &quot;S2&quot;)</span>
-<span class="s1">            |&gt; filter(fn: (r) =&gt; r[&quot;CodeID&quot;] == &quot;JOM20241031-104&quot; and r[&quot;type&quot;] == &quot;SCKS&quot; and r[&quot;Foot&quot;] == &quot;Left&quot;)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">            from(bucket: &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">            |&gt; range(start: time(v: &quot;</span><span class="si">{</span><span class="n">from_date_str</span><span class="si">}</span><span class="s1">&quot;), stop: time(v: &quot;</span><span class="si">{</span><span class="n">to_date_str</span><span class="si">}</span><span class="s1">&quot;))</span>
+<span class="s1">            |&gt; filter(fn: (r) =&gt; r._measurement == &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">            |&gt; filter(fn: (r) =&gt; </span><span class="si">{</span><span class="n">metrics_str</span><span class="si">}</span><span class="s1"> or r._field == &quot;Latitude&quot; or r._field == &quot;Longitude&quot;)</span>
+<span class="s1">            |&gt; filter(fn: (r) =&gt; r[&quot;CodeID&quot;] == &quot;</span><span class="si">{</span><span class="n">qtok</span><span class="si">}</span><span class="s1">&quot; and r[&quot;type&quot;] == &quot;SCKS&quot; and r[&quot;Foot&quot;] == &quot;</span><span class="si">{</span><span class="n">pie</span><span class="si">}</span><span class="s1">&quot;)</span>
 <span class="s1">            |&gt; group(columns: [&quot;_field&quot;])</span>
-<span class="s1">            |&gt; aggregateWindow(every: 20ms, fn: last, createEmpty: true)</span>
+<span class="s1">            |&gt; aggregateWindow(every: </span><span class="si">{</span><span class="n">window_size</span><span class="si">}</span><span class="s1">, fn: last, createEmpty: false)</span>
 <span class="s1">            |&gt; pivot(rowKey:[&quot;_time&quot;], columnKey: [&quot;_field&quot;], valueColumn: &quot;_value&quot;)</span>
-<span class="s1">            |&gt; keep(columns: [&quot;_time&quot;, &quot;Ax&quot;, &quot;Ay&quot;, &quot;Az&quot;, &quot;Gx&quot;, &quot;Gy&quot;, &quot;Gz&quot;, &quot;Mx&quot;, &quot;My&quot;, &quot;Mz&quot;, &quot;S0&quot;, &quot;S1&quot;, &quot;S2&quot;])</span>
-<span class="s1">        &#39;&#39;&#39;</span>
+<span class="s1">            |&gt; keep(columns: [&quot;_time&quot;, </span><span class="si">{</span><span class="n">columns_str</span><span class="si">}</span><span class="s1">, &quot;Latitude&quot;, &quot;Longitude&quot;])</span>
 
-        <span class="c1"># print(f&quot;Query generated with aggregate window: {query}&quot;)</span>
+<span class="s1">        &#39;&#39;&#39;</span>
+        
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query_api</span><span class="p">()</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">org</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">org</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in the query: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error en la consulta: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
 
-        <span class="c1"># Process the results into a DataFrame</span>
+        <span class="c1"># Process the results in a DataFrame</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
-                <span class="n">row</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Time&quot;</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get_time</span><span class="p">()}</span>
-                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="n">record</span><span class="o">.</span><span class="n">get_field</span><span class="p">():</span>
-                        <span class="n">row</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
-                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
-        <span class="c1"># Convert the data to a DataFrame</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;result&#39;</span><span class="p">,</span> <span class="s1">&#39;table&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># Ensure all required columns are present</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Time&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">metrics</span><span class="p">:</span>
+        <span class="c1"># Make sure that all the metrics are in the DataFrame</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;_time&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">metrics</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
-                <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Fill missing columns with None</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  
 
-        <span class="k">return</span> <span class="n">df</span></div>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;_time&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="cInfluxDB.debug_fields">
+<a class="viewcode-back" href="../../InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.debug_fields">[docs]</a>
+    <span class="k">def</span> <span class="nf">debug_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prints all available field names (_field) in the bucket to check what can be queried.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        import &quot;influxdata/influxdb/schema&quot;</span>
+<span class="s1">        schema.fieldKeys(bucket: &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query_api</span><span class="p">()</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">org</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">org</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Available fields (_field) in the bucket:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error al listar los campos: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="cInfluxDB.show_raw_sample">
+<a class="viewcode-back" href="../../InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.show_raw_sample">[docs]</a>
+    <span class="k">def</span> <span class="nf">show_raw_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_date</span><span class="p">,</span> <span class="n">to_date</span><span class="p">,</span> <span class="n">qtok</span><span class="p">,</span> <span class="n">pie</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        from(bucket: &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bucket</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">        |&gt; range(start: </span><span class="si">{</span><span class="n">from_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span><span class="si">}</span><span class="s1">, stop: </span><span class="si">{</span><span class="n">to_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">)</span><span class="si">}</span><span class="s1">)</span>
+<span class="s1">        |&gt; filter(fn: (r) =&gt; r._measurement == &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement</span><span class="si">}</span><span class="s1">&quot;)</span>
+<span class="s1">        |&gt; filter(fn: (r) =&gt; r[&quot;CodeID&quot;] == &quot;</span><span class="si">{</span><span class="n">qtok</span><span class="si">}</span><span class="s1">&quot; and r[&quot;Foot&quot;] == &quot;</span><span class="si">{</span><span class="n">pie</span><span class="si">}</span><span class="s1">&quot; and r[&quot;type&quot;] == &quot;SCKS&quot;)</span>
+<span class="s1">        |&gt; limit(n: 5)</span>
+<span class="s1">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query_api</span><span class="p">()</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">org</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">org</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">records</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error al ejecutar la consulta: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

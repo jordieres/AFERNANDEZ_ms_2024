@@ -23,10 +23,10 @@ cadence, and others.
 General Structure
 =================
 
-The application does include:
+The application includes:
 
-* One package named  ``InfluxDBms`` with several classes 
-* One Module named test_InfluxDB with several programs to extract and present data.
-* ...
+* One package named ``InfluxDBms`` containing several classes for managing and querying InfluxDB.
+* One module named ``test_InfluxDB`` with several scripts to extract and present data from InfluxDB.
+* One module named ``gps_trajectory`` for generating and visualizing GPS trajectories using Folium.
 
 Detailed information can be found in the modules below.
