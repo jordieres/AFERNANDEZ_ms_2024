@@ -64,23 +64,15 @@ class cInfluxDB:
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
 
-        # query = f'''
-        # from(bucket: "{self.bucket}")
-        # |> range(start: time(v: "{from_date_str}"), stop: time(v: "{to_date_str}"))
-        # |> filter(fn: (r) => r._measurement == "{self.measurement}")
-        # |> filter(fn: (r) => {metrics_str})
-        # |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
-        # |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-        # |> keep(columns: ["_time", {columns_str}])
-        # '''
+
         query = f'''
         from(bucket: "{self.bucket}")
             |> range(start: {from_date_str}, stop: {to_date_str})
             |> filter(fn: (r) => r._measurement == "{self.measurement}")
-            |> filter(fn: (r) => {metrics_str} or r._field == "Latitude" or r._field == "Longitude")
+            |> filter(fn: (r) => {metrics_str} or r._field == "lat" or r._field == "lng")
             |> filter(fn: (r) => r["CodeID"] == "{qtok}" and r["type"] == "SCKS" and r["Foot"] == "{pie}")
             |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-            |> keep(columns: ["_time", {columns_str}, "Latitude", "Longitude"])
+            |> keep(columns: ["_time", {columns_str}, "lat", "lng"])
         '''
 
         try:
@@ -94,9 +86,9 @@ class cInfluxDB:
         for table in result:
             for record in table.records:
                 val = record.values
-                # Extrae explícitamente lat/lon si existen
-                val["Latitude"] = val.get("Latitude", None)
-                val["Longitude"] = val.get("Longitude", None)
+                
+                val["Latitude"] = val.get("lat", None)
+                val["Longitude"] = val.get("lng", None)
                 data.append(val)
 
         df = pd.DataFrame(data)
@@ -139,7 +131,7 @@ class cInfluxDB:
             metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
 
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
-        columns_str = ', '.join([f'"{metric}"' for metric in metrics])
+        columns_str = ', '.join([f'"{metric}"' for metric in metrics + ["Latitude", "Longitude"]])
 
         query = f'''
             from(bucket: "{self.bucket}")
