@@ -1,1 +1,1 @@
-from ..external_repos.Gait_Tracking_With_x_IMU_Python.ximu_python_library.xIMUdataClass import xIMUdataClass
+from external_repos.Gait_Tracking_With_x_IMU_Python.ximu_python_library.xIMUdataClass import xIMUdataClass

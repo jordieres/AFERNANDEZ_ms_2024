@@ -1,54 +1,144 @@
-import sys
-import os
-
-# Añadir la ruta del módulo skinematics a sys.path
-sys.path.append(os.path.abspath("C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\external_repos\scikit_kinematics"))
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from skinematics import imus
+import os
+import sys
+from scipy import signal
+from scipy.signal import butter, filtfilt
 
-# Leer el archivo CSV
-excel_file = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba10.xlsx"
-df = pd.read_csv(excel_file, delimiter='\t')
+# === CONFIGURACIÓN DE RUTAS ===
+SKINEMATICS_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "external_repos", "scikit_kinematics")
+)
+sys.path.insert(0, SKINEMATICS_PATH)
 
-# Reemplazar comas por puntos y convertir a float
-for col in ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz']:
-    df[col] = df[col].astype(str).str.replace(',', '.').astype(float)
+from skinematics.sensors.manual import MyOwnSensor
+from skinematics import vector
+from skinematics.quat import Quaternion 
 
-# Asegurarse de que _time es tipo datetime
+# Definicion de path
+input_file = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba10.xlsx"
+output_dir = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\transfornm_data\out_transfornm_data"
+img_dir = os.path.join(output_dir, "img")
+output_file = os.path.join(output_dir, "dat_2024_prueba10_transformado_10.xlsx")
+
+
+# Carga de datos
+df = pd.read_excel(input_file)
+df = df.sort_values(by="_time").reset_index(drop=True)
 df['_time'] = pd.to_datetime(df['_time'])
 
-# Calcular frecuencia de muestreo promedio
-df['delta_time'] = df['_time'].diff().dt.total_seconds()
-freq = 1 / df['delta_time'].mean()
+# Ajuste de df
+cols_sensor = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz']
+for col in cols_sensor:
+    df[col] = df[col].astype(str).str.replace(',', '.').astype(float)
 
+# Frecuencia de muestreo (nº de veces que se registra una medicion)
+df['delta_time'] = df['_time'].diff().dt.total_seconds()
+df['delta_time'].iloc[0] = df['delta_time'].iloc[1]
+freq = 1 / df['delta_time'].mean()
 print(f"Frecuencia de muestreo estimada: {freq:.2f} Hz")
 
-# Extraer aceleraciones y velocidades angulares como arrays Nx3
+# Matrices de cada sensor
 acc = df[['Ax', 'Ay', 'Az']].values
 gyr = df[['Gx', 'Gy', 'Gz']].values
+mag = df[['Mx', 'My', 'Mz']].values
+in_data = {'rate': freq, 'acc': acc, 'omega': gyr, 'mag': mag}
 
-# Crear el objeto IMU de scikit-kinematics
-imu = imus.IMU(data=acc, rate=gyr, freq=freq)
+# Orientacion --> Trabajo con cuaterniones
+imu = MyOwnSensor(in_file='manual', in_data=in_data)
+imu.set_qtype('madgwick')
+quaternions = imu.quat
 
-# Calcular orientación, velocidad y posición
-imu.calc_orientation()  # Estima orientación
-imu.calc_position()     # Estima velocidad y posición
+# Aceleracion en marco inercial (sist de coordenadas --> utilizo gravedad real)
+gravity = vector.rotate_vector(np.tile([0, 0, 9.81], (len(quaternions), 1)), quaternions)
+acc_inertial = vector.rotate_vector(acc, quaternions) - gravity
 
-# Extraer resultados
-velocity = imu.vel  # Velocidad en m/s (Nx3)
-position = imu.pos  # Posición en metros (Nx3)
+# Suaviza aceleracion cuando hay variaciones altas
+def butter_lowpass_filter(data, cutoff, fs, order=2):
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    return filtfilt(b, a, data, axis=0)
 
-# Mostrar la posición final
-print("Última posición estimada (x, y, z):", position[-1])
+acc_inertial = butter_lowpass_filter(acc_inertial, cutoff=5, fs=freq)
 
-# Visualización de la trayectoria (solo X e Y)
-plt.plot(position[:, 0], position[:, 1])
-plt.xlabel('X (m)')
-plt.ylabel('Y (m)')
-plt.title('Trayectoria estimada')
-plt.grid(True)
-plt.axis('equal')
-plt.show()
+# DEteccion de reposo --> si hay reposo la aceleracion= gravedad
+acc_norm = np.linalg.norm(acc, axis=1)
+reposo = np.abs(acc_norm - 9.81) < 0.1
+
+# Correccion de offset de acceleracion cuando hay reposo
+acc_offset = acc_inertial[reposo].mean(axis=0) if np.any(reposo) else np.zeros(3)
+acc_inertial -= acc_offset
+
+# Integracion de velocidad (para datos mas reales)
+velocity = np.cumsum(acc_inertial / freq, axis=0)
+
+# Corrreccion de velocidad en reposo
+for i in range(1, len(reposo)):
+    if reposo[i] and reposo[i - 1]:
+        velocity[i] = [0, 0, 0]
+
+# === FILTRADO SUAVE DE VELOCIDAD ===
+velocity = butter_lowpass_filter(velocity, cutoff=0.3, fs=freq)
+
+# Integración de posición
+position = np.cumsum(velocity / freq, axis=0)
+
+#Guardar resultados en nuevo df
+df[['Vel_X', 'Vel_Y', 'Vel_Z']] = velocity
+df[['Pos_X', 'Pos_Y', 'Pos_Z']] = position
+df.to_excel(output_file, index=False)
+print(f"Archivo exportado: {output_file}")
+
+# Guardar Graficas (funcion)
+def guardar_grafica(nombre, fig):
+    os.makedirs(img_dir, exist_ok=True)
+    path = os.path.join(img_dir, f"{nombre}.png")
+    fig.savefig(path)
+    print(f"Guardado: {path}")
+    plt.close(fig)
+
+# Aceleraciones
+fig = plt.figure()
+plt.plot(df['_time'], df['Ax'], label='Ax')
+plt.plot(df['_time'], df['Ay'], label='Ay')
+plt.plot(df['_time'], df['Az'], label='Az')
+plt.title('Aceleraciones'); plt.xlabel('Tiempo'); plt.ylabel('m/s²')
+plt.legend(); plt.grid(True)
+guardar_grafica("aceleraciones_10", fig)
+
+# Giroscopio
+fig = plt.figure()
+plt.plot(df['_time'], df['Gx'], label='Gx')
+plt.plot(df['_time'], df['Gy'], label='Gy')
+plt.plot(df['_time'], df['Gz'], label='Gz')
+plt.title('Velocidades angulares (GIROSCOPIO)'); plt.xlabel('Tiempo'); plt.ylabel('rad/s')
+plt.legend(); plt.grid(True)
+guardar_grafica("giroscopio_10", fig)
+
+# Velocidad
+fig = plt.figure()
+plt.plot(df['_time'], df['Vel_X'], label='Vel_X')
+plt.plot(df['_time'], df['Vel_Y'], label='Vel_Y')
+plt.plot(df['_time'], df['Vel_Z'], label='Vel_Z')
+plt.title('Velocidad'); plt.xlabel('Tiempo'); plt.ylabel('m/s')
+plt.legend(); plt.grid(True)
+guardar_grafica("velocidad_10", fig)
+
+# Posición
+fig = plt.figure()
+plt.plot(df['_time'], df['Pos_X'], label='Pos_X')
+plt.plot(df['_time'], df['Pos_Y'], label='Pos_Y')
+plt.plot(df['_time'], df['Pos_Z'], label='Pos_Z')
+plt.title('Posición'); plt.xlabel('Tiempo'); plt.ylabel('m')
+plt.legend(); plt.grid(True)
+guardar_grafica("posicion_10", fig)
+
+# Trayectoria XY
+fig = plt.figure()
+plt.plot(df['Pos_X'], df['Pos_Y'])
+plt.title('Trayectoria XY'); plt.xlabel('X (m)'); plt.ylabel('Y (m)')
+plt.axis('equal'); plt.grid(True)
+guardar_grafica("trayectoria_XY_10", fig)
+

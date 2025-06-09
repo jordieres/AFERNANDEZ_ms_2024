@@ -1,0 +1,5 @@
+{
+  "python.analysis.extraPaths": [
+    "./external_repos/scikit_kinematics"
+  ]
+}
