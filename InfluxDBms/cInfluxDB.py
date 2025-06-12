@@ -86,9 +86,8 @@ class cInfluxDB:
         for table in result:
             for record in table.records:
                 val = record.values
-                
-                val["Latitude"] = val.get("lat", None)
-                val["Longitude"] = val.get("lng", None)
+                # val["Latitude"] = val.get("lat", None)
+                # val["Longitude"] = val.get("lng", None)
                 data.append(val)
 
         df = pd.DataFrame(data)

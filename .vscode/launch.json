@@ -13,10 +13,10 @@
             "args":[
                 "-f","2024-11-02T16:00:00Z",
                 "-u","2024-11-02T16:15:00Z",
-                "-l","Left",
+                "-l","Right",
                 "-q", "JOM20241031-104",
                 "-p","InfluxDBms/config_db.yaml",
-                "-o","test_InfluxDB/out/dat_2024_prueba11.xlsx",
+                "-o","test_InfluxDB/out/dat_2024_right.xlsx",
                 "-v", "3",
                 "-m", "Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz,S0,S1,S2"
             ],
