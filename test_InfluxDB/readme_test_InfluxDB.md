@@ -6,12 +6,14 @@ The test:influxDE folder contains test files for connecting to and querying data
 
 ## Folder Structure
 
+```text
  test_InfluxDB/
  |-- test_influx_basic.py
  |-- test_influx_basic_conMetrics.py
  |-- test_influx_aggWindow.py
  |-- extract_data.py
  |-- resultados_test/  # Folder where results are stored in Excel format
+ ```
 
 ## Test Files
 
@@ -19,7 +21,9 @@ The test:influxDE folder contains test files for connecting to and querying data
 
     - Description: Executes a basic query to the InfluxDB database.
     - Execution command:
+    ```bash
         python test_influx_basic.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left"
+    ```
 
 2. test_influx_basic_conMetrics.py
 
