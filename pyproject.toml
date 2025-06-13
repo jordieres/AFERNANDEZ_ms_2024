@@ -15,7 +15,8 @@ pandas = "^2.2.3"
 numpy = "^2.1"
 PyYAML = "^6.0.2"
 setuptools = "^75.8.0"
-urllib3 = "^2.3.0"
+urllib3 = "^2.4.0"
+folium = "^0.18"
 
 [build-system]
 requires = ["poetry-core"]
