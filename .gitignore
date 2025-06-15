@@ -1,5 +1,8 @@
 *.xlsx
 venv/*
 vpy/*
+external_repos/*
 .vscode/*
 *.pyc
+ahrs_.ipynb
+ahrs_test.ipynb

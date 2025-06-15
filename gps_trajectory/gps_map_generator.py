@@ -21,15 +21,15 @@ def generate_gps_map_from_excel(excel_path: str, output_html_path: str):
     df = df.sort_values(by='_time')
 
     # Remove duplicate coordinates
-    df = df.loc[(df['Latitude'].shift() != df['Latitude']) | (df['Longitude'].shift() != df['Longitude'])]
+    df = df.loc[(df['lat'].shift() != df['lat']) | (df['lng'].shift() != df['lng'])]
     df = df.reset_index(drop=True)
 
     # Create a map centered on the first coordinate
-    start_location = [df.loc[0, 'Latitude'], df.loc[0, 'Longitude']]
+    start_location = [df.loc[0, 'lat'], df.loc[0, 'lng']]
     map_object = folium.Map(location=start_location, zoom_start=18)
 
     # Add polyline of the trajectory
-    coordinates = df[['Latitude', 'Longitude']].values.tolist()
+    coordinates = df[['lat', 'lng']].values.tolist()
     folium.PolyLine(locations=coordinates, color='blue', weight=4).add_to(map_object)
 
     # Add start and end markers

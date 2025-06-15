@@ -1,12 +1,9 @@
 import pandas as pd
 
-# === CONFIGURA AQUÍ EL NOMBRE DE TU ARCHIVO ===
-archivo = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba10.xlsx"
-
-# === LEE EL ARCHIVO XLSX ===
+archivo = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
 df = pd.read_excel(archivo)
 
-# === INICIALIZA VARIABLES ===
+
 startTime = 0
 
 # === CALCULA samplePeriod Y stopTime DESDE _time ===

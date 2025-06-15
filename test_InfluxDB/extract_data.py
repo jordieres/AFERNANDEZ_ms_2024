@@ -113,6 +113,9 @@ def main():
 
     # Save to Excel
     try:
+        print("Columnas disponibles en el DataFrame:", df.columns)
+        print("Primeras filas:")
+        print(df.head())
         df["_time"] = df["_time"].dt.tz_localize(None)
         df.to_excel(args.output, index=False)
         if args.verbose >= 1:
