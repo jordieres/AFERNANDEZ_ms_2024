@@ -1,102 +1,209 @@
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import signal
-from ahrs.filters import Mahony
-from ahrs.common.orientation import q_rot, q_conj
+from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import ahrs
+import pandas as pd
+from ahrs.common.orientation import q_conj, q_rot
+from set_var import compute_time_parameters
 
-# ------------------ CONFIGURACIÓN ------------------
-excel_file = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba6.xlsx"
-sample_rate = 256  # Hz
-sample_period = 1 / sample_rate
-init_period = 2  # segundos
-# ----------------------------------------------------
+# === CONFIGURACIÓN ===
+file_path = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
 
-# Leer datos (soporta coma como decimal)
-df = pd.read_excel(excel_file)
-df = df.applymap(lambda x: float(str(x).replace(',', '.')) if isinstance(x, str) else x)
+# === CARGA Y CÁLCULO DE PARÁMETROS TEMPORALES ===
+results = compute_time_parameters(file_path)
+if not results:
+    raise RuntimeError("Time parameters could not be retrieved.")
 
-# Extraer sensores
-acc = df[['Ax', 'Ay', 'Az']].values
-gyr = df[['Gx', 'Gy', 'Gz']].values * np.pi / 180  # convertir a rad/s
-mag = df[['Mx', 'My', 'Mz']].values
-time = np.arange(len(acc)) * sample_period
+df = results["dataframe"]
+start_time = results["start_time"]
+stop_time = results["stop_time"]
+sample_period = results["sample_period"]
+sample_rate = results["frequency"]
 
-# Magnitud de acelerómetro y filtrado
+# === PREPROCESADO DATA ===
+time = np.arange(0, len(df)) * sample_period
+df.drop(columns=['_time'], inplace=True)
+print(" Dimensiones originales: ",df.shape)
+
+df.drop_duplicates(subset=['Ax','Ay','Az','Gx','Gy','Gz','Mx','My','Mz'], keep='first', inplace=True)
+print("Dimensiones tras eliminación de duplicados: ",df.shape)
+
+time = np.arange(0, len(df)) * sample_period
+
+gyr = df.iloc[:, 5:8].values * np.pi / 180  # convertir a rad/s
+acc = df.iloc[:, 2:5].values
+
+# cortar por tiempo para trabajar con la parte util de los datos
+idx = (time >= start_time) & (time <= stop_time)
+time = time[idx]
+gyr = gyr[idx]
+acc = acc[idx]
+
+
+# Magnitud de la aceleración
 acc_mag = np.linalg.norm(acc, axis=1)
-b, a = signal.butter(1, 0.001/(0.5*sample_rate), 'highpass')
-acc_mag_filt = signal.filtfilt(b, a, acc_mag)
-acc_mag_filt = np.abs(acc_mag_filt)
-b, a = signal.butter(1, 5/(0.5*sample_rate), 'lowpass')
-acc_mag_filt = signal.filtfilt(b, a, acc_mag_filt)
-stationary = acc_mag_filt < 0.05
 
-# Inicialización filtro Mahony
-mahony = Mahony(Kp=1, Ki=0, KpInit=1.0, frequency=sample_rate)
+# Frecuencia de corte = 0.01 Hz (más permisiva)
+cutoff_hp = 0.01  # Hz
+b, a = signal.butter(1, cutoff_hp / (sample_rate / 2), 'highpass')
+acc_hp = signal.filtfilt(b, a, acc_mag, padtype='odd', padlen=3*(max(len(a), len(b)) - 1))
+
+# Filtro pasa-baja
+cutoff_lp = 5.0  # Hz
+b, a = signal.butter(1, cutoff_lp / (sample_rate / 2), 'lowpass')
+acc_lp = signal.filtfilt(b, a, np.abs(acc_hp), padtype='odd', padlen=3*(max(len(a), len(b)) - 1))
+
+# percentil dinamico bajo del movimiento
+threshold = np.percentile(acc_lp, 90) * 0.5
+threshold = 0.1 #---->  Se tiene que definir segun el grafico de los datos para marcar el umbral para tener el max numero de muestras
+
+stationary = acc_lp < threshold
+
+# Visualización
+plt.figure(figsize=(10, 4))
+plt.plot(time, acc_lp, label='acc_lp')
+plt.axhline(threshold, color='red', linestyle='--', label=f'Umbral {threshold:.3f}')
+plt.title("Magnitud de aceleración filtrada")
+plt.xlabel("Tiempo (s)")
+plt.ylabel("|acc_hp| filtrada")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
+
+# Reporte
+print("Threshold usado:", threshold)
+print("Stationary únicos:", np.unique(stationary))
+print("Muestras estacionarias:", np.sum(stationary))
+print("Muestras en movimiento:", np.sum(~stationary))
+
+
+# Mostrar datos
+
+# GIROSCOPIO
+plt.figure(figsize=(15, 10))
+plt.subplot(2, 1, 1)
+plt.plot(time, gyr, linewidth=0.5)
+plt.title("Giroscopio")
+plt.legend(["X", "Y", "Z"])
+
+#ACELEROMETRO
+plt.subplot(2, 1, 2)
+plt.plot(time, acc, linewidth=0.5)
+plt.plot(time, acc_lp, 'k:', label='Filtered Magnitude')
+plt.plot(time, stationary.astype(float), 'k', label='Stationary')
+plt.title("Acelerómetro")
+plt.legend()
+plt.show()
+
+
+# Estimación de orientación
+#mahony = ahrs.filters.Mahony(Kp=1.0, Ki=0.0, frequency=sample_rate)
+mahony = ahrs.filters.Mahony(Kp=1.5, Ki=0.01, frequency=sample_rate) # cambio valores de Ki y Kp para mejorar deriva
 q = np.array([1.0, 0.0, 0.0, 0.0])
-init_idx = time <= init_period
-acc_mean = acc[init_idx].mean(axis=0)
+init_idx = time <= time[0] + 2
+#acc_init = acc[init_idx].mean(axis=0)
+acc_init = np.median(acc[init_idx], axis=0)
+
+
 for _ in range(2000):
-    q = mahony.updateIMU(q, gyr=np.zeros(3), acc=acc_mean)
+    q = mahony.updateIMU(q, gyr=np.zeros(3), acc=acc_init)
 
-# Estimar orientación para todo el tiempo
 quats = np.zeros((len(time), 4))
-for i in range(len(time)):
-    mahony.Kp = 0.5 if stationary[i] else 0
-    q = mahony.updateIMU(q, gyr=gyr[i], acc=acc[i])
-    quats[i] = q
+for t in range(len(time)):
+    mahony.Kp = 0.5 if stationary[t] else 0.0
+    q = mahony.updateIMU(q, gyr[t] * np.pi / 180, acc[t])
+    quats[t] = q
 
-# Rotar aceleraciones al marco terrestre
+# Aceleración en marco terrestre
 acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
-acc_earth -= np.array([0, 0, 1])  # quitar gravedad
-acc_earth *= 9.81  # convertir g a m/s^2
-
-# Integrar para obtener velocidad
+acc_earth -= np.array([0, 0, 1])
+acc_earth *= 9.81
+#acc_earth -= np.array([0, 0, 9.81])          # Quitar gravedad del marco terrestre ( ya la he restado antes)
+print("Acc_earth promedio post-corrección:", np.mean(acc_earth, axis=0))
+print("Acc init:", acc_init)
+print("Norm acc init:", np.linalg.norm(acc_init))
+# Integración: velocidad
 vel = np.zeros_like(acc_earth)
-for i in range(1, len(vel)):
-    vel[i] = vel[i-1] + acc_earth[i] * sample_period
-    if stationary[i]:
-        vel[i] = np.zeros(3)
+for t in range(1, len(vel)):
+    vel[t] = vel[t - 1] + acc_earth[t] * sample_period
+    if stationary[t]:
+        vel[t] = 0
 
-# Corregir deriva por integración
+# Comprobacion de parametros
+print("Acc. promedio:", np.mean(acc_earth, axis=0))
+print("Primer acc rotado:", acc_earth[0])
+print("Acc_earth promedio:", np.mean(acc_earth, axis=0))
+print("Velocidad final:", vel[-1])
+print("Stationary únicos:", np.unique(stationary))
+print("Quaterniones promedio:", np.mean(quats, axis=0))
+
+
+
+# Corrección por deriva
 vel_drift = np.zeros_like(vel)
-start = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
-end = np.where(np.diff(stationary.astype(int)) == 1)[0] + 1
-for s, e in zip(start, end):
-    drift_rate = vel[e-1] / (e - s)
+starts = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
+ends = np.where(np.diff(stationary.astype(int)) == 1)[0] + 1
+for s, e in zip(starts, ends):
+    drift_rate = vel[e - 1] / (e - s)
     drift = np.outer(np.arange(e - s), drift_rate)
     vel_drift[s:e] = drift
 vel -= vel_drift
 
-# Integrar velocidad para obtener posición
+# Integración: posición
 pos = np.zeros_like(vel)
-for i in range(1, len(pos)):
-    pos[i] = pos[i-1] + vel[i] * sample_period
+for t in range(1, len(pos)):
+    pos[t] = pos[t - 1] + vel[t] * sample_period
 
-# ------------------ GRAFICAR ------------------
-plt.figure()
-plt.plot(time, vel)
-plt.title("Velocidad")
-plt.xlabel("Tiempo (s)")
-plt.ylabel("Velocidad (m/s)")
-plt.legend(['X', 'Y', 'Z'])
+
+
+ime = np.arange(len(pos)) * sample_period
+
+# GRAFICA DE POSICION
+plt.figure(figsize=(15, 5))
+plt.plot(time, pos[:, 0], 'r', label='x')
+plt.plot(time, pos[:, 1], 'g', label='y')
+plt.plot(time, pos[:, 2], 'b', label='z')
+plt.xlabel("time (s)")
+plt.ylabel("position (m)")
+plt.title("position")
+plt.legend()
 plt.grid()
+plt.show()
 
-plt.figure()
-plt.plot(time, pos)
-plt.title("Posición")
-plt.xlabel("Tiempo (s)")
-plt.ylabel("Posición (m)")
-plt.legend(['X', 'Y', 'Z'])
+
+# GRAFICA DE VELOCIDAD
+plt.figure(figsize=(15, 5))
+plt.plot(time, vel[:, 0], color='red', label='x')
+plt.plot(time, vel[:, 1], color='green', label='y')
+plt.plot(time, vel[:, 2], color='blue', label='z')
+plt.xlabel("time (s)")
+plt.ylabel("velocity (m/s)")
+plt.title("velocity")
+plt.legend()
 plt.grid()
+plt.show()
 
+
+# GRAFICAS TRAYECTORIA
+
+# Gráfico XY
+plt.figure()
+plt.plot(pos[:, 0], pos[:, 1])
+plt.title("Trayectoria (X vs Y)")
+plt.xlabel("X (m)")
+plt.ylabel("Y (m)")
+plt.axis('equal')
+plt.grid()
+plt.show()
+
+# Gráfico 3D
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot(pos[:, 0], pos[:, 1], pos[:, 2])
 ax.set_title("Trayectoria 3D")
-ax.set_xlabel("X (m)")
-ax.set_ylabel("Y (m)")
-ax.set_zlabel("Z (m)")
-plt.tight_layout()
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
 plt.show()
