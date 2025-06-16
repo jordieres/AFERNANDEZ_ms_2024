@@ -1,9 +1,9 @@
 import ahrs
 from ahrs.common.orientation import q_prod, q_conj, acc2q, am2q, q2R, q_rot
 import pyquaternion
-from ximu_python_library.xIMUdataClass import xIMUdataClass
+import ximu_python_library.xIMUdataClass as xIMU
 import numpy as np
-from scipy import signal
+from scipy import signal    
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from ahrs.common.orientation import q2R

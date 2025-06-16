@@ -1,28 +1,44 @@
 import pandas as pd
 
-archivo = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
-df = pd.read_excel(archivo)
+def compute_time_parameters(file_path):
+    """
+    Reads an Excel file and computes timing parameters from the '_time' column.
 
+    Parameters:
+    - file_path (str): Path to the Excel file.
 
-startTime = 0
-
-# === CALCULA samplePeriod Y stopTime DESDE _time ===
-if '_time' in df.columns:
+    Returns:
+    - dict with startTime, stopTime, samplePeriod, frequency, and the loaded DataFrame.
+    """
     try:
-        df['_time'] = pd.to_datetime(df['_time'])
-        df = df.sort_values('_time').reset_index(drop=True)
-        dt = df['_time'].diff().dt.total_seconds().dropna()
-        samplePeriod = dt.mean()
-        frecuencia = 1 / samplePeriod
-        stopTime = (len(df) - 1) * samplePeriod
-
-        print("✅ Datos calculados a partir de los timestamps:")
-        print(f"startTime = {startTime}")
-        print(f"stopTime = {stopTime:.6f}  # Duración total")
-        print(f"samplePeriod = {samplePeriod:.8f}")
-        print(f"frecuencia = {frecuencia:.2f} Hz")
+        df = pd.read_excel(file_path)
     except Exception as e:
-        print("⚠️ Error al procesar la columna '_time':", e)
-else:
-    print("❌ La columna '_time' no existe. No se puede calcular automáticamente.")
-    print("✏️ Establece manualmente el samplePeriod y la frecuencia.")
+        print("Error reading the file:", e)
+        return None
+
+    start_time = 0
+
+    if '_time' in df.columns:
+        try:
+            df['_time'] = pd.to_datetime(df['_time'])
+            df = df.sort_values('_time').reset_index(drop=True)
+            dt = df['_time'].diff().dt.total_seconds().dropna()
+            sample_period = dt.mean()
+            frequency = 1 / sample_period
+            stop_time = (len(df) - 1) * sample_period
+
+            return {
+                "start_time": start_time,
+                "stop_time": stop_time,
+                "sample_period": sample_period,
+                "frequency": frequency,
+                "dataframe": df
+            }
+
+        except Exception as e:
+            print("Error processing the '_time' column:", e)
+    else:
+        print("'_time' column not found.")
+
+
+    return None
