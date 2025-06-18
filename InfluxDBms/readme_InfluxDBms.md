@@ -1,4 +1,4 @@
-# InfluxDBms
+# README - InfluxDBms
 
 ## Description
 This folder contains the tools and configurations needed to interact with an InfluxDB database. It includes scripts for querying, processing, and visualizing data, as well as specific configuration files for database access.
