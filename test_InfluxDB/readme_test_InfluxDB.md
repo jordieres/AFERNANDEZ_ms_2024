@@ -31,23 +31,22 @@ test_InfluxDB/
         ```
 
 - **`test_influx_basic_conMetrics.py`**:
-    Description: Executes a query including additional metric parameters.
-    Execution command:
+    - Description: Executes a query including additional metric parameters.
+    - Execution command:
         ```bash
             python test_influx_basic_conMetrics.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az"
         ```
 - **`test_influx_aggWindow.py`**:
 
-        - Description: Executes queries with a defined aggregation window.
-        - Execution command:
+    - Description: Executes queries with a defined aggregation window.
+    - Execution command:
         ```bash
             python test_influx_aggWindow.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az" -w "100ms"
         ```
 
 - **`extract_data.py`**
-
-        - Description: Extracts data from InfluxDB and saves it to an Excel file.
-        - Execution command:
+    - Description: Extracts data from InfluxDB and saves it to an Excel file.
+    - Execution command:
         ```bash
             python extract_data.py \
             -f "2024-11-02T15:08:45Z" \
@@ -58,7 +57,7 @@ test_InfluxDB/
             -o "C:/.../test_InfluxDB/out/dat_2024_prueba6.xlsx" \
             -v 2 \
             -m Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz,S0,S1,S2
-
+        ```
         
 
 ## Output Folder
@@ -66,7 +65,7 @@ test_InfluxDB/
 **`out/`** folder stores the files generated after executing the scripts. Each file is saved in Excel (.xlsx) format for further analysis.
 
 ## Dependencies
-- To install the necessary dependencies, run:
+To install the necessary dependencies, run:
 ```bash
     pip install pandas python-dateutil influxdb-client
 ```
