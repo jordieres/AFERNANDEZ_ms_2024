@@ -24,28 +24,28 @@ test_InfluxDB/
 
 -  **`test_influx_basic.py`**:
 
-        - Description: Executes a basic query to the InfluxDB database.
-        - Execution command:
+    - Executes a basic query to the InfluxDB database.
+    - Execution command:
         ```bash
             python test_influx_basic.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left"
         ```
 
 - **`test_influx_basic_conMetrics.py`**:
-    - Description: Executes a query including additional metric parameters.
+    - Executes a query including additional metric parameters.
     - Execution command:
         ```bash
             python test_influx_basic_conMetrics.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az"
         ```
 - **`test_influx_aggWindow.py`**:
 
-    - Description: Executes queries with a defined aggregation window.
+    - Executes queries with a defined aggregation window.
     - Execution command:
         ```bash
             python test_influx_aggWindow.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az" -w "100ms"
         ```
 
 - **`extract_data.py`**
-    - Description: Extracts data from InfluxDB and saves it to an Excel file.
+    - Extracts data from InfluxDB and saves it to an Excel file.
     - Execution command:
         ```bash
             python extract_data.py \

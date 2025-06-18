@@ -16,19 +16,20 @@ The main goal of this folder is to simplify access to and management of data sto
       * `urllib3`
       * `matplotlib`
 
-   - To install the required Python libraries, you have **two options**:
+- To install the required Python libraries, you have **two options**:
 
-      - **Option 1: Use `requirements.txt`**: 
+  - **Option 1: Use `requirements.txt`**:
 
-``` bash 
-pip install -r requirements.txt 
-```
-      
-      - **Option 2: Manually**: 
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-```bash 
-pip install pandas influxdb-client pyyaml urllib3 matplotlib 
-```
+  - **Option 2: Manually**:
+
+    ```bash
+    pip install pandas influxdb-client pyyaml urllib3 matplotlib
+    ```
+
 
 2. Configure your environment:
 
