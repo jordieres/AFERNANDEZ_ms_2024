@@ -17,7 +17,7 @@ PyYAML = "^6.0.2"
 setuptools = "^75.8.0"
 urllib3 = "^2.4.0"
 folium = "^0.18"
-gait-tracking = { path = "../external_repos/Gait_Tracking_With_x_IMU_Python" }
+gait-tracking = {path = "../external_repos/Gait_Tracking_With_x_IMU_Python"}
 
 [build-system]
 requires = ["poetry-core"]

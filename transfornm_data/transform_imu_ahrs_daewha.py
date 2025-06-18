@@ -1,33 +1,25 @@
 import ahrs
 from ahrs.common.orientation import q_prod, q_conj, acc2q, am2q, q2R, q_rot
 import pyquaternion
-import ximu_python_library.xIMUdataClass as xIMU
+from ximu_python_library.xIMUdataClass import xIMUdataClass
 import numpy as np
 from scipy import signal    
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from ahrs.common.orientation import q2R
 
-# filePath = 'datasets/straightLine'
-# startTime = 6
-# stopTime = 26
-# samplePeriod = 1/256
 
-# filePath = 'datasets/stairsAndCorridor'
-# startTime = 5
-# stopTime = 53
-# samplePeriod = 1/256
+filePath = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
+startTime = 0
+stopTime = 359.971
+samplePeriod = 0.03150455
 
-# filePath = 'datasets/spiralStairs'
+
+
+# filePath = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\external_repos\Gait_Tracking_With_x_IMU_Python\datasets\spiralStairs_CalInertialAndMag.csv"
 # startTime = 4
 # stopTime = 47
 # samplePeriod = 1/256
-
-filePath = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba10.xlsx"
-startTime = 0
-stopTime = 899.978
-samplePeriod = 0.02019337
-
 
 def main():
     xIMUdata = xIMUdataClass(filePath, 'InertialMagneticSampleRate', 1/samplePeriod)
@@ -57,6 +49,10 @@ def main():
     b, a = signal.butter(1, (2*filtCutOff)/(1/samplePeriod), 'highpass')
     acc_magFilt = signal.filtfilt(b, a, acc_mag, padtype = 'odd', padlen=3*(max(len(b),len(a))-1))
 
+
+    print("Primeros 100 valores de acc_magFilt:")
+    print(acc_magFilt[:100])
+
     # Compute absolute value
     acc_magFilt = np.abs(acc_magFilt)
 
@@ -67,33 +63,27 @@ def main():
 
 
     # Threshold detection
-    # A --> ORIGINAL
-    # stationary = acc_magFilt < 0.01
-
-    # B (velocidad me da negativa) --> ANGELA
-    # umbral_giro = 1.0
-    # stationary = (acc_magFilt < 0.01) & (np.linalg.norm([gyrX,gyrY,gyrZ],axis=0) < umbral_giro)
-
-    # C --> ANGELA
-    # # calcula la magnitud angular en cada instante
     gyro_mag = np.linalg.norm(np.vstack([gyrX, gyrY, gyrZ]).T, axis=1)
-    # # umbral fijo
-    # umbral_giro = 1.0  # grados/s
-    # # define estacionario combinando aceleración y giro
-    # stationary = (acc_magFilt < 0.01) & (gyro_mag < umbral_giro)
-
-    # D --> ANGELA
-    initPeriod = 5.0 # duración en segundos para fase inicial
+    initPeriod = 5.0
     init_mask = time <= (time[0] + initPeriod)
-    # fase inicial quieta 
     gyro_init = gyro_mag[init_mask]
-    #umbral en función de ruido (media + 3·σ)
     umbral_giro = np.mean(gyro_init) + 3*np.std(gyro_init)
-    print(f"Umbral de giro adaptativo: {umbral_giro:.2f} °/s")
-    stationary = (acc_magFilt < 0.01) & (gyro_mag < umbral_giro)
+
+        # En vez de acc_magFilt ya filtrado, usamos la magnitud cruda:
+    acc_mag_raw = np.sqrt(accX**2 + accY**2 + accZ**2)
+    acc_mag_diff = np.abs(acc_mag_raw - np.mean(acc_mag_raw[:int(1/samplePeriod)]))
+
+    # Nuevo umbral empírico
+    stationary = (acc_mag_diff < 0.015) & (gyro_mag < umbral_giro)
+    print(f"Se detectaron {np.sum(stationary)} muestras estacionarias de {len(stationary)} totales.")
 
 
-    # DIBUJO DE FIGURAS
+    # Diagnóstico de duración entre estacionarios
+    durations = np.diff(np.where(np.diff(stationary.astype(int)) != 0)[0])
+    print(f"Duración media entre cambios de estado estacionario: {np.mean(durations) * samplePeriod:.2f} s")
+
+
+
     fig = plt.figure(figsize=(10, 5))
     ax1 = fig.add_subplot(2,1,1)
     ax2 = fig.add_subplot(2,1,2)
@@ -109,6 +99,8 @@ def main():
     ax2.plot(time,accZ,c='b',linewidth=0.5)
     ax2.plot(time,acc_magFilt,c='k',linestyle=":",linewidth=1)
     ax2.plot(time,stationary,c='k')
+    ax2.fill_between(time, -1, 1, where=stationary, color='gray', alpha=0.2, label='estacionario')
+    ax2.legend()
     ax2.set_title("accelerometer")
     ax2.set_xlabel("time (s)")
     ax2.set_ylabel("acceleration (g)")
@@ -118,85 +110,99 @@ def main():
     # Compute orientation
     quat  = np.zeros((time.size, 4), dtype=np.float64)
 
-    print("Primeros vectores aceleración rotada:")
-    for i in range(3):
-        acc_body = np.array([accX[i], accY[i], accZ[i]])
-        acc_world = q_rot(q_conj(quat[i]), acc_body)
-        print(f"t={time[i]:.2f}s: {acc_world}")
-    
     # initial convergence
     initPeriod = 2
     indexSel = time<=time[0]+initPeriod
-    gyr=np.zeros(3, dtype=np.float64)
+    gyr_init = np.zeros(3, dtype=np.float64)
     acc = np.array([np.mean(accX[indexSel]), np.mean(accY[indexSel]), np.mean(accZ[indexSel])])
-    mahony = ahrs.filters.Mahony(Kp=1, Ki=0,KpInit=1, frequency=1/samplePeriod)
-    q = np.array([1.0,0.0,0.0,0.0], dtype=np.float64)
-    for i in range(0, 2000):
-        q = mahony.updateIMU(q, gyr=gyr, acc=acc)
+    mahony = ahrs.filters.Mahony(Kp=1, Ki=0, KpInit=1, frequency=1/samplePeriod)
+    q = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+    for i in range(2000):
+        q = mahony.updateIMU(q, gyr=gyr_init, acc=acc)
 
-    # # For all data --> codigo original
-    # for t in range(0,time.size):
-    #     if(stationary[t]):
-    #         mahony.Kp = 0.5
-    #     else:
-    #         mahony.Kp = 0
-    #     gyr = np.array([gyrX[t],gyrY[t],gyrZ[t]])*np.pi/180
-    #     acc = np.array([accX[t],accY[t],accZ[t]])
-    #     quat[t,:]=mahony.updateIMU(q,gyr=gyr,acc=acc)
-
-    # Modificacion angela (for all data)
+    # For all data
     for t in range(time.size):
-        mahony.Kp = 0.5 if stationary[t] else 0
-        gyr_rad = np.radians([gyrX[t], gyrY[t], gyrZ[t]])
-        acc_vec = np.array([accX[t], accY[t], accZ[t]])
-
-        q_new = mahony.updateIMU(q, gyr=gyr_rad, acc=acc_vec)
-        if q_new is not None:
-            q = q_new  # actualiza solo si el valor es valido
-
-        quat[t, :] = q
-    print("Vectores de aceleración rotada después de fix:")
-    for i in range(3):
-        acc_body = np.array([accX[i], accY[i], accZ[i]])
-        acc_world = q_rot(q_conj(quat[i]), acc_body)
-        print(f"t={time[i]:.2f}s: {acc_world}")
+        mahony.Kp = 0.5 if stationary[t] else 0.0
+        gyr = np.radians([gyrX[t], gyrY[t], gyrZ[t]])
+        acc = np.array([accX[t], accY[t], accZ[t]])
+        quat[t, :] = mahony.updateIMU(q, gyr=gyr, acc=acc)
 
     # -------------------------------------------------------------------------
-    # Compute translational accelerations
+    # # Compute translational accelerations
 
-    # # # Rotate body accelerations to Earth frame (COD ORIGINAL)
+    # # Rotate body accelerations to Earth frame
     # acc = []
     # for x,y,z,q in zip(accX,accY,accZ,quat):
     #     acc.append(q_rot(q_conj(q), np.array([x, y, z])))
     # acc = np.array(acc)
-    # # acc = acc - np.array([0,0,1]) -->original 
-    # # dos lineas siguientes= angela
-    # gravity = np.array([0.0, 0.0, 1.0])
-    # acc = acc - gravity
+    # acc = acc - np.array([0,0,1])
     # acc = acc * 9.81
 
-    # modificacion angela
-    acc = []
-    for x, y, z, q in zip(accX, accY, accZ, quat):
+    # ************************* AÑADIDO ANGELA ****************************
+    acc_global = []
+    for i, (x, y, z, q) in enumerate(zip(accX, accY, accZ, quat)):
         acc_body = np.array([x, y, z])
-        acc_world = q_rot(q_conj(q), acc_body)  # rotar aceleración al marco global
+        acc_world = q_rot(q_conj(q), acc_body)
 
-        # notaa! --> la gravedad en el marco global (ideal) es hacia abajo
-        gravity = np.array([0.0, 0.0, -1.0])  # cambia de +1 a -1
-        acc_corrected = (acc_world - gravity) * 9.81
-        acc.append(acc_corrected)
-    acc = np.array(acc)
+        if i < 10:  # solo mostramos los primeros 10 instantes
+            print(f"t={time[i]:.2f}s → acc_world = {acc_world}")
+
+        acc_global.append(acc_world)
+
+    acc_global = np.array(acc_global)
+    acc_global = acc_global - np.array([0, 0, 1])
+    acc_global = acc_global * 9.81
 
 
-    # Compute translational velocities
-    # acc[:,2] = acc[:,2] - 9.81
+    acc_global = np.array(acc_global)
+    plt.figure()
+    plt.plot(time, acc_global[:, 0], label='X')
+    plt.plot(time, acc_global[:, 1], label='Y')
+    plt.plot(time, acc_global[:, 2], label='Z')
+    plt.axhline(0, color='k', linestyle='--')
+    plt.title("Aceleración rotada y compensada (m/s²)")
+    plt.legend()
+    plt.show(block=False)
+    acc_global = np.array(acc_global)
+    if t < 100:
+        print(f"t={t} acc_world={acc_world}")
 
-    # acc_offset = np.zeros(3)
-    vel = np.zeros(acc.shape)
-    for t in range(1,vel.shape[0]):
-        vel[t,:] = vel[t-1,:] + acc[t,:]*samplePeriod
-        if stationary[t] == True:
-            vel[t,:] = np.zeros(3)
+
+    # Estima bias promedio solo en fases estacionarias
+    bias_est = np.mean(acc_global[stationary], axis=0)
+    print(f"Bias medio estimado durante quietud: {bias_est}")
+
+    plt.figure()
+    plt.plot(time, acc_global[:,2], label='Z sin bias')
+    plt.plot(time, acc_global[:,2] - bias_est[2], label='Z corregido', linestyle='--')
+    plt.axhline(0, color='k', linestyle=':')
+    plt.legend()
+    plt.title("Comparación eje Z antes y después de bias")
+    plt.show(block=False)
+
+
+    # Aplica la corrección
+    acc_global -= bias_est
+
+
+    alpha = 0.1  # entre 0 (reset completo) y 1 (no cambio)
+    vel = np.zeros(acc_global.shape)
+    for t in range(1, vel.shape[0]):
+        vel[t, :] = vel[t-1, :] + acc_global[t, :] * samplePeriod
+        if stationary[t]:
+            vel[t, :] *= alpha# en lugar de ponerlo a cero, lo atenuamos suavemente
+    # ************************* AÑADIDO ANGELA ****************************
+
+
+    # # Compute translational velocities
+    # # acc[:,2] = acc[:,2] - 9.81
+
+    # # acc_offset = np.zeros(3)
+    # vel = np.zeros(acc.shape)
+    # for t in range(1,vel.shape[0]):
+    #     vel[t,:] = vel[t-1,:] + acc[t,:]*samplePeriod
+    #     if stationary[t] == True:
+    #         vel[t,:] = np.zeros(3)
 
     # Compute integral drift during non-stationary periods
     velDrift = np.zeros(vel.shape)
