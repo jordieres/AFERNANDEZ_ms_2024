@@ -1,19 +1,23 @@
-# README - test:influxDE
+# README - test_influxDB
 
 ## Description
 
-The test:influxDE folder contains test files for connecting to and querying data from an InfluxDB database. It includes four Python test files and a folder named resultados_test, where Excel files with the results obtained after running the tests are stored.
+The `test_InfluxDB` folder contains test scripts designed to verify the functionality of querying and retrieving data from an InfluxDB database. It also includes a directory for storing the test results in Excel format.
+
+These scripts are particularly useful for debugging and validating data access parameters, metrics, and aggregation behaviors using the `InfluxDBms` module.
 
 ## Folder Structure
 
 ```text
- test_InfluxDB/
- |-- test_influx_basic.py
- |-- test_influx_basic_conMetrics.py
- |-- test_influx_aggWindow.py
- |-- extract_data.py
- |-- resultados_test/  # Folder where results are stored in Excel format
- ```
+test_InfluxDB/
+│
+├── test_influx_basic.py                
+├── test_influx_basic_conMetrics.py    
+├── test_influx_aggWindow.py           
+├── extract_data.py                    
+│
+└── out/                               # Folder for output Excel files
+```
 
 ## Test Files
 
@@ -29,34 +33,43 @@ The test:influxDE folder contains test files for connecting to and querying data
 
     - Description: Executes a query including additional metric parameters.
     - Execution command:
+    ```bash
         python test_influx_basic_conMetrics.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az"
-
+    ```
 3. test_influx_aggWindow.py
 
     - Description: Executes queries with a defined aggregation window.
     - Execution command:
+    ```bash
         python test_influx_aggWindow.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Left" -m "Ax,Ay,Az" -w "100ms"
+    ```
 
 4. extract_data.py
 
     - Description: Extracts data from InfluxDB and saves it to an Excel file.
     - Execution command:
-        python extract_data.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q JOM20241031-104 -l Left  -p ../InfluxDBms/config_db.yaml -o "C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba6.xlsx" -v 2 -m Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz,S0,S1,S2
+    ```bash
+        python extract_data.py \
+        -f "2024-11-02T15:08:45Z" \
+        -u "2024-11-02T20:50:00Z" \
+        -q JOM20241031-104 \
+        -l Left \
+        -p ../InfluxDBms/config_db.yaml \
+        -o "C:/.../test_InfluxDB/out/dat_2024_prueba6.xlsx" \
+        -v 2 \
+        -m Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz,S0,S1,S2
 
-## resultados_test Folder
+    ```
 
-    This folder stores the files generated after executing the scripts. Each file is saved in Excel (.xlsx) format for further analysis.
+## Output Folder
+
+    **`out/`** folder stores the files generated after executing the scripts. Each file is saved in Excel (.xlsx) format for further analysis.
 
 ## Dependencies
-
-    The scripts require the following Python libraries:
-        - argparse, pandas, datetime, dateutil
-
-## InfluxDBms (Custom modules for connecting to InfluxDB)
-
     - To install the necessary dependencies, run:
-
+    ```bash
         pip install pandas python-dateutil influxdb-client
+    ```
 
 ## Notes
 
