@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy import signal
 from matplotlib import pyplot as plt
@@ -70,7 +71,7 @@ plt.ylabel("|acc_hp| filtrada")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.show()
+
 
 # Reporte
 print("Threshold usado:", threshold)
@@ -95,7 +96,7 @@ plt.plot(time, acc_lp, 'k:', label='Filtered Magnitude')
 plt.plot(time, stationary.astype(float), 'k', label='Stationary')
 plt.title("Acelerómetro")
 plt.legend()
-plt.show()
+
 
 
 # Estimación de orientación
@@ -170,7 +171,6 @@ plt.ylabel("position (m)")
 plt.title("position")
 plt.legend()
 plt.grid()
-plt.show()
 
 
 # GRAFICA DE VELOCIDAD
@@ -183,7 +183,7 @@ plt.ylabel("velocity (m/s)")
 plt.title("velocity")
 plt.legend()
 plt.grid()
-plt.show()
+
 
 
 # GRAFICAS TRAYECTORIA
@@ -196,7 +196,7 @@ plt.xlabel("X (m)")
 plt.ylabel("Y (m)")
 plt.axis('equal')
 plt.grid()
-plt.show()
+
 
 # Gráfico 3D
 fig = plt.figure()
@@ -206,4 +206,7 @@ ax.set_title("Trayectoria 3D")
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
+
+
+# Mostrar todas las gracicas
 plt.show()
