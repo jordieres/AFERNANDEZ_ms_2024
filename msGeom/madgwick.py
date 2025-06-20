@@ -120,7 +120,7 @@ class MadgwickAHRS:
         accelerometer = np.array(accelerometer, dtype=float).flatten()
 
         # Normalise accelerometer measurement
-        if norm(accelerometer) is 0:
+        if norm(accelerometer) == 0:
             warnings.warn("accelerometer is zero")
             return
         accelerometer /= norm(accelerometer)
