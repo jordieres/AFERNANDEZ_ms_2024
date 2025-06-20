@@ -2,8 +2,8 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from clase_madgwick import MadgwickAHRS
-from clase_quaternion import Quaternion
+from msGeom.madgwick import MadgwickAHRS
+from msGeom.quaternion import Quaternion
 
 def load_data(file_path: str) -> pd.DataFrame:
     """Load and convert sensor data from a CSV file.
