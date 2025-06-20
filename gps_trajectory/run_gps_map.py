@@ -1,15 +1,23 @@
-# run_gps_map.py
-from gps_trajectory.gps_map_generator import *
+import argparse
+from gps_trajectory.gps_map_generator import GPSTrajectoryProcessor
 
-# Define paths
-input_excel = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_right.xlsx"
-output_html = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\gps_trajectory\out_gps\trayectoria_tabuenca_right_1.html"
 
-# Prepare GPS data
-df = prepare_gps_dataframe(input_excel)
+def main():
+        
+    """
+    Main function to run the GPS map and trajectory generation.
+    """
+    parser = argparse.ArgumentParser(description="Generate GPS map and trajectory plot.")
+    parser.add_argument("-i", "--input", required=True, help="Path to input Excel file.")
+    parser.add_argument("-o", "--output", required=True, help="Path to output HTML map.")
+    parser.add_argument("-p", "--plot", required=True, help="Path to output trajectory PNG plot.")
+    args = parser.parse_args()
 
-# Generate HTML map
-generate_gps_map(df, output_html)
+    processor = GPSTrajectoryProcessor()
+    df = processor.prepare_gps_dataframe(args.input)
+    processor.generate_gps_map(df, args.output)
+    processor.plot_macroscopic_trajectory(df, args.plot)
 
-# Plot macroscopic trajectory
-plot_macroscopic_trajectory(df)
+
+if __name__ == "__main__":
+    main()
