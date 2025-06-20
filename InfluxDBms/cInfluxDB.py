@@ -59,7 +59,7 @@ class cInfluxDB:
 
         # Default metrics
         if metrics is None:
-            metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+            metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz']
         
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics])
@@ -127,7 +127,7 @@ class cInfluxDB:
 
         # Default metrics
         if metrics is None:
-            metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz', 'S0', 'S1', 'S2']
+            metrics = ['Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz', 'Mx', 'My', 'Mz']
 
         metrics_str = ' or '.join([f'r._field == "{metric}"' for metric in metrics])
         columns_str = ', '.join([f'"{metric}"' for metric in metrics + ["Latitude", "Longitude"]])

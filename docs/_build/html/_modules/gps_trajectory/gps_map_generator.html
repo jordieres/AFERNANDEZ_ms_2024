@@ -72,50 +72,98 @@
            <div itemprop="articleBody">
              
   <h1>Source code for gps_trajectory.gps_map_generator</h1><div class="highlight"><pre>
-<span></span><span class="c1"># gps_map_generator.py</span>
-
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">folium</span>
 
-<div class="viewcode-block" id="generate_gps_map_from_excel">
-<a class="viewcode-back" href="../../gps_trajectory.html#gps_trajectory.gps_map_generator.generate_gps_map_from_excel">[docs]</a>
-<span class="k">def</span> <span class="nf">generate_gps_map_from_excel</span><span class="p">(</span><span class="n">excel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_html_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Generates a GPS trajectory map from an Excel file and saves it as an HTML file.</span>
 
-<span class="sd">    :param excel_path: Path to the Excel file containing &#39;_time&#39;, &#39;Latitude&#39;, and &#39;Longitude&#39;.</span>
-<span class="sd">    :type excel_path: str</span>
-<span class="sd">    :param output_html_path: Path where the HTML file with the map will be saved.</span>
-<span class="sd">    :type output_html_path: str</span>
+<div class="viewcode-block" id="GPSTrajectoryProcessor">
+<a class="viewcode-back" href="../../gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor">[docs]</a>
+<span class="k">class</span> <span class="nc">GPSTrajectoryProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class that handles GPS data processing, mapping, and trajectory plotting.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Load GPS data from the Excel file</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">excel_path</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor. Currently does not require any parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
 
-    <span class="c1"># Ensure &#39;_time&#39; is datetime and sort by time</span>
-    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;_time&#39;</span><span class="p">])</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;_time&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="GPSTrajectoryProcessor.prepare_gps_dataframe">
+<a class="viewcode-back" href="../../gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor.prepare_gps_dataframe">[docs]</a>
+    <span class="k">def</span> <span class="nf">prepare_gps_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">excel_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads and prepares a GPS DataFrame from an Excel file.</span>
 
-    <span class="c1"># Remove duplicate coordinates</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span> <span class="o">!=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">])</span> <span class="o">|</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span> <span class="o">!=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">])]</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="sd">        :param excel_path: Path to the Excel file containing &#39;_time&#39;, &#39;lat&#39;, and &#39;lng&#39;.</span>
+<span class="sd">        :return: Cleaned and sorted DataFrame with unique GPS points.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">excel_path</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;_time&#39;</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;_time&#39;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span> <span class="o">!=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span> <span class="o">|</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;lng&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span> <span class="o">!=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;lng&#39;</span><span class="p">])]</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
-    <span class="c1"># Create a map centered on the first coordinate</span>
-    <span class="n">start_location</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Latitude&#39;</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Longitude&#39;</span><span class="p">]]</span>
-    <span class="n">map_object</span> <span class="o">=</span> <span class="n">folium</span><span class="o">.</span><span class="n">Map</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">start_location</span><span class="p">,</span> <span class="n">zoom_start</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
 
-    <span class="c1"># Add polyline of the trajectory</span>
-    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-    <span class="n">folium</span><span class="o">.</span><span class="n">PolyLine</span><span class="p">(</span><span class="n">locations</span><span class="o">=</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_object</span><span class="p">)</span>
+<div class="viewcode-block" id="GPSTrajectoryProcessor.generate_gps_map">
+<a class="viewcode-back" href="../../gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor.generate_gps_map">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_gps_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">output_html_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a GPS trajectory map and saves it as an HTML file.</span>
 
-    <span class="c1"># Add start and end markers</span>
-    <span class="n">folium</span><span class="o">.</span><span class="n">Marker</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">popup</span><span class="o">=</span><span class="s2">&quot;Start&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">folium</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_object</span><span class="p">)</span>
-    <span class="n">folium</span><span class="o">.</span><span class="n">Marker</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">coordinates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">popup</span><span class="o">=</span><span class="s2">&quot;End&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">folium</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_object</span><span class="p">)</span>
+<span class="sd">        :param df: DataFrame with &#39;lat&#39; and &#39;lng&#39; columns.</span>
+<span class="sd">        :param output_html_path: Path where the HTML file with the map will be saved.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_location</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;lng&#39;</span><span class="p">]]</span>
+        <span class="n">map_object</span> <span class="o">=</span> <span class="n">folium</span><span class="o">.</span><span class="n">Map</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">start_location</span><span class="p">,</span> <span class="n">zoom_start</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
 
-    <span class="c1"># Save to HTML</span>
-    <span class="n">map_object</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_html_path</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Map saved successfully at: </span><span class="si">{</span><span class="n">output_html_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lng&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">folium</span><span class="o">.</span><span class="n">PolyLine</span><span class="p">(</span><span class="n">locations</span><span class="o">=</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_object</span><span class="p">)</span>
+        <span class="n">folium</span><span class="o">.</span><span class="n">Marker</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">popup</span><span class="o">=</span><span class="s2">&quot;Start&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">folium</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_object</span><span class="p">)</span>
+        <span class="n">folium</span><span class="o">.</span><span class="n">Marker</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">coordinates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">popup</span><span class="o">=</span><span class="s2">&quot;End&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">folium</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_object</span><span class="p">)</span>
 
+        <span class="n">map_object</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_html_path</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Map saved successfully at: </span><span class="si">{</span><span class="n">output_html_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPSTrajectoryProcessor.plot_macroscopic_trajectory">
+<a class="viewcode-back" href="../../gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor.plot_macroscopic_trajectory">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_macroscopic_trajectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts GPS coordinates to a macroscopic trajectory in local flat coordinates and plots it.</span>
+
+<span class="sd">        :param df: DataFrame with &#39;lat&#39; and &#39;lng&#39; columns.</span>
+<span class="sd">        :param output_path: Path where the PNG file with the plot will be saved.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">lng</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;lng&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">lat_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span>
+        <span class="n">lng_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lng</span><span class="p">)</span>
+
+        <span class="n">lat0</span> <span class="o">=</span> <span class="n">lat_rad</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lng0</span> <span class="o">=</span> <span class="n">lng_rad</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="mi">6371000</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="p">(</span><span class="n">lng_rad</span> <span class="o">-</span> <span class="n">lng0</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat0</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="p">(</span><span class="n">lat_rad</span> <span class="o">-</span> <span class="n">lat0</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;GPS&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Macroscopic GPS Trajectory&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;East (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;North (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">output_path</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Macroscopic trajectory saved to: </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</div>
 
 </pre></div>
 

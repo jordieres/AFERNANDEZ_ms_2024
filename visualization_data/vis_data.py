@@ -9,7 +9,7 @@ from clase_madgwick import MadgwickAHRS
 from clase_quaternion import Quaternion
 
 #  Cargar los datos desde el archivo Excel
-ruta_archivo = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba6.xlsx"
+ruta_archivo = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
 df = pd.read_excel(ruta_archivo)
 
 # #2. Convertir datos a arrays numpy
@@ -52,8 +52,6 @@ df = pd.read_excel(ruta_archivo)
 
 
 # Cargar los datos
-df = pd.read_csv("datos_pie_derecho.csv", delimiter="\t")  # Ajusta según el formato de tu dataset
-
 # Convertir los datos correctamente
 df["Gx"] = df["Gx"].str.replace(",", ".").astype(float) * np.pi / 180  # Convertir a rad/s
 df["Gy"] = df["Gy"].str.replace(",", ".").astype(float) * np.pi / 180
