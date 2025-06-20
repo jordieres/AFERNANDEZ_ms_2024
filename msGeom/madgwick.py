@@ -19,7 +19,7 @@
 import warnings
 import numpy as np
 from numpy.linalg import norm
-from msGeom.quaternion import Quaternion
+from clase_quaternion import Quaternion
 
 
 class MadgwickAHRS:
