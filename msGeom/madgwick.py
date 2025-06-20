@@ -67,7 +67,7 @@ class MadgwickAHRS:
         accelerometer /= norm(accelerometer)
 
         # Normalise magnetometer measurement
-        if norm(magnetometer) is 0:
+        if norm(magnetometer) == 0:
             warnings.warn("magnetometer is zero")
             return
         magnetometer /= norm(magnetometer)
