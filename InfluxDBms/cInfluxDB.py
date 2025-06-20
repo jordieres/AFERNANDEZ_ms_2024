@@ -200,3 +200,6 @@ class cInfluxDB:
                     print(record.values)
         except Exception as e:
             print(f"Error al ejecutar la consulta: {e}")
+
+    def close(self)->None:
+        self.client.close()

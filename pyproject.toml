@@ -8,8 +8,9 @@ license = "GPL 3.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 influxdb_client = "^1.48.0"
+openpyxl = "^3.1.5"
 matplotlib = "^3.10.1"
 pandas = "^2.2.3"
 numpy = "^2.1"
@@ -17,7 +18,8 @@ PyYAML = "^6.0.2"
 setuptools = "^75.8.0"
 urllib3 = "^2.4.0"
 folium = "^0.18"
-gait-tracking = {path = "../external_repos/Gait_Tracking_With_x_IMU_Python"}
+gait-tracking = { path = "../external_repos/Gait_Tracking_With_x_IMU_Python" }
+
 
 [build-system]
 requires = ["poetry-core"]
