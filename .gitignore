@@ -8,3 +8,4 @@ ahrs_.ipynb
 ahrs_test.ipynb
 ahrs_test_2.ipynb
 .config.yaml
+.config*.yaml

@@ -118,6 +118,7 @@ def main():
         print(df.head())
         df["_time"] = df["_time"].dt.tz_localize(None)
         df.to_excel(args.output, index=False)
+        iDB.close()
         if args.verbose >= 1:
             print(f"Data successfully saved to {args.output}")
     except Exception as e:
