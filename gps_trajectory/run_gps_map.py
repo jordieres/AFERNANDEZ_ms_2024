@@ -17,6 +17,8 @@ def main():
     df = processor.prepare_gps_dataframe(args.input)
     processor.generate_gps_map(df, args.output)
     processor.plot_macroscopic_trajectory(df, args.plot)
+    distancia_total = processor.calculate_total_distance(df)
+    print(f"Distancia total recorrida: {distancia_total:.2f} metros")
 
 
 if __name__ == "__main__":

@@ -6,21 +6,12 @@ import sys
 from scipy import signal
 from scipy.signal import butter, filtfilt
 
-# === CONFIGURACIÓN DE RUTAS ===
-SKINEMATICS_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "external_repos", "scikit_kinematics")
-)
-sys.path.insert(0, SKINEMATICS_PATH)
-
 from skinematics.sensors.manual import MyOwnSensor
 from skinematics import vector
 from skinematics.quat import Quaternion 
 
 # Definicion de path
-input_file = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_prueba10.xlsx"
-output_dir = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\transfornm_data\out_transfornm_data"
-img_dir = os.path.join(output_dir, "img")
-output_file = os.path.join(output_dir, "dat_2024_prueba10_transformado_10.xlsx")
+input_file = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
 
 
 # Carga de datos
@@ -63,7 +54,7 @@ def butter_lowpass_filter(data, cutoff, fs, order=2):
 
 acc_inertial = butter_lowpass_filter(acc_inertial, cutoff=5, fs=freq)
 
-# DEteccion de reposo --> si hay reposo la aceleracion= gravedad
+# Deteccion de reposo --> si hay reposo la aceleracion= gravedad
 acc_norm = np.linalg.norm(acc, axis=1)
 reposo = np.abs(acc_norm - 9.81) < 0.1
 
@@ -88,16 +79,8 @@ position = np.cumsum(velocity / freq, axis=0)
 #Guardar resultados en nuevo df
 df[['Vel_X', 'Vel_Y', 'Vel_Z']] = velocity
 df[['Pos_X', 'Pos_Y', 'Pos_Z']] = position
-df.to_excel(output_file, index=False)
-print(f"Archivo exportado: {output_file}")
 
-# Guardar Graficas (funcion)
-def guardar_grafica(nombre, fig):
-    os.makedirs(img_dir, exist_ok=True)
-    path = os.path.join(img_dir, f"{nombre}.png")
-    fig.savefig(path)
-    print(f"Guardado: {path}")
-    plt.close(fig)
+
 
 # Aceleraciones
 fig = plt.figure()
@@ -106,7 +89,7 @@ plt.plot(df['_time'], df['Ay'], label='Ay')
 plt.plot(df['_time'], df['Az'], label='Az')
 plt.title('Aceleraciones'); plt.xlabel('Tiempo'); plt.ylabel('m/s²')
 plt.legend(); plt.grid(True)
-guardar_grafica("aceleraciones_10", fig)
+
 
 # Giroscopio
 fig = plt.figure()
@@ -115,7 +98,7 @@ plt.plot(df['_time'], df['Gy'], label='Gy')
 plt.plot(df['_time'], df['Gz'], label='Gz')
 plt.title('Velocidades angulares (GIROSCOPIO)'); plt.xlabel('Tiempo'); plt.ylabel('rad/s')
 plt.legend(); plt.grid(True)
-guardar_grafica("giroscopio_10", fig)
+
 
 # Velocidad
 fig = plt.figure()
@@ -124,7 +107,7 @@ plt.plot(df['_time'], df['Vel_Y'], label='Vel_Y')
 plt.plot(df['_time'], df['Vel_Z'], label='Vel_Z')
 plt.title('Velocidad'); plt.xlabel('Tiempo'); plt.ylabel('m/s')
 plt.legend(); plt.grid(True)
-guardar_grafica("velocidad_10", fig)
+
 
 # Posición
 fig = plt.figure()
@@ -133,12 +116,14 @@ plt.plot(df['_time'], df['Pos_Y'], label='Pos_Y')
 plt.plot(df['_time'], df['Pos_Z'], label='Pos_Z')
 plt.title('Posición'); plt.xlabel('Tiempo'); plt.ylabel('m')
 plt.legend(); plt.grid(True)
-guardar_grafica("posicion_10", fig)
+
 
 # Trayectoria XY
 fig = plt.figure()
 plt.plot(df['Pos_X'], df['Pos_Y'])
 plt.title('Trayectoria XY'); plt.xlabel('X (m)'); plt.ylabel('Y (m)')
 plt.axis('equal'); plt.grid(True)
-guardar_grafica("trayectoria_XY_10", fig)
+
+
+plt.show()
 
