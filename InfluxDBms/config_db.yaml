@@ -3,3 +3,9 @@ influxdb:
   org: "ZZZ"
   token: "uuuuuu"
   url: "https://xxx"
+
+Location:
+  proj='utm'
+  zone=30
+  ellps='WGS84'
+  south=False
