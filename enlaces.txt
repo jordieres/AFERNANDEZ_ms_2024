@@ -1,7 +1,0 @@
-COSAS DE CUATERNIONES
-
-https://github.com/MartinWeigel/Quaternion 
-https://kieranwynn.github.io/pyquaternion/
-https://github.com/joycesudi/quaternion
-https://www.reddit.com/r/Python/comments/t4xr8e/best_library_for_numpy_quaternion/
-https://quaternionic.readthedocs.io/en/latest/

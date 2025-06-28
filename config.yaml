@@ -5,7 +5,7 @@ influxdb:
   url: "https://xxx"
 
 Location:
-  proj='utm'
-  zone=30
-  ellps='WGS84'
-  south=False
+  proj : 'utm'
+  zone: 30
+  ellps: 'WGS84'
+  south: false

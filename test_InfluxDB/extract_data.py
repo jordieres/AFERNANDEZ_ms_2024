@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument('-u', '--until', type=parse_datetime, default=default_until, help='End date (ISO 8601)')
     parser.add_argument('-q', '--qtok', type=str, required=True, help='CodeID')
     parser.add_argument('-l', '--leg', choices=['Left', 'Right'], required=True, help='Choice of Left or Right Foot')
-    parser.add_argument('-p', '--path', type=str, default='../InfluxDBms/config_db.yaml', help='Path to the configuration file')
+    parser.add_argument('-c', '--config', type=str, default='../InfluxDBms/config_db.yaml', help='Path to the configuration file')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to the Excel file as output')
     parser.add_argument('-v', '--verbose', type=int, default=0, help='Verbosity level')
     # parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")

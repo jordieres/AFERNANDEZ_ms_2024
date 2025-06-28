@@ -1,10 +1,5 @@
 - Para activar entorno virtual:           venv\Scripts\activate
-- Ejecución de archivo en el venv:        python consulta_influxdb.py
 - Verificación de conectividad de red:    ping 138.100.82.178
-- verbose				  python3 script.py --from_time "2024-10-13 00:00:00" --until "2024-10-13 23:59:59"
-
-- EJECUCION DE CONSULTA     python  test_InfluxDBms_conn.py -f "2024-11-02T15:08:45Z" -u "2024-11-02T20:50:00Z" -q "JOM20241031-104" -l "Right"
-
 - Para actualizar doc de sphinx .\make html
 
 - para generar enlace de documentacion Sphinx a otra carpeta con archivos .py 
@@ -26,3 +21,14 @@ SINTAXIS: https://docs.github.com/en/get-started/writing-on-github/getting-start
 PYTHON WEELS https://realpython.com/python-wheels/     https://www.geeksforgeeks.org/what-is-a-python-wheel/ 
 
 para actualizar GitHub: git pull origin main
+
+
+
+
+COSAS DE CUATERNIONES
+
+https://github.com/MartinWeigel/Quaternion 
+https://kieranwynn.github.io/pyquaternion/
+https://github.com/joycesudi/quaternion
+https://www.reddit.com/r/Python/comments/t4xr8e/best_library_for_numpy_quaternion/
+https://quaternionic.readthedocs.io/en/latest/
