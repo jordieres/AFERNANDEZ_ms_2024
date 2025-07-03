@@ -1,9 +1,9 @@
 *.xlsx
+*.txt
 venv/*
 vpy/*
-external_repos/*
 .vscode/*
 *.pyc
 .config.yaml
-.config*.yaml
 out/*
+
