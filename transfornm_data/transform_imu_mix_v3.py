@@ -9,7 +9,8 @@ from pyproj import Proj
 import argparse
 import os
 import yaml
-
+from filterpy.kalman import KalmanFilter
+from filterpy.common import Q_discrete_white_noise
 
 def load_data(file_path):
     """
@@ -159,14 +160,25 @@ def update_quaternion_madgwick(q, t, filter_, gyr, acc, mag, use_mag):
     """
     Update Madgwick filter quaternion with or without magnetometer.
 
-    :param q: Current quaternion.
+    This function applies the Madgwick update step either in MARG mode (gyro, accel, mag)
+    or IMU-only mode (gyro, accel) depending on the `use_mag` flag.
+
+    :param q: Current quaternion estimate (4,).
+    :type q: np.ndarray
     :param t: Current time index.
-    :param filter_: Madgwick filter instance.
-    :param gyr: Gyroscope data.
-    :param acc: Accelerometer data.
-    :param mag: Magnetometer data.
-    :param use_mag: Flag to indicate if magnetometer should be used.
-    :return: Updated quaternion.
+    :type t: int
+    :param filter_: Instance of the Madgwick filter.
+    :type filter_: Madgwick
+    :param gyr: Gyroscope data array of shape (N, 3), in rad/s.
+    :type gyr: np.ndarray
+    :param acc: Accelerometer data array of shape (N, 3), in m/s².
+    :type acc: np.ndarray
+    :param mag: Magnetometer data array of shape (N, 3), in µT.
+    :type mag: np.ndarray
+    :param use_mag: Whether to include magnetometer data in the update.
+    :type use_mag: bool
+    :return: Updated quaternion estimate (4,).
+    :rtype: np.ndarray
     """
     if use_mag:
         return filter_.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
@@ -177,42 +189,90 @@ def update_quaternion_mahony(q, t, filter_, gyr, acc, mag, use_mag):
     """
     Update Mahony filter quaternion with or without magnetometer.
 
-    :param q: Current quaternion.
+    This function applies the Mahony update step in either MARG mode (gyro, accel, mag)
+    or IMU-only mode (gyro, accel) depending on the `use_mag` flag.
+
+    :param q: Current quaternion estimate (4,).
+    :type q: np.ndarray
     :param t: Current time index.
-    :param filter_: Mahony filter instance.
-    :param gyr: Gyroscope data.
-    :param acc: Accelerometer data.
-    :param mag: Magnetometer data.
-    :param use_mag: Flag to indicate if magnetometer should be used.
-    :return: Updated quaternion.
+    :type t: int
+    :param filter_: Instance of the Mahony filter.
+    :type filter_: Mahony
+    :param gyr: Gyroscope data array of shape (N, 3), in rad/s.
+    :type gyr: np.ndarray
+    :param acc: Accelerometer data array of shape (N, 3), in m/s².
+    :type acc: np.ndarray
+    :param mag: Magnetometer data array of shape (N, 3), in µT.
+    :type mag: np.ndarray
+    :param use_mag: Whether to include magnetometer data in the update.
+    :type use_mag: bool
+    :return: Updated quaternion estimate (4,).
+    :rtype: np.ndarray
     """
     if use_mag:
         return filter_.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
     else:
         return filter_.updateIMU(q, gyr=gyr[t], acc=acc[t])
+    
+# Agregación de ZUPH
+def detect_no_rotation(gyr: np.ndarray, threshold: float = 0.05, duration_samples: int = 5) -> np.ndarray:
+    """
+    Detect periods where there is negligible angular velocity on Z-axis (i.e., no yaw rotation).
+
+    :param gyr: Gyroscope data array of shape (N, 3), in rad/s.
+    :type gyr: np.ndarray
+    :param threshold: Threshold for Z-axis angular velocity (in rad/s) to define no rotation.
+    :type threshold: float
+    :param duration_samples: Minimum number of consecutive samples below the threshold to validate no rotation.
+    :type duration_samples: int
+    :return: Boolean array of shape (N,), where True indicates no rotation around the Z-axis.
+    :rtype: np.ndarray
+    """
+
+    gz = np.abs(gyr[:, 2])  # Only Z axis
+    mask = gz < threshold
+    stable = np.copy(mask)
+    for i in range(len(mask)):
+        if not mask[i]:
+            continue
+        if i + duration_samples <= len(mask) and np.all(mask[i:i + duration_samples]):
+            stable[i:i + duration_samples] = True
+    return stable
 
 def estimate_position(name: str, gyr, acc, mag, time, sample_rate, stationary, use_madgwick=True, use_mag=True):
     """
     Estimate position from IMU data using Madgwick or Mahony filter.
 
-    :param name: Filter name.
-    :param gyr: Gyroscope data.
-    :param acc: Accelerometer data.
-    :param mag: Magnetometer data.
-    :param time: Time vector.
-    :param sample_rate: Sampling rate.
-    :param stationary: Stationary mask.
-    :param use_madgwick: Whether to use Madgwick filter.
-    :param use_mag: Whether to include magnetometer.
-    :return: Estimated positions.
+    :param name: Label for identifying the current dataset or subject.
+    :type name: str
+    :param gyr: Gyroscope data array of shape (N, 3), in rad/s.
+    :type gyr: np.ndarray
+    :param acc: Accelerometer data array of shape (N, 3), in m/s².
+    :type acc: np.ndarray
+    :param mag: Magnetometer data array of shape (N, 3), in µT.
+    :type mag: np.ndarray
+    :param time: Time array of shape (N,), in seconds.
+    :type time: np.ndarray
+    :param sample_rate: Sampling rate of the data in Hz.
+    :type sample_rate: float
+    :param stationary: Boolean array indicating stationary periods (ZUPT).
+    :type stationary: np.ndarray
+    :param use_madgwick: Whether to use Madgwick filter (True) or Mahony filter (False).
+    :type use_madgwick: bool
+    :param use_mag: Whether to use magnetometer data in the orientation filter.
+    :type use_mag: bool
+    :return: Estimated position array of shape (N, 3), in meters.
     :rtype: np.ndarray
+
     """
     if use_madgwick:
-        filter_ = Madgwick(frequency=sample_rate, gain=0.005 if use_mag else 0.01)
+        base_gain = 0.005 if use_mag else 0.01
+        filter_ = Madgwick(frequency=sample_rate, gain=base_gain)
         q = axang2quat([0, 0, 1], np.deg2rad(45))
         update_function = update_quaternion_madgwick
     else:
-        filter_ = Mahony(Kp=1.5, Ki=0.01, frequency=sample_rate)
+        base_kp = 1.5
+        filter_ = Mahony(Kp=base_kp, Ki=0.01, frequency=sample_rate)
         q = np.array([1.0, 0.0, 0.0, 0.0])
         acc_init = np.median(acc[time <= time[0] + 2], axis=0)
         for _ in range(2000):
@@ -220,9 +280,22 @@ def estimate_position(name: str, gyr, acc, mag, time, sample_rate, stationary, u
         update_function = update_quaternion_mahony
 
     quats = np.zeros((len(time), 4))
+    no_rotation = detect_no_rotation(gyr)
+    no_motion = stationary & no_rotation
+
     for t in range(len(time)):
         if not use_madgwick:
-            filter_.Kp = 0.5 if stationary[t] else 0.0
+            filter_.Kp = base_kp if stationary[t] else 0.0
+
+        # Apply ZUPH
+        if use_mag and no_motion[t]:
+            if use_madgwick:
+                filter_.gain = 0.001
+            else:
+                filter_.Kp = base_kp * 0.1
+        elif use_madgwick:
+            filter_.gain = base_gain
+
         q_new = update_function(q, t, filter_, gyr, acc, mag, use_mag)
         if q_new is not None:
             q = q_new
@@ -251,6 +324,7 @@ def estimate_position(name: str, gyr, acc, mag, time, sample_rate, stationary, u
         pos[t] = pos[t - 1] + vel[t] * (1 / sample_rate)
 
     return pos
+
 
 
 def compute_gps_positions(df, config):
@@ -324,7 +398,8 @@ def plot_trajectories(resultados, errores, gps_pos, gps_final, title="Trajectory
 
     if save_path:
         plt.savefig(save_path)
-    
+
+      
 
 def parse_args():
     """
@@ -343,35 +418,66 @@ def parse_args():
 
     return parser.parse_args()
 
+def apply_kalman_filter(pos_imu: np.ndarray, gps_pos: np.ndarray, sample_rate: float) -> np.ndarray:
+
+
+    n = pos_imu.shape[0]
+    dt = 1.0 / sample_rate
+
+    kf = KalmanFilter(dim_x=4, dim_z=2)
+    kf.F = np.array([[1, 0, dt, 0],
+                     [0, 1, 0, dt],
+                     [0, 0, 1,  0],
+                     [0, 0, 0,  1]])
+    kf.H = np.array([[1, 0, 0, 0],
+                     [0, 1, 0, 0]])
+    kf.R = np.eye(2) * 20.0
+    kf.P = np.eye(4) * 10.0
+    kf.Q = Q_discrete_white_noise(dim=4, dt=dt, var=2)
+
+    # Estado inicial: posición y velocidad estimada por IMU
+    vel_imu = np.gradient(pos_imu, dt, axis=0)
+    kf.x = np.zeros((4, 1))
+    kf.x[:2] = pos_imu[0, :2].reshape(2, 1)
+    kf.x[2:] = vel_imu[0, :2].reshape(2, 1)
+
+    fused = np.zeros((n, 2))
+    for i in range(n):
+        # Predicción basada en modelo (usa estado anterior)
+        kf.predict()
+
+        # Corrección basada en GPS si disponible
+        if i < gps_pos.shape[0]:
+            z = gps_pos[i].reshape(2, 1)
+            kf.update(z)
+
+        fused[i] = kf.x[:2, 0]
+
+    return fused
+
+
+
+from scipy.interpolate import interp1d
 
 def main():
-    """
-    Main function to process IMU Excel files and plot estimated trajectories vs GPS.
-    """
     args = parse_args()
     config = load_config(args.config)
     output_dir = args.output_dir
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
 
-    
-
-
     for file_path in args.file_paths:
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         foot_label = "Left Foot" if "left" in base_name.lower() else "Right Foot" if "right" in base_name.lower() else base_name
 
         if args.verbose >= 2:
-            print(f"\n")
-            print(f"{'*'*33}  {foot_label}  {'*'*33}\n ")
+            print(f"\n{'*'*33}  {foot_label}  {'*'*33}\n")
             print(f"{'-'*80}")
             print(f"Processing file: {base_name}...")
             print(f"{'-'*80}\n")
-            
 
         try:
             df = load_data(file_path)
-            
             df = resample_to_40hz(df)
             time, sample_rate, gyr, acc, mag, sample_period = preprocess_data(df)
             stationary = detect_stationary(acc, sample_rate)
@@ -382,29 +488,61 @@ def main():
                 "Mahony with mag": estimate_position("Mahony with mag", gyr, acc, mag, time, sample_rate, stationary, False, True),
                 "Mahony without mag": estimate_position("Mahony without mag", gyr, acc, mag, time, sample_rate, stationary, False, False),
             }
-            
-            gps_pos, gps_final = compute_gps_positions(df,config)
 
+            gps_pos, gps_final = compute_gps_positions(df, config)
+
+            gps_time = df.loc[~df['lat'].isna(), 'time'].to_numpy()
+            imu_time = df['time'].to_numpy()
+
+
+            kalman_results = {}
             errors = {}
-            if args.verbose >= 2:
-                print("Estimation results vs GPS:\n")
-                
-            for name, pos in resultados.items():
-                error = np.linalg.norm(pos[-1, :2] - gps_final)
-                errors[name] = error
-                print(f"- {name:<25} → Error: {error:7.2f} m", end="")
-                distance = np.max(np.linalg.norm(pos, axis=1))
-                print(f" | Max distance: {distance:7.2f} m")
-            print(f"{'-'*80}")
 
+            for name, pos in resultados.items():
+                imu_len = len(pos)
+                time_cut = imu_time[:imu_len]
+
+                # Crear función de interpolación GPS para esta trayectoria
+                try:
+                    gps_interp_fn = interp1d(gps_time, gps_pos, axis=0, bounds_error=False, fill_value="extrapolate")
+                    gps_interp = gps_interp_fn(time_cut)
+                except Exception as e:
+                    print(f"Warning: Failed to interpolate GPS for {name} – {e}")
+                    continue
+
+                print(f"Kalman → {name}")
+                print(f"  IMU start pos: {pos[0]}, end: {pos[-1]}")
+                print(f"  GPS interp start: {gps_interp[0]}, end: {gps_interp[-1]}")
+
+                kalman_fused = apply_kalman_filter(pos, gps_interp, sample_rate)
+                kalman_name = f"{name} + Kalman"
+                kalman_results[kalman_name] = kalman_fused
+
+                kalman_error = np.mean(np.linalg.norm(kalman_fused[:, :2] - gps_interp[:imu_len], axis=1))
+                errors[kalman_name] = kalman_error
+
+                base_error = np.mean(np.linalg.norm(pos[:imu_len, :2] - gps_interp[:imu_len], axis=1))
+                errors[name] = base_error
+
+            resultados.update(kalman_results)
+
+            if args.verbose >= 2:
+                print("Estimation results vs GPS (with Kalman):\n")
+                for name, pos in resultados.items():
+                    error = errors.get(name, 0.0)
+                    distance = np.max(np.linalg.norm(pos[:, :2], axis=1))
+                    print(f"- {name:<30} → Error: {error:7.2f} m | Max distance: {distance:7.2f} m")
+                print(f"{'-'*80}")
 
             output_file = None
-            if output_dir and args.output_mode in ("save", "both"): output_file = os.path.join(output_dir, f"{base_name}_trajectory.png")
+            if output_dir and args.output_mode in ("save", "both"):
+                output_file = os.path.join(output_dir, f"{base_name}_trajectory.png")
 
-            plot_trajectories(resultados, errors, gps_pos, gps_final, title=f"Trajectory Comparison - {foot_label}", save_path=output_file)
+            plot_trajectories(resultados, errors, gps_pos, gps_final,
+                              title=f"Trajectory Comparison - {foot_label}",
+                              save_path=output_file)
 
             if args.verbose >= 3:
-
                 print(f"\nDiagnostics:\n")
                 print(f"- Total interpolated samples    : {len(df):,}")
                 print(f"- Estimated frequency (Hz)      : {sample_rate:.2f}")
@@ -418,7 +556,6 @@ def main():
                 print(f"- Norm of acc_init (expected ~1): {np.linalg.norm(acc_init):.4f}")
                 print(f"- Norm of mag_init              : {np.linalg.norm(mag_init):.4f}\n")
 
-
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 
@@ -428,7 +565,6 @@ def main():
 
     if args.output_mode in ("screen", "both"):
         plt.show()
-    
 
 
 if __name__ == "__main__":
