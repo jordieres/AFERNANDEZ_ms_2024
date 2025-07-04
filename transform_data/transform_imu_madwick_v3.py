@@ -668,6 +668,10 @@ def main():
             if save_path:
                 plt.savefig(save_path)
 
+
+            # comnzamos la parte 2 df2.pos_kalman1´
+            
+
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 
