@@ -142,12 +142,37 @@ def main():
 
              # Mostrar resumen antes de interpolar
             print_summary(df, "ANTES de interpolar")
-
+            print(df.head())
             df_interp = resample_to_40hz(df)
 
             # Mostrar resumen después de interpolar
             print_summary(df_interp, "DESPUÉS de interpolar")
+            print(df_interp.head())
 
+            # 1. Comprobar si hay valores nulos
+            print("¿Tiene NaNs?")
+            print(df_interp.isnull().sum())
+
+            # 2. Ver las estadísticas generales
+            print("\nResumen estadístico:")
+            print(df_interp.describe())
+
+            # 3. Ver las primeras y últimas filas
+            print("\nPrimeras filas:")
+            print(df_interp.head())
+
+            print("\nÚltimas filas:")
+            print(df_interp.tail())
+
+            # 4. Comprobar que los tiempos estén bien ordenados y espaciados
+            print("\nEspaciado temporal:")
+            delta_times = df_interp['_time'].diff().dt.total_seconds().dropna()
+            print(f"Media del intervalo (s): {delta_times.mean():.4f}")
+            print(f"¿Hay intervalos mayores de 0.05s?: {(delta_times > 0.05).sum()}")
+
+            # 5. Ver si hay variación en columnas clave
+            print("\n¿Ax tiene valores únicos?:", df_interp['Ax'].nunique())
+            print("¿lat/lng tienen variación?:", df_interp['lat'].nunique(), df_interp['lng'].nunique())
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 
