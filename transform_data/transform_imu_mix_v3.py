@@ -410,7 +410,6 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="IMU data processing pipeline")
     parser.add_argument("-f", "--file_paths", type=str, nargs="+", required=True, help="Paths to one or more Excel files")
-    parser.add_argument("--threshold", type=float, default=0.1, help="Stationary detection threshold")
     parser.add_argument('-v', '--verbose', type=int, default=3, help='Verbosity level')
     parser.add_argument('-c', '--config', type=str, default='.config.yaml', help='Path to the configuration file')
     parser.add_argument('--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots: 'screen', 'save', or 'both'")
@@ -509,10 +508,6 @@ def main():
                 except Exception as e:
                     print(f"Warning: Failed to interpolate GPS for {name} – {e}")
                     continue
-
-                print(f"Kalman → {name}")
-                print(f"  IMU start pos: {pos[0]}, end: {pos[-1]}")
-                print(f"  GPS interp start: {gps_interp[0]}, end: {gps_interp[-1]}")
 
                 kalman_fused = apply_kalman_filter(pos, gps_interp, sample_rate)
                 kalman_name = f"{name} + Kalman"

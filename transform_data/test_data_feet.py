@@ -147,7 +147,7 @@ def main():
 
             # Mostrar resumen después de interpolar
             print_summary(df_interp, "DESPUÉS de interpolar")
-            print(df_interp.head())
+            
 
             # 1. Comprobar si hay valores nulos
             print("¿Tiene NaNs?")

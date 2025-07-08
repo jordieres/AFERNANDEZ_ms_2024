@@ -103,7 +103,7 @@ def preprocess_data(df):
 
     gyr = df[['Gx', 'Gy', 'Gz']].to_numpy() * np.pi / 180
     acc = df[['Ax', 'Ay', 'Az']].to_numpy()
-    mag = df[['Mx', 'My', 'Mz']].to_numpy() / 1000
+    mag = df[['Mx', 'My', 'Mz']].to_numpy() * 0.1
 
     return time, sample_rate, gyr, acc, mag, sample_period
 
