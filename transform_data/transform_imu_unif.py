@@ -122,6 +122,8 @@ def main():
                     if output_dir:
                         output_map = os.path.join(output_dir, f"{base_name}_map_estimates.html")
                         generate_map_with_estimates(gps_df, resultados, output_map, config)
+
+                        
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 

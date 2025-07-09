@@ -1,3 +1,12 @@
+"""
+Madwick con Magnetometro aplicando ZUPT,ZUPH y lo de la rotación.
+Además se aplica el kalman simple unicamente pero en este caso se divide el df en 2 en el primero se deriva con kalman y en el segundo se estima a partir de la primera deriva a ver cuanto de fiable es el filtro. 
+
+"""
+
+
+
+
 import numpy as np
 import pandas as pd
 import argparse
@@ -10,6 +19,124 @@ from mpl_toolkits.mplot3d import Axes3D
 from ahrs.filters import Madgwick
 from ahrs.common.orientation import q_conj, q_rot
 from pyproj import Proj
+
+import numpy as np
+
+
+
+class KalmanFilter2D:
+    """
+    Filtro de Kalman para estimación de posición y velocidad en 2D.
+    
+    Implementa un filtro discreto con modelo lineal de estado:
+    estado = [x, y, vx, vy]. Observa únicamente la posición (x, y).
+    
+    El filtro puede inicializarse una vez y aplicarse a múltiples secuencias
+    de datos sin redefinir sus matrices internas.
+    
+    Attributes:
+        dt (float): Intervalo temporal constante entre muestras.
+        F (ndarray): Matriz de transición del estado.
+        H (ndarray): Matriz de observación.
+        Q (ndarray): Covarianza del ruido del proceso.
+        R (ndarray): Covarianza del ruido de la observación.
+        P (ndarray): Matriz de covarianza del error estimado.
+        x (ndarray): Estado actual del filtro [x, y, vx, vy].
+    """
+ 
+    def __init__(self, dt, q=0.05, r=5.0, p0=1.0):
+        """
+        Inicializa el filtro con parámetros de dinámica y ruido.
+
+        Args:
+            dt (float): Intervalo de tiempo entre muestras.
+            q (float, optional): Varianza del ruido de proceso. Default = 0.05.
+            r (float, optional): Varianza del ruido de observación GPS. Default = 5.0.
+            p0 (float, optional): Valor inicial para la matriz de covarianza P. Default = 1.0.
+        """
+        self.dt = dt
+
+        self.F = np.array([
+            [1, 0, dt, 0],
+            [0, 1, 0, dt],
+            [0, 0, 1,  0],
+            [0, 0, 0,  1]
+        ])
+
+        self.H = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0]
+        ])
+
+        self.Q = np.eye(4) * q
+        self.R = np.eye(2) * r
+        self.P = np.eye(4) * p0
+        self.x = np.zeros(4)
+
+    def initialize(self, pos0_xy, vel0_xy=(0.0, 0.0)):
+        """
+        Establece el estado inicial del filtro.
+
+        Args:
+            pos0_xy (array-like): Posición inicial [x, y].
+            vel0_xy (array-like, optional): Velocidad inicial [vx, vy]. Default = (0.0, 0.0).
+        """
+        self.x[:2] = pos0_xy
+        self.x[2:] = vel0_xy
+
+    def reset_covariance(self, p0=1.0):
+        """
+        Reinicia la matriz de covarianza P del filtro.
+
+        Args:
+            p0 (float): Valor escalar para la nueva matriz P = p0 * I.
+        """
+        self.P = np.eye(4) * p0
+
+    def step(self, z=None):
+        """
+        Realiza un paso de predicción y corrección (si hay observación).
+
+        Args:
+            z (array-like or None): Observación [x, y] del GPS. Si es None, no se corrige.
+
+        Returns:
+            ndarray: Estado posterior estimado [x, y, vx, vy].
+        """
+        # Predicción
+        self.x = self.F @ self.x
+        self.P = self.F @ self.P @ self.F.T + self.Q
+
+        # Corrección si hay observación
+        if z is not None:
+            y = z - self.H @ self.x
+            S = self.H @ self.P @ self.H.T + self.R
+            K = self.P @ self.H.T @ np.linalg.inv(S)
+
+            self.x += K @ y
+            self.P = (np.eye(4) - K @ self.H) @ self.P
+
+        return self.x.copy()
+
+    def filter_sequence(self, gps_positions):
+        """
+        Aplica el filtro a una secuencia de observaciones GPS.
+
+        Args:
+            gps_positions (array-like): Lista o array (N, 2) de observaciones [x, y].
+                Se pueden usar `None` o vectores con `np.nan` para pasos sin observación.
+
+        Returns:
+            ndarray: Matriz (N, 4) con los estados estimados [x, y, vx, vy] en cada paso.
+        """
+        filtered = []
+        for z in gps_positions:
+            if z is None or (isinstance(z, np.ndarray) and np.isnan(z).any()):
+                z = None
+            filtered.append(self.step(z))
+        return np.vstack(filtered)
+ 
+
 
 
 def load_data(file_path):
@@ -130,14 +257,28 @@ def estimate_gravity_vector(acc: np.ndarray, alpha: float = 0.9) -> np.ndarray:
     for i in range(1, len(acc)):
         gravity[i] = alpha * gravity[i - 1] + (1 - alpha) * acc[i]
 
-    # Normalización segura
+    
     norm = np.linalg.norm(gravity, axis=1, keepdims=True)
-    norm[norm == 0] = 1.0  # Evita división por cero
+    norm[norm == 0] = 1.0  # evita division x cero
     gravity_normalized = gravity / norm
 
     return gravity_normalized
 
 def detect_stationary_zones(acc, sample_rate):
+    """
+    Detect stationary periods from accelerometer data using filtering and thresholding.
+
+    :param acc: Acceleration data array with shape (N, 3).
+    :type acc: np.ndarray
+    :param sample_rate: Sampling rate of the accelerometer signal in Hz.
+    :type sample_rate: float
+    :return: A tuple containing:
+             - stationary: Boolean array indicating stationary (True) or moving (False) states.
+             - acc_lp: Low-pass filtered absolute high-pass signal used for thresholding.
+             - threshold: Threshold value used to determine stationary periods.
+    :rtype: tuple[np.ndarray, np.ndarray, float]
+    :raises ValueError: If input shape is invalid or sample_rate is non-positive.
+    """
     acc_mag = np.linalg.norm(acc, axis=1)
     acc_mag_clipped = np.clip(acc_mag, 0, 20)
 
@@ -154,38 +295,82 @@ def detect_stationary_zones(acc, sample_rate):
 
 
 def estimate_orientation_and_position(time, gyr, acc, mag, sample_period, sample_rate, stationary):
-    madgwick = Madgwick(frequency=sample_rate, gain=0.041)
+    """
+    Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
+    and zero-velocity updates.
+
+    Applies orientation estimation with adaptive gain based on motion state (ZUPH),
+    and velocity correction during stationary periods (ZUPT).
+
+    :param time: Array of time stamps.
+    :type time: np.ndarray
+    :param gyr: Gyroscope data array with shape (N, 3), in rad/s.
+    :type gyr: np.ndarray
+    :param acc: Accelerometer data array with shape (N, 3), in m/s².
+    :type acc: np.ndarray
+    :param mag: Magnetometer data array with shape (N, 3), in µT.
+    :type mag: np.ndarray
+    :param sample_period: Time between samples, in seconds.
+    :type sample_period: float
+    :param sample_rate: Sampling rate in Hz.
+    :type sample_rate: float
+    :param stationary: Boolean array indicating stationary states (True for stationary).
+    :type stationary: np.ndarray
+    :return: Tuple (quats, acc_earth, vel, pos) where:
+             - quats: Quaternion orientation estimates.
+             - acc_earth: Linear acceleration in earth frame (gravity removed).
+             - vel: Estimated velocity with ZUPT correction.
+             - pos: Estimated position.
+    :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+    :raises ValueError: If input shapes are inconsistent.
+    """
+    base_gain = 0.041  # Ganancia base de Madgwick
+    low_gain = 0.001   # Ganancia reducida para ZUPH
+    madgwick = Madgwick(frequency=sample_rate, gain=base_gain)
     q = np.array([1.0, 0.0, 0.0, 0.0])
     quats = np.zeros((len(time), 4))
     quats[0] = q
 
+    # Detecta zonas sin rotación (giro bajo)
+    gyro_norm = np.linalg.norm(gyr, axis=1)
+    no_rotation = gyro_norm < 0.1  # umbral en rad/s
+    no_motion = stationary & no_rotation  # ZUPH: sin movimiento ni rotación
+
     for t in range(1, len(time)):
+        # Aplica ZUPH: reduce el gain si estamos en zona estacionaria sin rotación
+        madgwick.gain = low_gain if no_motion[t] else base_gain
         q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
         quats[t] = q
 
+    # Convertir aceleraciones al marco terrestre
     acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
     acc_earth -= estimate_gravity_vector(acc, 0.95)
     acc_earth *= 9.81
 
+    # Integración de velocidad con ZUPT
     vel = np.zeros_like(acc_earth)
     for t in range(1, len(vel)):
         vel[t] = vel[t - 1] + acc_earth[t] * sample_period
         if stationary[t]:
-            vel[t] = 0
+            vel[t] = 0  # ZUPT aplicado: velocidad puesta a cero si está estacionario
 
+    # Corrección de deriva por interpolación entre zonas ZUPT
     vel_drift = np.zeros_like(vel)
     starts = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
     ends = np.where(np.diff(stationary.astype(int)) == 1)[0] + 1
     for s, e in zip(starts, ends):
-        drift_rate = vel[e - 1] / (e - s)
-        vel_drift[s:e] = np.outer(np.arange(e - s), drift_rate)
+        if e > s:
+            drift_rate = vel[e - 1] / (e - s)
+            vel_drift[s:e] = np.outer(np.arange(e - s), drift_rate)
     vel -= vel_drift
 
+    # Integración para obtener posición
     pos = np.zeros_like(vel)
     for t in range(1, len(pos)):
         pos[t] = pos[t - 1] + vel[t] * sample_period
 
     return quats, acc_earth, vel, pos
+
 
 
 def compute_gps_positions(df, config):
@@ -194,42 +379,51 @@ def compute_gps_positions(df, config):
 
     :param df: DataFrame with 'lat' and 'lng' columns.
     :type df: pd.DataFrame
-    :param config: Full configuration dictionary (already loaded).
+    :param config: Configuration dictionary containing a 'Location' section with projection parameters:
+                   - proj (str): Projection type (e.g., 'utm')
+                   - zone (int): UTM zone number
+                   - ellps (str): Ellipsoid model (e.g., 'WGS84')
+                   - south (bool): True if in southern hemisphere
     :type config: dict
     :return: Tuple of GPS position array and final GPS position.
     :rtype: tuple[np.ndarray, np.ndarray]
+    :raises KeyError: If required projection parameters are missing in config['Location'].
     """
-    location_cfg = config.get("Location", {}) 
+
+
+    # Get projection configuration
+    location_cfg = config["Location"]  # Raises KeyError if 'Location' section is missing
+
+    proj = Proj(
+        proj=location_cfg["proj"],
+        zone=location_cfg["zone"],
+        ellps=location_cfg["ellps"],
+        south=location_cfg["south"]
+    )
+
+    # Extract latitude and longitude values
     lat = df['lat'].to_numpy()
     lng = df['lng'].to_numpy()
 
-    proj = Proj(
-        proj=location_cfg.get('proj', 'utm'),
-        zone=location_cfg.get('zone', 30),
-        ellps=location_cfg.get('ellps', 'WGS84'),
-        south=location_cfg.get('south', False)
-    )
-
+    # Project to Cartesian coordinates
     x, y = proj(lng, lat)
     gps_pos = np.stack((x - x[0], y - y[0]), axis=1)
 
-
     return gps_pos, gps_pos[-1]
 
-
-def plot_results(time, acc_lp, threshold, pos, vel, gps_pos=None, output_dir=None, base_name="trajectory", verbose=3):
+def plot_results(time, acc_lp, threshold, pos, vel, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", verbose=3, traj_label="IMU" ):
     """
     Plot diagnostic and trajectory figures for IMU data, and optionally save them.
 
     This function generates several plots based on filtered acceleration, position,
-    velocity, 2D and 3D trajectory, and a comparison with GPS data if available. 
+    velocity, 2D and 3D trajectory. If GPS data is provided, it includes a comparative plot. 
     Depending on the verbosity level and output directory, plots can also be saved.
 
     :param time: Array of timestamps in seconds.
     :type time: np.ndarray
     :param acc_lp: Low-pass filtered acceleration magnitude.
     :type acc_lp: np.ndarray
-    :param threshold: Threshold used for detecting stationary periods.
+    :param threshold: Threshold value used to detect stationary periods.
     :type threshold: float
     :param pos: Estimated position array of shape (N, 3).
     :type pos: np.ndarray
@@ -237,11 +431,16 @@ def plot_results(time, acc_lp, threshold, pos, vel, gps_pos=None, output_dir=Non
     :type vel: np.ndarray
     :param gps_pos: Optional GPS position array of shape (N, 2). Defaults to None.
     :type gps_pos: np.ndarray or None
-    :param output_dir: Directory to save output plots. If None, plots are not saved.
+    :param output_dir: Directory to save plots. If None, figures are displayed but not saved.
     :type output_dir: str or None
-    :param base_name: Base filename used when saving plots.
+    :param title: Title used in trajectory comparison plots.
+    :type title: str
+    :param base_name: Base filename for saving output plots (without extension).
     :type base_name: str
-    :param verbose: Verbosity level (2 shows trajectory comparison, 3 shows all plots).
+    :param verbose: Verbosity level:
+                    - 1: No plots
+                    - 2: Show/save trajectory plots
+                    - 3: Show/save all plots (acceleration, velocity, etc.)
     :type verbose: int
     """
     def save_figure(title):
@@ -309,16 +508,75 @@ def plot_results(time, acc_lp, threshold, pos, vel, gps_pos=None, output_dir=Non
     # IMU vs GPS comparison (always in verbose 2 or 3)
     if gps_pos is not None and verbose >= 2:
         plt.figure(figsize=(10, 8))
-        plt.plot(pos[:, 0], pos[:, 1], label='IMU Trajectory')
+        plt.plot(pos[:, 0], pos[:, 1], label=f'{traj_label} Trajectory')
         plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label='GPS Reference')
         plt.plot(gps_pos[-1, 0], gps_pos[-1, 1], 'ko', label='Final GPS')
-        plt.title("Trajectory Comparison (IMU vs GPS)")
+        plt.title(title)
         plt.xlabel("X (m)")
         plt.ylabel("Y (m)")
         plt.axis("equal")
         plt.grid()
         plt.legend()
-        save_figure("Trajectory Comparison (IMU vs GPS)")
+        save_figure(f"Trajectory Comparison ({traj_label} vs GPS)")
+
+# def apply_kalman_filter(pos_imu, gps_pos, time):
+#     """
+#     Ajusta la trayectoria estimada por la IMU usando un filtro de Kalman 2D con GPS como corrección.
+
+#     :param pos_imu: Posiciones estimadas por la IMU (N, 3).
+#     :param gps_pos: Posiciones GPS proyectadas en 2D (N, 2).
+#     :param time: Vector de tiempo.
+#     :return: Posiciones corregidas (N, 3)
+#     """
+#     dt = np.mean(np.diff(time))
+#     n = len(time)
+
+#     # Estado: [x, y, vx, vy]
+#     X = np.zeros((4, n))
+#     X[:2, 0] = gps_pos[0]  # posición inicial GPS
+#     X[2:, 0] = 0  # velocidad inicial 0
+
+#     # Matriz de transición del estado
+#     F = np.array([
+#         [1, 0, dt, 0],
+#         [0, 1, 0, dt],
+#         [0, 0, 1, 0 ],
+#         [0, 0, 0, 1 ]
+#     ])
+
+#     # Matriz de observación (solo medimos x, y del GPS)
+#     H = np.array([
+#         [1, 0, 0, 0],
+#         [0, 1, 0, 0]
+#     ])
+
+#     # Matrices de covarianza
+#     Q = np.eye(4) * 0.05   # Ruido del proceso (más alto si confías poco en la IMU)
+#     R = np.eye(2) * 5.0    # Ruido de la medición GPS
+#     P = np.eye(4) * 1.0    # Inicialización de incertidumbre
+
+#     estimated = np.zeros((n, 4))
+#     for k in range(1, n):
+#         # Predicción
+#         X[:, k] = F @ X[:, k - 1]
+#         P = F @ P @ F.T + Q
+
+#         # Solo corregimos si hay dato GPS
+#         if k < len(gps_pos):
+#             Z = gps_pos[k]  # medición GPS
+#             y = Z - H @ X[:, k]  # error de innovación
+#             S = H @ P @ H.T + R
+#             K = P @ H.T @ np.linalg.inv(S)  # ganancia de Kalman
+#             X[:, k] += K @ y
+#             P = (np.eye(4) - K @ H) @ P
+
+#         estimated[k] = X[:, k]
+
+#     pos_kalman = np.copy(pos_imu)
+#     pos_kalman[:, 0] = estimated[:, 0]
+#     pos_kalman[:, 1] = estimated[:, 1]
+#     return pos_kalman
+
 
 
 
@@ -338,17 +596,23 @@ def parse_args():
     parser.add_argument('-o', '--output_dir', type=str, default=None, help='Directory to save output plots')
     return parser.parse_args()
 
+prev_gps_latlng = None
+prev_gps_pos = None
+
 
 
 def main():
     """
     Main function to process IMU Excel files and plot estimated trajectories vs GPS.
     """
+    global prev_gps_latlng, prev_gps_pos
     args = parse_args()
     config = load_config(args.config)
     output_dir = args.output_dir
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
+
+    kf = None  # KalmanFilter2D instance
 
     for file_path in args.file_paths:
         base_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -362,24 +626,77 @@ def main():
 
         try:
             df = load_data(file_path)
-            df = resample_to_40hz(df)
 
+            if 'lat' in df.columns and 'lng' in df.columns:
+                current_gps_latlng = df[['lat', 'lng']].to_numpy()
+                use_prev_gps = False
+
+                if prev_gps_latlng is None:
+                    print("Este es el primer archivo con GPS cargado.")
+                else:
+                    if current_gps_latlng.shape == prev_gps_latlng.shape:
+                        same_gps = np.allclose(current_gps_latlng, prev_gps_latlng, atol=1e-6)
+                        print(f"¿GPS idéntico a archivo anterior?: {same_gps}")
+                        if same_gps:
+                            use_prev_gps = True
+                    else:
+                        print("GPS no comparable: diferente número de muestras.")
+                prev_gps_latlng = current_gps_latlng
+
+            df = resample_to_40hz(df)
             time, sample_rate, gyr, acc, mag, sample_period = preprocess_data(df)
             stationary, acc_lp, threshold = detect_stationary_zones(acc, sample_rate)
             quats, acc_earth, vel, pos = estimate_orientation_and_position(
                 time, gyr, acc, mag, sample_period, sample_rate, stationary
             )
 
-            gps_pos, gps_final = compute_gps_positions(df, config)
-            error = np.linalg.norm(pos[-1, :2] - gps_final) if gps_pos is not None else None
+            if use_prev_gps and prev_gps_pos is not None:
+                gps_pos = prev_gps_pos
+                gps_final = gps_pos[-1]
+                print("Se reutilizó el GPS del primer archivo.")
+            else:
+                gps_pos, gps_final = compute_gps_positions(df, config)
+                prev_gps_pos = gps_pos
 
-            if args.verbose >=2:
-                print("Estimation results vs GPS:\n")
-                print(f"- Error with GPS: {error:7.2f} m")
-                distance = np.max(np.linalg.norm(pos, axis=1))
-                print(f"- Max distance: {distance:7.2f} m")
+            # División para validación con Kalman
+            n = len(gps_pos)
+            mid = n // 2
+            gps_pos_1, gps_pos_2 = gps_pos[:mid], gps_pos[mid:]
+            pos_imu_1, pos_imu_2 = pos[:mid], pos[mid:]
+
+            dt = np.mean(np.diff(time))
+            if kf is None:
+                kf = KalmanFilter2D(dt=dt, q=0.05, r=5.0)
+
+            # Primera mitad con observación
+            kf.initialize(gps_pos_1[0])
+            traj_filtrada_1 = kf.filter_sequence(gps_pos_1)
+            pos_kalman_1 = pos_imu_1.copy()
+            pos_kalman_1[:, :2] = traj_filtrada_1[:, :2]
+
+            # Segunda mitad sin observación
+            kf.initialize(gps_pos_2[0])
+            kf.reset_covariance(p0=1.0)
+            traj_filtrada_2 = kf.filter_sequence(gps_pos_2)
+            pos_kalman_2 = pos_imu_2.copy()
+            pos_kalman_2[:, :2] = traj_filtrada_2[:, :2]
+
+            # Unir trayectorias
+            pos_kalman = np.vstack((pos_kalman_1, pos_kalman_2))
+
+            dist_gps = np.sum(np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)) if gps_pos is not None else 0
+
+            if args.verbose >= 2:
+                def print_metrics(name, traj):
+                    final_err = np.linalg.norm(traj[-1, :2] - gps_final)
+                    total_dist = np.sum(np.linalg.norm(np.diff(traj[:, :2], axis=0), axis=1))
+                    print(f"- {name}   -> Final error: {final_err:.2f} m | Distance: {total_dist:.2f} m")
+
+                print("\n Quantitative Comparison: ")
+                print(f"- Total GPS distance: {dist_gps:.2f} m")
+                print_metrics("IMU", pos)
+                print_metrics("Kalman", pos_kalman)
                 print(f"{'-'*80}")
-
             elif args.verbose == 3:
                 print("Diagnostics:")
                 print(f"- Samples: {len(df)}")
@@ -388,12 +705,27 @@ def main():
                 print(f"- Final position: {pos[-1]}")
                 print(f"- Final velocity: {vel[-1]}")
 
-            # Save or show plots
             save_path = None
             if output_dir and args.output_mode in ("save", "both"):
                 save_path = os.path.join(output_dir, f"{base_name}_trajectory.png")
 
-            plot_results(time, acc_lp, threshold, pos, vel, gps_pos=gps_pos, output_dir=output_dir if args.output_mode in ("save", "both") else None, base_name=base_name, verbose=args.verbose)
+            plot_results(
+                time, acc_lp, threshold, pos, vel, gps_pos=gps_pos,
+                output_dir=output_dir if args.output_mode in ("save", "both") else None,
+                title=f"Trajectory Comparison - {foot_label} (IMU vs GPS)",
+                base_name=base_name + "_pre_kalman",
+                verbose=args.verbose,
+                traj_label="IMU"
+            )
+
+            plot_results(
+                time, acc_lp, threshold, pos_kalman, vel, gps_pos=gps_pos,
+                output_dir=output_dir if args.output_mode in ("save", "both") else None,
+                title=f"Trajectory Comparison - {foot_label} (Kalman vs GPS)",
+                base_name=base_name + "_post_kalman",
+                verbose=args.verbose,
+                traj_label="Kalman"
+            )
 
             if save_path:
                 plt.savefig(save_path)
@@ -407,7 +739,6 @@ def main():
 
     if args.output_mode in ("screen", "both"):
         plt.show()
-
 
 
 if __name__ == "__main__":
