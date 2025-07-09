@@ -30,7 +30,7 @@ def main():
         try:
             df = load_data(file_path)
             df = resample_to_40hz(df)
-            time, sample_rate, gyr, acc, mag, _ = preprocess_data(df)
+            time, sample_rate, gyr, acc, mag, gps_df = preprocess_data(df)
             stationary = detect_stationary(acc, sample_rate)
 
             gps_pos, gps_final = compute_gps_positions(df, config)
@@ -117,10 +117,11 @@ def main():
                 elif args.plot_mode == 'all':
                     all_data = {k: (resultados[k], errores[k]) for k in resultados}
                     plot_trajectories_all(all_data, gps_pos, gps_final, title=f"Trajectory ({foot_label})")
-                elif args.plot_mode == 'interactive':
-                    output_file_html = os.path.join(output_dir, f"{base_name}_interactive.html")
-                    plot_trajectories_interactive(resultados, errores, gps_pos, gps_final, title=f"Trajectory ({foot_label})", save_path=output_file_html)
 
+                elif args.plot_mode == 'interactive':
+                    if output_dir:
+                        output_map = os.path.join(output_dir, f"{base_name}_map_estimates.html")
+                        generate_map_with_estimates(gps_df, resultados, output_map, config)
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 

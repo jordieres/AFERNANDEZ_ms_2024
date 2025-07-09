@@ -5,14 +5,16 @@ from scipy.interpolate import CubicSpline
 from matplotlib import pyplot as plt
 from ahrs.filters import Madgwick, Mahony
 from ahrs.common.orientation import q_conj, q_rot, axang2quat
-from pyproj import Proj
+from pyproj import Proj, Transformer
 import argparse
 import os
 import yaml
 from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 import plotly.graph_objects as go
-
+import folium
+from folium.plugins import PolyLineTextPath
+from folium import FeatureGroup, LayerControl
 
 
 def load_data(file_path):
@@ -114,8 +116,8 @@ def preprocess_data(df):
 
     :param df: Preprocessed DataFrame.
     :type df: pd.DataFrame
-    :return: Tuple of time array, sample rate, gyroscope, accelerometer, magnetometer arrays, and sample period.
-    :rtype: tuple[np.ndarray, float, np.ndarray, np.ndarray, np.ndarray, float]
+    :return: Tuple of time array, sample rate, gyroscope, accelerometer, magnetometer arrays, sample period and filtered GPS DataFrame..
+    :rtype: tuple[np.ndarray, float, np.ndarray, np.ndarray, np.ndarray, float, pd.DataFrame]
     """
     ...
     df['time'] = (df['_time'] - df['_time'].iloc[0]).dt.total_seconds()
@@ -127,8 +129,9 @@ def preprocess_data(df):
     acc = df[['Ax', 'Ay', 'Az']].to_numpy() 
     mag = df[['Mx', 'My', 'Mz']].to_numpy() * 0.1
     
+    df_gps = df[['lat', 'lng', 'time']].dropna().reset_index(drop=True)
 
-    return time, sample_rate, gyr, acc, mag, sample_period
+    return time, sample_rate, gyr, acc, mag, df_gps
 
 
 def estimate_gravity_vector(acc: np.ndarray, alpha: float = 0.9) -> np.ndarray:
@@ -521,3 +524,128 @@ def plot_trajectories_split(resultados, errores, gps_pos, gps_final, title, save
     plt.grid()
     if save_path:
         plt.savefig(save_path)
+
+
+
+
+
+
+# def generate_map_with_estimates(df_gps: pd.DataFrame, resultados: dict[str, np.ndarray], output_html_path: str):
+#     """
+#     Generates a map with GPS trajectory and estimated trajectories (IMU/Kalman) using Folium.
+
+#     :param df_gps: GPS DataFrame with 'lat' and 'lng'.
+#     :param resultados: Dictionary of trajectories in local X, Y coordinates (relative to GPS origin).
+#     :param output_html_path: Output path for the HTML map.
+#     """
+#     # 1. GPS Reference (UTM origin)
+#     lat0, lon0 = df_gps.loc[0, 'lat'], df_gps.loc[0, 'lng']
+#     proj_utm = Proj(proj='utm', zone=30, ellps='WGS84', south=False)
+#     transformer = Transformer.from_proj(proj_utm, 'epsg:4326', always_xy=True)
+
+#     # 2. Start folium map
+#     fmap = folium.Map(location=[lat0, lon0], zoom_start=18)
+
+#     # 3. Add GPS trajectory
+#     gps_coords = df_gps[['lat', 'lng']].values.tolist()
+#     folium.PolyLine(gps_coords, color='black', weight=4, popup="GPS").add_to(fmap)
+
+#     # 4. Add start/end markers
+#     folium.Marker(location=gps_coords[0], popup="Start", icon=folium.Icon(color='green')).add_to(fmap)
+#     folium.Marker(location=gps_coords[-1], popup="End", icon=folium.Icon(color='red')).add_to(fmap)
+
+#     # 5. Estimated trajectories (IMU, Kalman, etc.)
+#     color_list = ['blue', 'orange', 'purple', 'darkred', 'cadetblue', 'darkgreen', 'darkblue']
+#     color_map = {}
+
+#     for i, (name, traj) in enumerate(resultados.items()):
+#         x_coords = traj[:, 0]
+#         y_coords = traj[:, 1]
+#         lon_est, lat_est = transformer.transform(
+#             x_coords + proj_utm(lon0, lat0)[0],
+#             y_coords + proj_utm(lon0, lat0)[1]
+#         )
+#         path = list(zip(lat_est, lon_est))
+#         color = color_list[i % len(color_list)]
+#         color_map[name] = color
+#         folium.PolyLine(path, color=color, weight=3, popup=name).add_to(fmap)
+
+#     # 6. Optional: Add simulated legend using HTML
+#     legend_html = """
+#     <div style='position: fixed; bottom: 40px; left: 40px; z-index:9999; background-color:white;
+#                 padding: 10px; border:2px solid grey; border-radius:8px; font-size:14px;'>
+#         <b>Legend</b><br>
+#     """
+#     legend_html += f"<i style='background:black;width:10px;height:10px;display:inline-block;margin-right:5px;'></i>GPS<br>"
+#     for name, color in color_map.items():
+#         legend_html += f"<i style='background:{color};width:10px;height:10px;display:inline-block;margin-right:5px;'></i>{name}<br>"
+#     legend_html += "</div>"
+#     fmap.get_root().html.add_child(folium.Element(legend_html))
+
+#     # 7. Save map
+#     fmap.save(output_html_path)
+#     print(f"✅ Map with estimated trajectories saved to: {output_html_path}")
+
+
+
+def generate_map_with_estimates(df_gps, resultados, output_html_path, config):
+    """
+    Generates an interactive map with GPS and estimated IMU/Kalman trajectories using Folium.
+    Each trajectory can be toggled on/off via layer control.
+    
+    
+    :param df_gps: DataFrame containing GPS data with 'lat' and 'lng' columns.
+    :type df_gps: pandas.DataFrame
+    :param resultados: Dictionary mapping method names to estimated 2D trajectories (X, Y in meters).
+    :type resultados: dict[str, numpy.ndarray]
+    :param output_html_path: Path to save the resulting interactive HTML map.
+    :type output_html_path: str
+    :param config: Loaded YAML configuration dictionary containing 'Location' parameters.
+    :type config: dict
+    """
+    # 1. Get projection configuration
+    location_cfg = config["Location"]  # Raises KeyError if missing
+    proj = Proj(
+        proj=location_cfg["proj"],
+        zone=location_cfg["zone"],
+        ellps=location_cfg["ellps"],
+        south=location_cfg["south"]
+    )
+    ref_code = location_cfg["code"]
+    transformer = Transformer.from_proj(proj, ref_code, always_xy=True)
+
+    # 2. Get origin (first GPS point)
+    lat0, lon0 = df_gps.loc[0, 'lat'], df_gps.loc[0, 'lng']
+
+    # 3. Start folium map
+    fmap = folium.Map(location=[lat0, lon0], zoom_start=18)
+
+    # 4. Add GPS track
+    gps_coords = df_gps[['lat', 'lng']].values.tolist()
+    gps_group = folium.FeatureGroup(name='GPS (reference)')
+    folium.PolyLine(gps_coords, color='grey', weight=4).add_to(gps_group)
+    folium.Marker(location=gps_coords[0], popup="Start", icon=folium.Icon(color='green')).add_to(gps_group)
+    folium.Marker(location=gps_coords[-1], popup="End", icon=folium.Icon(color='red')).add_to(gps_group)
+    gps_group.add_to(fmap)
+
+    # 5. Add IMU/Kalman estimates
+    color_list = ['cadetblue','#5DA5DA','#FAA43A', "#056641",'#F17CB0',"#F04BF0",'#DECF3F','#F15854']
+    for i, (name, traj) in enumerate(resultados.items()):
+        x_coords = traj[:, 0]
+        y_coords = traj[:, 1]
+        lon_est, lat_est = transformer.transform(
+            x_coords + proj(lon0, lat0)[0],
+            y_coords + proj(lon0, lat0)[1]
+        )
+        path = list(zip(lat_est, lon_est))
+        color = color_list[i % len(color_list)]
+        group = folium.FeatureGroup(name=name)
+        folium.PolyLine(path, color=color, weight=3).add_to(group)
+        group.add_to(fmap)
+
+    # 6. Layer control
+    folium.LayerControl(collapsed=False).add_to(fmap)
+
+    # 7. Save map
+    fmap.save(output_html_path)
+    print(f"Interactive map saved to: {output_html_path}")
