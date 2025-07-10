@@ -11,7 +11,6 @@ from matplotlib import pyplot as plt
 from class_transform_imu import *
 from class_madwick import *
 
-
 prev_gps_latlng = None
 prev_gps_pos = None
 
