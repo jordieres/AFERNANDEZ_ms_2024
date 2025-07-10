@@ -44,7 +44,6 @@ def load_config(config_path):
     return config
 
 
-
 def parse_args():
     """
     Parse command-line arguments for the IMU processing pipeline.
@@ -172,11 +171,8 @@ def detect_stationary(acc, sample_rate):
     :type acc: np.ndarray
     :param sample_rate: Sampling rate of the accelerometer signal in Hz.
     :type sample_rate: float
-    :return: A tuple containing:
-             - stationary: Boolean array indicating stationary (True) or moving (False) states.
-             - acc_lp: Low-pass filtered absolute high-pass signal used for thresholding.
-             - threshold: Threshold value used to determine stationary periods.
-    :rtype: tuple[np.ndarray, np.ndarray, float]
+    :return: A tuple containing stationary: Boolean array indicating stationary (True) or moving (False) states.
+    :rtype: tuple[np.ndarray]
     :raises ValueError: If input shape is invalid or sample_rate is non-positive.
     """
     acc_mag = np.linalg.norm(acc, axis=1)
