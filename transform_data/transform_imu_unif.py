@@ -1,11 +1,37 @@
 import numpy as np
+import argparse
+import os
 from class_transform_imu import *
 from scipy.interpolate import interp1d
 
 
+def parse_args():
+    """
+    Parse command-line arguments for the IMU processing pipeline.
+
+    :return: Parsed command-line arguments.
+    :rtype: argparse.Namespace
+    """
+    parser = argparse.ArgumentParser(description="IMU data processing pipeline")
+    parser.add_argument("-f", "--file_paths", type=str, nargs="+", required=True, help="Paths to one or more Excel files")
+    parser.add_argument('-v', '--verbose', type=int, default=3, help='Verbosity level')
+    parser.add_argument('-c', '--config', type=str, default='.config.yaml', help='Path to the configuration file')
+    parser.add_argument('--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots: 'screen', 'save', or 'both'")
+    parser.add_argument('-o', '--output_dir', type=str, default=None, help='Directory to save output plots')
+    parser.add_argument('-m','--methods', nargs='+', choices=['madgwick_imu', 'madgwick_marg', 'mahony_imu', 'mahony_marg'], required=True, help="Algoritmos a ejecutar (elige uno o varios)")
+    parser.add_argument('-g','--plot_mode', choices=['split', 'all', 'interactive'], default='split', help="How to plot trajectories: 'split' (default), 'all', or 'interactive'")
+    return parser.parse_args()
+
+
 def main():
     args = parse_args()
-    config = load_config(args.config)
+    data_proc = DataPreprocessor(args.config)
+    imu_proc = IMUProcessor()
+    kalman_proc = KalmanProcessor()
+    plot_proc = PlotProcessor()
+
+    config = data_proc.config
+
     output_dir = args.output_dir
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
@@ -28,14 +54,13 @@ def main():
             print(f"{'-'*80}\n")
 
         try:
-            df = load_data(file_path)
-            df = resample_to_40hz(df)
-            time, sample_rate, gyr, acc, mag, gps_df = preprocess_data(df)
-            stationary = detect_stationary(acc, sample_rate)
-
-            gps_pos, gps_final = compute_gps_positions(df, config)
+            df = data_proc.load_data(file_path)
+            df = data_proc.resample_to_40hz(df)
+            time, sample_rate, gyr, acc, mag, df_gps = data_proc.preprocess_data(df)
+            gps_pos, gps_final = data_proc.compute_positions(df_gps, config)
+            stationary = imu_proc.detect_stationary(acc, sample_rate)
             imu_time = df['time'].to_numpy()
-            gps_time = df.loc[~df['lat'].isna(), 'time'].to_numpy()
+            gps_time = df_gps['time'].to_numpy()
             gps_interp_fn = interp1d(gps_time, gps_pos, axis=0, bounds_error=False, fill_value="extrapolate")
 
             resultados = {}
@@ -46,7 +71,7 @@ def main():
                 m_conf = method_configs[method_key]
                 method_name = m_conf["title"]
 
-                pos = estimate_position_generic(
+                pos = imu_proc.estimate_position_generic(
                     method=m_conf["method"],
                     use_mag=m_conf["use_mag"],
                     gyr=gyr, acc=acc, mag=mag,
@@ -55,7 +80,7 @@ def main():
                 )
 
                 gps_interp = gps_interp_fn(imu_time[:len(pos)])
-                kalman_fused = apply_kalman_filter2(pos, gps_interp, time)
+                kalman_fused = kalman_proc.apply_filter2(pos, gps_interp, time)
 
                 base_error = np.mean(np.linalg.norm(pos[:, :2] - gps_interp[:len(pos), :2], axis=1))
                 kalman_error = np.mean(np.linalg.norm(kalman_fused[:, :2] - gps_interp[:len(pos), :2], axis=1))
@@ -87,28 +112,14 @@ def main():
                     print(f"Total Duration           : {duration:.2f} s")
                     print(f"Average Speed (IMU)      : {mean_speed:.2f} m/s")
 
-                 
-
-                # Guardar imagen si procede
-                if output_dir and args.output_mode in ("save", "both"):
-                    output_file = os.path.join(output_dir, f"{base_name}_{method_key}.png")
-
-                    plot_trajectories(
-                        resultados={f"{method_name}": pos[:, :2], f"{method_name} + Kalman": kalman_fused},
-                        errores={f"{method_name}": base_error, f"{method_name} + Kalman": kalman_error},
-                        gps_pos=gps_pos,
-                        gps_final=gps_final,
-                        title=f"Trajectory  ({foot_label})",
-                        save_path=output_file
-                    )
-
+                
             print(f"{'-'*80}")
 
             if args.output_mode in ("screen", "both"):
                 if args.plot_mode == 'split':
                     for method_key in args.methods:
                         method_title = method_configs[method_key]["title"]
-                        plot_trajectories_split(
+                        plot_proc.plot_trajectories_split(
                             {k: v for k, v in resultados.items() if method_title in k},
                             {k: v for k, v in errores.items() if method_title in k},
                             gps_pos, gps_final,
@@ -116,17 +127,28 @@ def main():
                         )
                 elif args.plot_mode == 'all':
                     all_data = {k: (resultados[k], errores[k]) for k in resultados}
-                    plot_trajectories_all(all_data, gps_pos, gps_final, title=f"Trajectory ({foot_label})")
-
+                    plot_proc.plot_trajectories_all(all_data, gps_pos, gps_final, title=f"Trajectory ({foot_label})")
                 elif args.plot_mode == 'interactive':
                     if output_dir:
                         output_map = os.path.join(output_dir, f"{base_name}_map_estimates.html")
-                        generate_map_with_estimates(gps_df, resultados, output_map, config)
+                        plot_proc.generate_map_with_estimates(df_gps, resultados, output_map, config)
 
-                        
+            if output_dir and args.output_mode in ("save", "both"):
+                for method_key in args.methods:
+                    m_conf = method_configs[method_key]
+                    method_name = m_conf["title"]
+                    output_file = os.path.join(output_dir, f"{base_name}_{method_key}.png")
+                    plot_proc.plot_trajectories(
+                        resultados={f"{method_name}": resultados[f"{method_name}"], f"{method_name} + Kalman": resultados[f"{method_name} + Kalman"]},
+                        errores={f"{method_name}": errores[f"{method_name}"], f"{method_name} + Kalman": errores[f"{method_name} + Kalman"]},
+                        gps_pos=gps_pos,
+                        gps_final=gps_final,
+                        title=f"Trajectory ({foot_label})",
+                        save_path=output_file
+                    )
+
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
-
 
     if args.output_mode in ("screen", "both"):
         plt.show()

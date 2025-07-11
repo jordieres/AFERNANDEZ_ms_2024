@@ -6,24 +6,44 @@ Además se aplica el kalman simple unicamente pero en este caso se divide el df 
 
 import numpy as np
 import os
+import argparse
 from matplotlib import pyplot as plt
 
 from class_transform_imu import *
 from class_madwick import *
 
-prev_gps_latlng = None
-prev_gps_pos = None
+
+
+def parse_args():
+    """
+    Parse command-line arguments for the IMU processing pipeline.
+
+    :return: Parsed command-line arguments.
+    :rtype: argparse.Namespace
+    """
+    parser = argparse.ArgumentParser(description="IMU data processing pipeline")
+    parser.add_argument("-f", "--file_paths", type=str, nargs="+", required=True, help="Paths to one or more Excel files")
+    parser.add_argument("--threshold", type=float, default=0.1, help="Stationary detection threshold")
+    parser.add_argument('-v', '--verbose', type=int, default=3, help='Verbosity level')
+    parser.add_argument('-c', '--config', type=str, default='.config.yaml', help='Path to the configuration file')
+    parser.add_argument('--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots: 'screen', 'save', or 'both'")
+    parser.add_argument('-o', '--output_dir', type=str, default=None, help='Directory to save output plots')
+    return parser.parse_args()
+
+
 
 def main():
     """
     Main function to process IMU Excel files and plot estimated trajectories vs GPS.
     """
-    global prev_gps_latlng, prev_gps_pos
-    args = parse_args_M()
-    config = load_config(args.config)
-    output_dir = args.output_dir
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
+    args = parse_args()
+    if args.output_dir:
+        os.makedirs(args.output_dir, exist_ok=True)
+
+    preprocessor = DataPreprocessor(args.config)
+    imu_processor = IMUProcessor()
+    estimator = PositionVelocityEstimator(sample_rate=40, sample_period=1/40)
+    plotter = PlotProcessor()
 
     kf = None  # KalmanFilter2D instance
 
@@ -38,38 +58,15 @@ def main():
             print(f"{'-'*80}\n")
 
         try:
-            df = load_data(file_path)
-
-            if 'lat' in df.columns and 'lng' in df.columns:
-                current_gps_latlng = df[['lat', 'lng']].to_numpy()
-                use_prev_gps = False
-
-                if prev_gps_latlng is None:
-                    print("Este es el primer archivo con GPS cargado.")
-                else:
-                    if current_gps_latlng.shape == prev_gps_latlng.shape:
-                        same_gps = np.allclose(current_gps_latlng, prev_gps_latlng, atol=1e-6)
-                        print(f"¿GPS idéntico a archivo anterior?: {same_gps}")
-                        if same_gps:
-                            use_prev_gps = True
-                    else:
-                        print("GPS no comparable: diferente número de muestras.")
-                prev_gps_latlng = current_gps_latlng
-
-            df = resample_to_40hz(df)
-            time, sample_rate, gyr, acc, mag, sample_period = preprocess_data(df)
-            stationary, acc_lp, threshold = detect_stationary(acc, sample_rate)
-            quats, acc_earth, vel, pos = estimate_orientation_and_position(
+            df = preprocessor.resample_to_40hz(df)
+            time, sample_rate, gyr, acc, mag, sample_period = preprocessor.preprocess_data(df)
+            stationary, acc_lp, threshold = imu_processor.detect_stationary(acc, sample_rate)
+            quats, acc_earth, vel, pos = estimator.estimate_orientation_and_position(
                 time, gyr, acc, mag, sample_period, sample_rate, stationary
             )
 
-            if use_prev_gps and prev_gps_pos is not None:
-                gps_pos = prev_gps_pos
-                gps_final = gps_pos[-1]
-                print("Se reutilizó el GPS del primer archivo.")
-            else:
-                gps_pos, gps_final = compute_gps_positions(df, config)
-                prev_gps_pos = gps_pos
+            gps_pos, gps_final = preprocessor.compute_positions(df, preprocessor.config)
+            
 
             # División para validación con Kalman
             n = len(gps_pos)
@@ -118,38 +115,34 @@ def main():
                 print(f"- Final position: {pos[-1]}")
                 print(f"- Final velocity: {vel[-1]}")
 
-            save_path = None
-            if output_dir and args.output_mode in ("save", "both"):
-                save_path = os.path.join(output_dir, f"{base_name}_trajectory.png")
+            
+            if args.output_dir and args.output_mode in ("save", "both"):
+                return os.path.join(args.output_dir, f"{base_name}.png")
 
-            plot_results(
+            plotter.plot_results_madwick(
                 time, acc_lp, threshold, pos, vel, gps_pos=gps_pos,
-                output_dir=output_dir if args.output_mode in ("save", "both") else None,
+                output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
                 title=f"Trajectory Comparison - {foot_label} (IMU vs GPS)",
                 base_name=base_name + "_pre_kalman",
                 verbose=args.verbose,
                 traj_label="IMU"
             )
 
-            plot_results(
+            plotter.plot_results_madwick(
                 time, acc_lp, threshold, pos_kalman, vel, gps_pos=gps_pos,
-                output_dir=output_dir if args.output_mode in ("save", "both") else None,
+                output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
                 title=f"Trajectory Comparison - {foot_label} (Kalman vs GPS)",
                 base_name=base_name + "_post_kalman",
                 verbose=args.verbose,
                 traj_label="Kalman"
             )
 
-            if save_path:
-                plt.savefig(save_path)
-
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
 
-    if output_dir and args.output_mode in ("save", "both"):
+    if args.output_dir and args.output_mode in ("save", "both"):
         print(f"{'-'*80}")
-        print(f"\nTrajectory plots successfully saved to:\n{output_dir}\n")
-
+        print(f"\nTrajectory plots saved to: {args.output_dir}")
     if args.output_mode in ("screen", "both"):
         plt.show()
 
