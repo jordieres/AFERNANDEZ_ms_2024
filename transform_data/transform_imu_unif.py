@@ -2,6 +2,24 @@ import numpy as np
 from class_transform_imu import *
 from scipy.interpolate import interp1d
 
+def parse_args():
+    """
+    Parse command-line arguments for the IMU processing pipeline.
+
+    :return: Parsed command-line arguments.
+    :rtype: argparse.Namespace
+    """
+    parser = argparse.ArgumentParser(description="IMU data processing pipeline")
+    parser.add_argument("-f", "--file_paths", type=str, nargs="+", required=True, help="Paths to the relevant HDF5 file")
+    parser.add_argument('-v', '--verbose', type=int, default=3, help='Verbosity level')
+    parser.add_argument('-c', '--config', type=str, default='.config.yaml', help='Path to the configuration file')
+    parser.add_argument('-s', '--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots: 'screen', 'save', or 'both'")
+    parser.add_argument('-o', '--output_dir', type=str, default=None, help='Directory to save output plots')
+    parser.add_argument('-k', '--key', type=str, required=True, help='Key inside the HDF5 file to be processed (h5ls *)')
+    parser.add_argument('-m','--methods', nargs='+', choices=['madgwick_imu', 'madgwick_marg', 'mahony_imu', 'mahony_marg'], required=True, help="Algoritmos a ejecutar (elige uno o varios)")
+    parser.add_argument('-g','--plot_mode', choices=['split', 'all', 'interactive'], default='split', help="How to plot trajectories: 'split' (default), 'all', or 'interactive'")
+    return parser.parse_args()
+
 
 def main():
     args = parse_args()
