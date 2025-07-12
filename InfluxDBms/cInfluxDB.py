@@ -1,6 +1,7 @@
 import pandas as pd
 from influxdb_client import InfluxDBClient
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import urllib3
 import yaml
 
@@ -27,6 +28,14 @@ class cInfluxDB:
         self.org = config['influxdb']['org']
         self.token = config['influxdb']['token']
         self.url = config['influxdb']['url']
+        
+        if 'Location' in config.keys():
+            self.proj = config['Location']['proj']
+            self.zone = config['Location']['zone']
+            self.ellps= config['Location']['ellps']
+            self.south= config['Location']['south']
+            self.code = config['Location']['code']
+            self.zInfo= config['Location']['zoneInfo']
 
         # Initialises the InfluxDB client
         self.client = InfluxDBClient(url=self.url, token=self.token, org=self.org, \
@@ -34,6 +43,36 @@ class cInfluxDB:
         self.measurement = self.bucket.split("/")[0] if '/' in self.bucket else \
                            self.bucket
     
+    def cet2zulu(self,dt: datetime, tzone:str = "Europe/Madrid") -> str :
+        """
+        Converts a naive datetime to a Zulu (UTC) time string assuming a given timezone.
+
+        This method interprets the input naive datetime as being in the specified
+        timezone (defaulting to Central European Summer Time, 'Europe/Madrid'),
+        converts it to UTC, and returns the result in ISO 8601 Zulu format.
+
+        Args:
+            dt (datetime): A naive datetime object (i.e., without timezone info) that 
+                should be interpreted as local time in the specified timezone.
+            tzone (str, optional): The IANA timezone name to interpret `dt` in. 
+                Defaults to "Europe/Madrid".
+
+        Returns:
+            str: A string representing the datetime in UTC using the Zulu format 
+            (e.g., '2024-04-25T14:13:30Z').
+
+        Raises:
+            ValueError: If the provided timezone name is invalid or unsupported.
+
+        Example:
+            dt = datetime(2024, 4, 25, 16, 13, 30)
+            self.cet2zulu(dt)  =>   '2024-04-25T14:13:30Z'
+        """
+        from_date_cest = dt.replace(tzinfo=ZoneInfo(tzone))
+        from_date_utc = from_date_cest.astimezone(ZoneInfo("UTC"))
+        zulu_time = from_date_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return zulu_time
+        
 
     def query_data(self, from_date: datetime, to_date: datetime, qtok: str, pie: str, 
                    metrics=None) -> pd.DataFrame:
@@ -54,8 +93,12 @@ class cInfluxDB:
         :return: DataFrame with the metrics pivoted on columns, ordered by _time descending.
         :rtype: pd.DataFrame
         """
-        from_date_str = from_date.strftime('%Y-%m-%dT%H:%M:%SZ')  # UTC con 'Z'
-        to_date_str = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+        zInfo = "Europe/Madrid"
+        if self.zInfo:
+            zInfo = self.zInfo
+            
+        from_date_str = self.cet2zulu(from_date,zInfo)  # UTC con 'Z'
+        to_date_str = self.cet2zulu(to_date, zInfo)
 
         # Default metrics
         if metrics is None:
@@ -83,6 +126,9 @@ class cInfluxDB:
 
         # Process the results in a DataFrame
         data = []
+        if len(result) == 0:
+            return pd.DataFrame()
+        
         for table in result:
             for record in table.records:
                 val = record.values

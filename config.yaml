@@ -5,7 +5,12 @@ influxdb:
   url: "https://xxx"
 
 Location:
-  proj : 'utm'
+  proj: 'utm'
   zone: 30
   ellps: 'WGS84'
-  south: false
+  south: False
+  code: 'epsg:4326'
+  zoneInfo: 'Europe/Madrid'
+
+Display:
+  mode:'Screen'  # 'PDF'
