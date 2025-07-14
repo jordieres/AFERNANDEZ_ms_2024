@@ -1,9 +1,16 @@
+"""
+
+Madwick con Magnetometro aplicando ZUPT,ZUPH y lo de la rotación.
+Además se ven distintas formas de ajustar la deriva aunque la mejor es la de kalman basico.
+
+"""
+
 import os
 import argparse
 import numpy as np
 
 from class_transform_imu import*
-from class_madwick import *
+
 
 
 def parse_args():
@@ -78,24 +85,23 @@ def main():
             
 
             # Plot all variations
-            plotter.plot_results_madwick(time, acc_lp=None, threshold=args.threshold, pos=pos, vel=vel,
+            plotter.plot_results_madwick(time,  pos=pos, vel=vel,
                                          gps_pos=gps_pos, output_dir=args.output_dir, base_name=base_name + "_pre_kalman",
                                          verbose=args.verbose, title=f"{foot_label} - IMU", traj_label="IMU")
 
-            plotter.plot_results_madwick(time, acc_lp=None, threshold=args.threshold, pos=pos_kalman, vel=vel,
+            plotter.plot_results_madwick(time, pos=pos_kalman, vel=vel,
                                          gps_pos=gps_pos, output_dir=args.output_dir, base_name=base_name + "_kalman",
                                          verbose=args.verbose, title=f"{foot_label} - Kalman", traj_label="Kalman")
 
-            plotter.plot_results_madwick(time, acc_lp=None, threshold=args.threshold, 
-                                         pos=np.hstack((pos_ekf_2d, pos[:, 2:3])), vel=vel,
+            plotter.plot_results_madwick(time, pos=np.hstack((pos_ekf_2d, pos[:, 2:3])), vel=vel,
                                          gps_pos=gps_pos, output_dir=args.output_dir, base_name=base_name + "_ekf2d",
                                          verbose=args.verbose, title=f"{foot_label} - EKF 2D", traj_label="EKF 2D")
 
-            plotter.plot_results_madwick(time, acc_lp=None, threshold=args.threshold, pos=pos_complementary, vel=vel,
+            plotter.plot_results_madwick(time, pos=pos_complementary, vel=vel,
                                          gps_pos=gps_pos, output_dir=args.output_dir, base_name=base_name + "_complementary",
                                          verbose=args.verbose, title=f"{foot_label} - Complementary", traj_label="Complementary")
 
-            plotter.plot_results_madwick(time, acc_lp=None, threshold=args.threshold, pos=pos_drift_corrected, vel=vel,
+            plotter.plot_results_madwick(time,  pos=pos_drift_corrected, vel=vel,
                                          gps_pos=gps_pos, output_dir=args.output_dir, base_name=base_name + "_drift",
                                          verbose=args.verbose, title=f"{foot_label} - Linear Drift", traj_label="LinearDrift")
 

@@ -10,7 +10,7 @@ import argparse
 from matplotlib import pyplot as plt
 
 from class_transform_imu import *
-from class_madwick import *
+
 
 
 
@@ -58,14 +58,15 @@ def main():
             print(f"{'-'*80}\n")
 
         try:
-            df = preprocessor.resample_to_40hz(df)
-            time, sample_rate, gyr, acc, mag, sample_period = preprocessor.preprocess_data(df)
-            stationary, acc_lp, threshold = imu_processor.detect_stationary(acc, sample_rate)
+            df = preprocessor.load_data(file_path)
+            df_inter = preprocessor.resample_to_40hz(df)
+            time, sample_rate, gyr, acc, mag, sample_period = preprocessor.preprocess_data(df_inter)
+            stationary = imu_processor.detect_stationary(acc, sample_rate)
             quats, acc_earth, vel, pos = estimator.estimate_orientation_and_position(
-                time, gyr, acc, mag, sample_period, sample_rate, stationary
+                time, gyr, acc, mag, stationary
             )
 
-            gps_pos, gps_final = preprocessor.compute_positions(df, preprocessor.config)
+            gps_pos, gps_final = preprocessor.compute_positions(df_inter, preprocessor.config)
             
 
             # División para validación con Kalman
@@ -109,7 +110,7 @@ def main():
                 print(f"{'-'*80}")
             elif args.verbose == 3:
                 print("Diagnostics:")
-                print(f"- Samples: {len(df)}")
+                print(f"- Samples: {len(df_inter)}")
                 print(f"- Frequency (Hz): {sample_rate:.2f}")
                 print(f"- Stationary samples: {np.sum(stationary)}")
                 print(f"- Final position: {pos[-1]}")
@@ -120,7 +121,7 @@ def main():
                 return os.path.join(args.output_dir, f"{base_name}.png")
 
             plotter.plot_results_madwick(
-                time, acc_lp, threshold, pos, vel, gps_pos=gps_pos,
+                time, pos, vel, gps_pos=gps_pos,
                 output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
                 title=f"Trajectory Comparison - {foot_label} (IMU vs GPS)",
                 base_name=base_name + "_pre_kalman",
@@ -129,7 +130,7 @@ def main():
             )
 
             plotter.plot_results_madwick(
-                time, acc_lp, threshold, pos_kalman, vel, gps_pos=gps_pos,
+                time, pos_kalman, vel, gps_pos=gps_pos,
                 output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
                 title=f"Trajectory Comparison - {foot_label} (Kalman vs GPS)",
                 base_name=base_name + "_post_kalman",
