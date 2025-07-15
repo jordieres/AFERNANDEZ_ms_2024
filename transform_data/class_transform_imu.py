@@ -116,7 +116,7 @@ class DataPreprocessor:
 
         gyr = df[['Gx', 'Gy', 'Gz']].to_numpy() * np.pi / 180
         acc = df[['Ax', 'Ay', 'Az']].to_numpy() 
-        mag = df[['Mx', 'My', 'Mz']].to_numpy() * 0.1
+        mag = df[['Mx', 'My', 'Mz']].to_numpy() * 100
         
         df_gps = df[['lat', 'lng', 'time']].dropna().reset_index(drop=True)
 
@@ -1180,6 +1180,5 @@ class DetectPeaks:
         plt.ylabel(signal_column)
         plt.title("Detected Peak Triplets")
         plt.tight_layout()
-        plt.show()
 
     
