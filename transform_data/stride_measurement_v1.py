@@ -60,7 +60,12 @@ def main():
             time, sample_rate, gyr, acc, mag, df_gps = preprocessor.preprocess_data(df_inter)
             triplets = dp.detect_gyro_triplet_peaks(df_inter, column='modG')
             dp.plot_peaks(df_inter, signal_column='modG', peak_df=triplets)
-    
+
+            df_inter["modA"] = np.sqrt(df_inter["Ax"]**2 + df_inter["Ay"]**2 + df_inter["Az"]**2)
+            triplets_acc = dp.detect_gyro_triplet_peaks(df_inter, column='modA')
+            dp.plot_peaks(df_inter, signal_column='modA', peak_df=triplets_acc)
+
+
 
         except Exception as e:
             print(f"Error processing {file_path}: {e}")

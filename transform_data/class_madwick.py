@@ -60,10 +60,20 @@ class PositionVelocityEstimator:
             q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
             quats[t] = q
 
+        # acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
+        # acc_earth -= IMUProcessor.estimate_gravity_vector(acc, 0.95)
+        # acc_earth *= 9.81
+        gravity = IMUProcessor.estimate_gravity_vector(acc, 0.95)
+        print("➡️ Vector gravedad estimado:", gravity)
+
         acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
-        acc_earth -= IMUProcessor.estimate_gravity_vector(acc, 0.95)
+        acc_earth -= gravity
         acc_earth *= 9.81
 
+        print("🔍 Normas de acc_earth (primeros 10):", np.linalg.norm(acc_earth[:10], axis=1))
+        print("acc_earth media total:", np.mean(np.linalg.norm(acc_earth, axis=1)))
+        
+        
         vel = np.zeros_like(acc_earth)
         for t in range(1, len(vel)):
             vel[t] = vel[t - 1] + acc_earth[t] * self.sample_period
@@ -82,6 +92,12 @@ class PositionVelocityEstimator:
         pos = np.zeros_like(vel)
         for t in range(1, len(pos)):
             pos[t] = pos[t - 1] + vel[t] * self.sample_period
+
+        print("🔍 Resumen de flags:")
+        print(f"Samples estacionarios: {np.sum(stationary)} / {len(stationary)} ({np.mean(stationary)*100:.2f}%)")
+        print(f"acc_earth media (primeros 5):\n{acc_earth[:5]}")
+        print(f"vel media (primeros 5):\n{vel[:5]}")
+        print(f"pos media (primeros 5):\n{pos[:5]}")
 
         return quats, acc_earth, vel, pos
 

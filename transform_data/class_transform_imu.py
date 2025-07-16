@@ -714,81 +714,94 @@ class PlotProcessor:
 
 
 
-class detectPeak:
-    
 
- 
- 
-    def detect_gyro_triplet_peaks(df: pd.DataFrame, column: str, distance: int = 10, prominence: float = 0.5) -> pd.DataFrame:
+class DetectPeaks:
+    def __init__(self):
+        pass
+
+    def detect_triplet_peaks(self, df: pd.DataFrame, column: str, distance: int = 10, prominence: float = 0.5) -> pd.DataFrame:
+
         """Detects triplets of peaks (entry-secondary, main, exit-secondary) in gyroscope data.
-    
-        Args:
-            df (pd.DataFrame): Input DataFrame with a 'datetime' column in milliseconds and a gyroscope data column.
-            column (str): Name of the column containing gyroscope values.
-            distance (int): Minimum horizontal distance (in samples) between peaks.
-            prominence (float): Minimum prominence of a peak to be considered significant.
-    
+            Args:
+
+                df (pd.DataFrame): Input DataFrame with a 'datetime' column in milliseconds and a gyroscope data column.
+                column (str): Name of the column containing gyroscope values.
+                distance (int): Minimum horizontal distance (in samples) between peaks.
+                prominence (float): Minimum prominence of a peak to be considered significant.
+        
         Returns:
             pd.DataFrame: A DataFrame containing the time and values of the identified peak triplets with labels.
+
         """
+
         values = df[column].values
         peaks, properties = find_peaks(values, distance=distance, prominence=prominence)
-    
         peak_df = df.iloc[peaks].copy()
         peak_df["peak_type"] = "unlabeled"
     
         # Heuristics: look for triplets where a main peak is preceded and followed by smaller peaks
+
         triplet_peaks = []
         for i in range(1, len(peaks) - 1):
             prev_idx, curr_idx, next_idx = peaks[i - 1], peaks[i], peaks[i + 1]
             prev_val, curr_val, next_val = values[prev_idx], values[curr_idx], values[next_idx]
-    
             if curr_val > prev_val and curr_val > next_val:
                 triplet_peaks.extend([
-                    {"timestamp": df.iloc[prev_idx]["datetime"], "value": prev_val, "peak_type": "entry"},
-                    {"timestamp": df.iloc[curr_idx]["datetime"], "value": curr_val, "peak_type": "main"},
-                    {"timestamp": df.iloc[next_idx]["datetime"], "value": next_val, "peak_type": "exit"}
+                    {"timestamp": df.iloc[prev_idx]["time"], "value": prev_val, "peak_type": "entry"},
+                    {"timestamp": df.iloc[curr_idx]["time"], "value": curr_val, "peak_type": "main"},
+                    {"timestamp": df.iloc[next_idx]["time"], "value": next_val, "peak_type": "exit"}
+
                 ])
     
         return pd.DataFrame(triplet_peaks)
     
     
-    def plot_peaks(df: pd.DataFrame, signal_column: str, peak_df: pd.DataFrame) -> None:
-        """Plots the gyroscope signal and overlays detected peak triplets.
-    
+    def plot_peaks(self, df: pd.DataFrame, signal_column: str, peak_df: pd.DataFrame, signal_name: str = None) -> None:
+        """
+        Plots the gyroscope or accelerometer signal and overlays detected peak triplets.
+
         Args:
             df (pd.DataFrame): Original DataFrame with time series data.
-            signal_column (str): Name of the column with gyroscope values.
+            signal_column (str): Name of the column with signal values.
             peak_df (pd.DataFrame): DataFrame with labeled peaks.
+            signal_name (str, optional): Name to display in the title (e.g., 'modG', 'modA'). Defaults to signal_column.
         """
+        if signal_name is None:
+            signal_name = signal_column
+
         plt.figure(figsize=(15, 4))
-        plt.plot(df["datetime"], df[signal_column], label="Gyro signal", color="orange")
-    
+        plt.plot(df["time"], df[signal_column], label=f"{signal_name} signal", color="orange")
+
         for label, color in zip(["entry", "main", "exit"], ["blue", "red", "green"]):
             points = peak_df[peak_df["peak_type"] == label]
             plt.scatter(points["timestamp"], points["value"], label=label, color=color)
-    
+
         plt.legend()
-        plt.xlabel("Time (ms)")
-        plt.ylabel(signal_column)
-        plt.title("Detected Peak Triplets")
+        plt.xlabel("Time (s)")
+        plt.ylabel(f"{signal_name} value")
+        plt.title(f"Detected Peak Triplets - {signal_name}")
         plt.tight_layout()
-        plt.show()
+
+
+    def analyze_step_robustness(self,triplets: pd.DataFrame, signal_name: str, total_time: float, window_size: float = 10.0):
+        print(f"\n Validación de pasos detectados en ventanas de {window_size:.0f}s para {signal_name}:")
+        triplets = triplets.copy()
+        triplets["timestamp"] = pd.to_numeric(triplets["timestamp"], errors="coerce")
+        n_windows = int(np.ceil(total_time / window_size))
+        for i in range(n_windows):
+            start_t = i * window_size
+            end_t = (i + 1) * window_size
+            in_window = triplets[
+                (triplets['peak_type'] == 'main') &
+                (triplets['timestamp'] >= start_t) &
+                (triplets['timestamp'] < end_t)
+            ]
+            print(f" Ventana {i+1}: {len(in_window)} pasos detectados entre {start_t:.1f}s y {end_t:.1f}s")
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-# MADWICK 
 
 
 class PositionVelocityEstimator:
@@ -801,7 +814,6 @@ class PositionVelocityEstimator:
         self.sample_period = sample_period
         self.base_gain = 0.041
         self.low_gain = 0.001
-        self.imu_processor = IMUProcessor()
 
     def estimate_orientation_and_position(self, time, gyr, acc, mag, stationary):
         """
@@ -847,15 +859,18 @@ class PositionVelocityEstimator:
             q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
             quats[t] = q
 
-        acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
-        acc_earth -= self.imu_processor.estimate_gravity_vector(acc, 0.95)
-        acc_earth *= 9.81
+        imu_proc = IMUProcessor()
+        gravity = imu_proc.estimate_gravity_vector(acc, 0.95)
 
+        acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
+        acc_earth -= gravity
+        acc_earth *= 9.81
+        
         vel = np.zeros_like(acc_earth)
         for t in range(1, len(vel)):
             vel[t] = vel[t - 1] + acc_earth[t] * self.sample_period
-            if stationary[t]:
-                vel[t] = 0
+            if stationary[t] and not stationary[t - 1]:
+                vel[t] = 0  
 
         vel_drift = np.zeros_like(vel)
         starts = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
@@ -1118,67 +1133,41 @@ class KalmanFilter2D:
             filtered.append(self.step(z))
         return np.vstack(filtered)
     
+    def filter_with_GPS_predict_and_IMU_update(self, gps_positions, imu_velocities):
+        """
+        Predice usando posiciones GPS como entrada del modelo y corrige con velocidades IMU.
 
-class DetectPeaks:
-    def __init__(self):
-        pass
+        Args:
+            gps_positions (N, 2): Posición de GPS (para predicción del modelo).
+            imu_velocities (N, 2): Velocidades medidas por el IMU (como observación de corrección).
 
-    
-    def detect_gyro_triplet_peaks(self, df: pd.DataFrame, column: str, distance: int = 10, prominence: float = 0.5) -> pd.DataFrame:
-
-        """Detects triplets of peaks (entry-secondary, main, exit-secondary) in gyroscope data.
-            Args:
-
-                df (pd.DataFrame): Input DataFrame with a 'datetime' column in milliseconds and a gyroscope data column.
-                column (str): Name of the column containing gyroscope values.
-                distance (int): Minimum horizontal distance (in samples) between peaks.
-                prominence (float): Minimum prominence of a peak to be considered significant.
-        
         Returns:
-            pd.DataFrame: A DataFrame containing the time and values of the identified peak triplets with labels.
-
+            (N, 4): Estados filtrados [x, y, vx, vy]
         """
+        filtered = []
 
-        values = df[column].values
-        peaks, properties = find_peaks(values, distance=distance, prominence=prominence)
-        peak_df = df.iloc[peaks].copy()
-        peak_df["peak_type"] = "unlabeled"
-    
-        # Heuristics: look for triplets where a main peak is preceded and followed by smaller peaks
+        for i in range(len(gps_positions)):
+            # Predicción (con modelo)
+            self.x = self.F @ self.x
+            self.P = self.F @ self.P @ self.F.T + self.Q
 
-        triplet_peaks = []
-        for i in range(1, len(peaks) - 1):
-            prev_idx, curr_idx, next_idx = peaks[i - 1], peaks[i], peaks[i + 1]
-            prev_val, curr_val, next_val = values[prev_idx], values[curr_idx], values[next_idx]
-            if curr_val > prev_val and curr_val > next_val:
-                triplet_peaks.extend([
-                    {"timestamp": df.iloc[prev_idx]["time"], "value": prev_val, "peak_type": "entry"},
-                    {"timestamp": df.iloc[curr_idx]["time"], "value": curr_val, "peak_type": "main"},
-                    {"timestamp": df.iloc[next_idx]["time"], "value": next_val, "peak_type": "exit"}
-
+            # Corrección con velocidad IMU (si está disponible)
+            z_vel = imu_velocities[i]
+            if not np.isnan(z_vel).any():
+                # Solo velocidad: observamos vx, vy (últimas dos componentes)
+                H_vel = np.array([
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]
                 ])
-    
-        return pd.DataFrame(triplet_peaks)
-    
-    
-    def plot_peaks(self, df: pd.DataFrame, signal_column: str, peak_df: pd.DataFrame) -> None:
+                R_vel = np.eye(2) * 1.0  # Ajusta si hace falta
 
-        """Plots the gyroscope signal and overlays detected peak triplets.
-            Args:
-            df (pd.DataFrame): Original DataFrame with time series data.
-            signal_column (str): Name of the column with gyroscope values.
-            peak_df (pd.DataFrame): DataFrame with labeled peaks.
-        """
-        plt.figure(figsize=(15, 4))
-        plt.plot(df["time"], df[signal_column], label="Gyro signal", color="orange")
-        for label, color in zip(["entry", "main", "exit"], ["blue", "red", "green"]):
-            points = peak_df[peak_df["peak_type"] == label]
-            plt.scatter(points["timestamp"], points["value"], label=label, color=color)
-    
-        plt.legend()
-        plt.xlabel("Time (ms)")
-        plt.ylabel(signal_column)
-        plt.title("Detected Peak Triplets")
-        plt.tight_layout()
+                y = z_vel - H_vel @ self.x
+                S = H_vel @ self.P @ H_vel.T + R_vel
+                K = self.P @ H_vel.T @ np.linalg.inv(S)
 
-    
+                self.x += K @ y
+                self.P = (np.eye(4) - K @ H_vel) @ self.P
+
+            filtered.append(self.x.copy())
+
+        return np.vstack(filtered)
