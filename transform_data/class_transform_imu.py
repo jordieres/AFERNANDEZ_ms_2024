@@ -118,9 +118,9 @@ class DataPreprocessor:
         acc = df[['Ax', 'Ay', 'Az']].to_numpy() 
         mag = df[['Mx', 'My', 'Mz']].to_numpy() * 100
         
-        df_gps = df[['lat', 'lng', 'time']].dropna().reset_index(drop=True)
+        
 
-        return time, sample_rate, gyr, acc, mag, df_gps
+        return time, sample_rate, gyr, acc, mag
     
     def compute_positions(self, df, config):
         """
@@ -141,11 +141,15 @@ class DataPreprocessor:
             ellps=location_cfg["ellps"],
             south=location_cfg["south"]
         )
-        lat = df['lat'].to_numpy()
-        lng = df['lng'].to_numpy()
+
+        df_gps = df[['lat', 'lng', 'time']].dropna().reset_index(drop=True)
+
+        lat = df_gps['lat'].to_numpy()
+        lng = df_gps['lng'].to_numpy()
+        
         x, y = proj(lng, lat)
         gps_pos = np.stack((x - x[0], y - y[0]), axis=1)
-        return gps_pos, gps_pos[-1]
+        return df_gps,gps_pos, gps_pos[-1]
 
 
 

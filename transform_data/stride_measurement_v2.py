@@ -124,8 +124,8 @@ def main():
         )
 
         # === Exportar Excel con zancadas ===
-        gps_lat = df_gps['lat'].to_numpy() if not df_gps.empty else np.full(len(pos_kalman), np.nan)
-        gps_lng = df_gps['lng'].to_numpy() if not df_gps.empty else np.full(len(pos_kalman), np.nan)
+        gps_lat = df_gps['lat'] if not df_gps.empty else np.full(len(pos_kalman), np.nan)
+        gps_lng = df_gps['lng'] if not df_gps.empty else np.full(len(pos_kalman), np.nan)
 
         gps_lat = gps_lat[:len(time)] if len(gps_lat) >= len(time) else np.pad(gps_lat, (0, len(time) - len(gps_lat)), constant_values=np.nan)
         gps_lng = gps_lng[:len(time)] if len(gps_lng) >= len(time) else np.pad(gps_lng, (0, len(time) - len(gps_lng)), constant_values=np.nan)
