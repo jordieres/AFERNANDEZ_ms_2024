@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from dateutil.parser import parse as parse_date
 import pandas as pd
 
-from InfluxDBms.cInfluxDB import cInfluxDB
+from InfluxDBms.influxdb_tools import cInfluxDB
 from InfluxDBms.fecha_verbose import VAction
 from InfluxDBms.plot_functions_InfluxDB import *
 

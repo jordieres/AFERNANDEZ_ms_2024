@@ -1,11 +1,55 @@
 import pandas as pd
-from influxdb_client import InfluxDBClient
-from datetime import datetime
 import urllib3
 import yaml
+import matplotlib.pyplot as plt
+import pandas as pd
+import argparse
+from influxdb_client import InfluxDBClient
+from datetime import datetime
+from datetime import datetime, timezone, timedelta
+from dateutil.parser import parse as parse_date
 
 # Desactiva las advertencias de SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+class InfluxHelper:
+    """
+    Helper class for handling datetime parsing and default timestamp generation.
+    """
+
+    def __init__(self):
+        """
+        Initialize the InfluxHelper instance.
+        Currently no internal state, but structure allows future extensibility.
+        """
+        pass
+
+    def parse_datetime(self, value):
+        """
+        Convert a string into a datetime object.
+
+        :param value: String representation of a date/time.
+        :type value: str
+        :return: Parsed datetime object.
+        :rtype: datetime
+        :raises argparse.ArgumentTypeError: If the date format is invalid.
+        """
+        try:
+            return parse_date(value)
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(f"Invalid date: {value}. Error: {e}")
+
+    def get_default_dates(self):
+        """
+        Get default start and end datetimes in ISO 8601 format.
+
+        :return: Tuple of (start, end) time strings.
+        :rtype: tuple[str, str]
+        """
+        now = datetime.now(timezone.utc)
+        return now.isoformat() + "Z", (now + timedelta(minutes=30)).isoformat() + "Z"
+
 
 class cInfluxDB:
     def __init__(self, config_path: str, timeout: int = 500_000):
@@ -186,6 +230,24 @@ class cInfluxDB:
             print(f"Error al listar los campos: {e}")
     
     def show_raw_sample(self, from_date, to_date, qtok, pie):
+        """
+        Executes a sample query on InfluxDB to retrieve and print the first 5 records
+        that match the specified filtering criteria.
+
+        This method is useful for debugging or quickly inspecting raw data from the database.
+
+        :param from_date: Start date of the query (inclusive).
+        :type from_date: datetime.datetime
+        :param to_date: End date of the query (inclusive).
+        :type to_date: datetime.datetime
+        :param qtok: The CodeID to filter the data by.
+        :type qtok: str
+        :param pie: Indicates which foot's data to query ("Left" or "Right").
+        :type pie: str
+
+        :return: None. The results are printed directly to stdout.
+        :rtype: None
+        """
         query = f'''
         from(bucket: "{self.bucket}")
         |> range(start: {from_date.strftime('%Y-%m-%dT%H:%M:%SZ')}, stop: {to_date.strftime('%Y-%m-%dT%H:%M:%SZ')})
@@ -199,7 +261,14 @@ class cInfluxDB:
                 for record in table.records:
                     print(record.values)
         except Exception as e:
-            print(f"Error al ejecutar la consulta: {e}")
+            print(f"Error executing the sample query: {e}")
 
-    def close(self)->None:
+
+    def close(self) -> None:
+        """
+        Closes the connection to the InfluxDB client.
+
+        :return: None
+        :rtype: None
+        """
         self.client.close()

@@ -3,47 +3,10 @@
 extract_data.py : Test_DB_Connection to InfluxDB for Gait
 """
 
-import sys, os, argparse
+import argparse
+from InfluxDBms.influxdb_tools import cInfluxDB,InfluxPlotter,InfluxHelper
 
 
-import pandas as pd
-from datetime import datetime, timedelta, timezone
-from dateutil.parser import parse as parse_date
-
-# Import specific InfluxDB modules
-from InfluxDBms.cInfluxDB import cInfluxDB
-from InfluxDBms.fecha_verbose import BatchProcess, VAction
-from InfluxDBms.plot_functions_InfluxDB import *
-
-#
-# Function to convert strings to datetime objects
-def parse_datetime(value):
-    """
-    Converts a string into a datetime object.
-    
-    :param value: String representation of a date/time.
-    :type value: str
-    :return: Parsed datetime object.
-    :rtype: datetime
-    :raises argparse.ArgumentTypeError: If the date format is invalid.
-    """
-    try:
-        return parse_date(value)  
-    except ValueError as e:
-        raise argparse.ArgumentTypeError(f"Invalid date: {value}. Error: {e}")
-
-# Get default dates
-def get_default_dates():
-    """
-    Retrieves the default start and end dates for querying.
-    
-    :return: Tuple with start and end date in ISO 8601 format.
-    :rtype: tuple[str, str]
-    """
-    now = datetime.now(timezone.utc)
-    return now.isoformat() + "Z", (now + timedelta(minutes=30)).isoformat() + "Z"
-
-# Parse command-line arguments
 def parse_args():
     """
     Parses command-line arguments for batch processing.
@@ -51,10 +14,11 @@ def parse_args():
     :return: Parsed arguments.
     :rtype: argparse.Namespace
     """
+    helper = InfluxHelper()
     parser = argparse.ArgumentParser(description='Extract data from InfluxDB and save to Excel.')
-    default_from, default_until = get_default_dates()
-    parser.add_argument('-f', '--from_time', type=parse_datetime, default=default_from, help='Start date (ISO 8601)')
-    parser.add_argument('-u', '--until', type=parse_datetime, default=default_until, help='End date (ISO 8601)')
+    default_from, default_until = helper.get_default_dates()
+    parser.add_argument('-f', '--from_time', type=helper.parse_datetime, default=default_from, help='Start date (ISO 8601)')
+    parser.add_argument('-u', '--until', type=helper.parse_datetime, default=default_until, help='End date (ISO 8601)')
     parser.add_argument('-q', '--qtok', type=str, required=True, help='CodeID')
     parser.add_argument('-l', '--leg', choices=['Left', 'Right'], required=True, help='Choice of Left or Right Foot')
     parser.add_argument('-c', '--config', type=str, default='../.config_db.yaml', help='Path to the configuration file')
@@ -62,7 +26,7 @@ def parse_args():
     parser.add_argument('-v', '--verbose', type=int, default=0, help='Verbosity level')
     # parser.add_argument('-w', '--window_size', type=str, default="20ms", help="Aggregation window size (default: 20ms)")
     parser.add_argument('-m', '--metrics', help="Comma-separated list of metrics", default=None)
-    
+  
     return parser.parse_args()
 
 
@@ -114,8 +78,6 @@ def main():
     # Save to Excel
     try:
         print("Columnas disponibles en el DataFrame:", df.columns)
-        print("Primeras filas:")
-        print(df.head())
         df["_time"] = df["_time"].dt.tz_localize(None)
         df.to_excel(args.output, index=False)
         iDB.close()
@@ -123,6 +85,11 @@ def main():
             print(f"Data successfully saved to {args.output}")
     except Exception as e:
         print(f"Error saving to Excel: {e}")
+
+
+   # Close DB connection at the end
+    iDB.close()
+
 
 if __name__ == "__main__":
     main() 

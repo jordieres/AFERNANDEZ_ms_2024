@@ -75,9 +75,6 @@ This folder includes the following files and their purposes:
 - **`orden.sh`**:  
   A script file with instructions to install additional dependencies required to interact with InfluxDB.
 
-- **`config_db.yaml`**:  
-  Configuration file containing the credentials and parameters required to connect to the InfluxDB database.
-
 - **`setup.py`**:  
   Allows packaging and potential distribution of the module as a Python package.
 
