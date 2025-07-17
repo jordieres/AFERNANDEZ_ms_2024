@@ -43,14 +43,14 @@ def main():
     try:
         df = preprocessor.load_data(file_path)
         df_inter = preprocessor.resample_to_40hz(df)
-        time, sample_rate, gyr, acc, mag, df_gps = preprocessor.preprocess_data(df_inter)
+        time, sample_rate, gyr, acc, mag = preprocessor.preprocess_data(df_inter)
 
         stationary = imu_processor.detect_stationary(acc, sample_rate)
         quats, acc_earth, vel, pos = estimator.estimate_orientation_and_position(time, gyr, acc, mag, stationary)
         # print(" Primeras posiciones estimadas (pos):", pos[:5])
         # print(" Primeras velocidades estimadas (vel):", vel[:5])
 
-        gps_pos, gps_final = preprocessor.compute_positions(df_inter, preprocessor.config)
+        df_gps,gps_pos, gps_final = preprocessor.compute_positions(df_inter, preprocessor.config)
         n = len(gps_pos)
         mid = n // 2
         gps_pos_1, gps_pos_2 = gps_pos[:mid], gps_pos[mid:]
