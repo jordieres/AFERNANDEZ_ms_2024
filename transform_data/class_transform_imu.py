@@ -153,6 +153,51 @@ class DataPreprocessor:
 
 
 
+    # def compute_positions(self, df, config):
+    #     """
+    #     Convierte coordenadas GPS a posiciones cartesianas locales usando proyección,
+    #     filtrando cambios reales de posición GPS.
+
+    #     :param df: DataFrame con columnas 'lat', 'lng', 'time'.
+    #     :param config: Diccionario de configuración con parámetros de proyección.
+    #     :return: DataFrame GPS filtrado, matriz de posiciones (N,2), última posición GPS.
+    #     """
+    #     location_cfg = config["Location"]
+    #     proj = Proj(
+    #         proj=location_cfg["proj"],
+    #         zone=location_cfg["zone"],
+    #         ellps=location_cfg["ellps"],
+    #         south=location_cfg["south"]
+    #     )
+
+    #     # 1. Extraer columnas necesarias y eliminar NaNs
+    #     df_gps = df[['lat', 'lng', 'time']].dropna().copy()
+
+    #     # 2. Redondear lat/lng para evitar falsos cambios por ruido decimal
+    #     num_decimales = 7
+    #     df_gps['lat_r'] = df_gps['lat'].round(num_decimales)
+    #     df_gps['lng_r'] = df_gps['lng'].round(num_decimales)
+
+    #     # 3. Detectar cambios reales en posición GPS
+    #     cambio_lat = df_gps['lat_r'].diff().abs() > 10**(-num_decimales) / 2
+    #     cambio_lng = df_gps['lng_r'].diff().abs() > 10**(-num_decimales) / 2
+    #     cambios_reales = (cambio_lat | cambio_lng).fillna(True)
+
+    #     # 4. Filtrar solo las filas donde hubo un cambio real
+    #     df_gps_filtrado = df_gps[cambios_reales].reset_index(drop=True)
+
+    #     # 5. Proyectar a coordenadas locales
+    #     lat = df_gps_filtrado['lat'].to_numpy()
+    #     lng = df_gps_filtrado['lng'].to_numpy()
+    #     x, y = proj(lng, lat)
+    #     gps_pos = np.stack((x - x[0], y - y[0]), axis=1)
+
+    #     df_gps_filtrado =  df_gps_filtrado[['time', 'lat', 'lng']]
+
+    #     return df_gps_filtrado, gps_pos, gps_pos[-1]
+
+
+
 
 class IMUProcessor:
     """
@@ -1025,153 +1070,84 @@ class SensorFusionFilters:
 
 
 
+import numpy as np
+
 class KalmanFilter2D:
-    """
-    Filtro de Kalman para estimación de posición y velocidad en 2D.
-    
-    Implementa un filtro discreto con modelo lineal de estado:
-    estado = [x, y, vx, vy]. Observa únicamente la posición (x, y).
-    
-    El filtro puede inicializarse una vez y aplicarse a múltiples secuencias
-    de datos sin redefinir sus matrices internas.
-    
-    Attributes:
-        dt (float): Intervalo temporal constante entre muestras.
-        F (ndarray): Matriz de transición del estado.
-        H (ndarray): Matriz de observación.
-        Q (ndarray): Covarianza del ruido del proceso.
-        R (ndarray): Covarianza del ruido de la observación.
-        P (ndarray): Matriz de covarianza del error estimado.
-        x (ndarray): Estado actual del filtro [x, y, vx, vy].
-    """
- 
-    def __init__(self, dt, q=0.05, r=5.0, p0=1.0):
-        """
-        Inicializa el filtro con parámetros de dinámica y ruido.
+    def __init__(self, dt, q, r):
+        # dt: tiempo entre muestras
+        # q: covarianza del ruido del proceso (modelo de movimiento del IMU)
+        # r: covarianza del ruido de la medición (GPS)
 
-        Args:
-            dt (float): Intervalo de tiempo entre muestras.
-            q (float, optional): Varianza del ruido de proceso. Default = 0.05.
-            r (float, optional): Varianza del ruido de observación GPS. Default = 5.0.
-            p0 (float, optional): Valor inicial para la matriz de covarianza P. Default = 1.0.
-        """
-        self.dt = dt
+        # Estado inicial (ej. [x, y, vx, vy])
+        self.state = np.zeros(4)
+        # Covarianza del estado
+        self.P = np.eye(4) * 1000 # Gran incertidumbre inicial
 
+        # Matriz de Transición de Estado (F) - Modelo de movimiento (ej. Posición = Posición anterior + Velocidad*dt)
+        # Asumiendo un modelo de velocidad constante o aceleración constante
         self.F = np.array([
-            [1, 0, dt, 0],
-            [0, 1, 0, dt],
-            [0, 0, 1,  0],
-            [0, 0, 0,  1]
+            [1, 0, dt, 0],  # x = x + vx*dt
+            [0, 1, 0, dt],  # y = y + vy*dt
+            [0, 0, 1, 0],   # vx = vx
+            [0, 0, 0, 1]    # vy = vy
         ])
 
-        self.H = np.array([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0]
+        # Matriz de Control (B) - Si aplicas entradas de control (aceleraciones del IMU)
+        # Si usas aceleraciones del IMU para predecir, B sería:
+        self.B = np.array([
+            [0.5 * dt**2, 0],
+            [0, 0.5 * dt**2],
+            [dt, 0],
+            [0, dt]
         ])
+        # Y necesitarías pasar 'acc' a la predicción. 
 
+        # Matriz de Ruido del Proceso (Q) - Incertidumbre en nuestro modelo de movimiento
         self.Q = np.eye(4) * q
+
+        # Matriz de Observación (H) - Cómo las mediciones se relacionan con el estado (GPS mide [x, y])
+        self.H = np.array([
+            [1, 0, 0, 0],  # Medición de x
+            [0, 1, 0, 0]   # Medición de y
+        ])
+
+        # Matriz de Ruido de la Medición (R) - Incertidumbre del sensor GPS
         self.R = np.eye(2) * r
-        self.P = np.eye(4) * p0
-        self.x = np.zeros(4)
 
-    def initialize(self, pos0_xy, vel0_xy=(0.0, 0.0)):
-        """
-        Establece el estado inicial del filtro.
+    def initialize(self, initial_gps_pos):
+        # Inicializa el estado con la primera posición del GPS. Velocidad inicial cero.
+        self.state = np.array([initial_gps_pos[0], initial_gps_pos[1], 0.0, 0.0])
+        # Resetea la incertidumbre para la inicialización
+        self.P = np.eye(4) * 1.0 # Menor incertidumbre si estamos seguros del punto de partida
 
-        Args:
-            pos0_xy (array-like): Posición inicial [x, y].
-            vel0_xy (array-like, optional): Velocidad inicial [vx, vy]. Default = (0.0, 0.0).
-        """
-        self.x[:2] = pos0_xy
-        self.x[2:] = vel0_xy
+    def predict(self, acc_imu=None):
+        # Predicción del estado: x_k = F * x_{k-1} (+ B * u)
+        # Si usaras las aceleraciones del IMU directamente en el modelo de predicción:
+        if acc_imu is not None:
+            u = np.array([acc_imu[0], acc_imu[1]]) # Asumiendo acc_earth ya en 2D
+            self.state = self.F @ self.state + self.B @ u  
 
-    def reset_covariance(self, p0=1.0):
-        """
-        Reinicia la matriz de covarianza P del filtro.
+        else:
+          self.state = self.F @ self.state
 
-        Args:
-            p0 (float): Valor escalar para la nueva matriz P = p0 * I.
-        """
-        self.P = np.eye(4) * p0
-
-    def step(self, z=None):
-        """
-        Realiza un paso de predicción y corrección (si hay observación).
-
-        Args:
-            z (array-like or None): Observación [x, y] del GPS. Si es None, no se corrige.
-
-        Returns:
-            ndarray: Estado posterior estimado [x, y, vx, vy].
-        """
-        # Predicción
-        self.x = self.F @ self.x
+        # Predicción de la covarianza: P_k = F * P_{k-1} * F^T + Q
         self.P = self.F @ self.P @ self.F.T + self.Q
 
-        # Corrección si hay observación
-        if z is not None:
-            y = z - self.H @ self.x
-            S = self.H @ self.P @ self.H.T + self.R
-            K = self.P @ self.H.T @ np.linalg.inv(S)
+    def update(self, measurement_gps):
+        # Innovación/Error de Medición: y = z - H * x_k
+        y = measurement_gps - (self.H @ self.state)
 
-            self.x += K @ y
-            self.P = (np.eye(4) - K @ self.H) @ self.P
+        # Covarianza de Innovación: S = H * P_k * H^T + R
+        S = self.H @ self.P @ self.H.T + self.R
 
-        return self.x.copy()
+        # Ganancia de Kalman: K = P_k * H^T * S^-1
+        K = self.P @ self.H.T @ np.linalg.inv(S)
 
-    def filter_sequence(self, gps_positions):
-        """
-        Aplica el filtro a una secuencia de observaciones GPS.
+        # Actualización del estado: x_k = x_k + K * y
+        self.state = self.state + (K @ y)
 
-        Args:
-            gps_positions (array-like): Lista o array (N, 2) de observaciones [x, y].
-                Se pueden usar `None` o vectores con `np.nan` para pasos sin observación.
+        # Actualización de la covarianza: P_k = (I - K * H) * P_k
+        I = np.eye(self.P.shape[0])
+        self.P = (I - K @ self.H) @ self.P
 
-        Returns:
-            ndarray: Matriz (N, 4) con los estados estimados [x, y, vx, vy] en cada paso.
-        """
-        filtered = []
-        for z in gps_positions:
-            if z is None or (isinstance(z, np.ndarray) and np.isnan(z).any()):
-                z = None
-            filtered.append(self.step(z))
-        return np.vstack(filtered)
-    
-    def filter_with_GPS_predict_and_IMU_update(self, gps_positions, imu_velocities):
-        """
-        Predice usando posiciones GPS como entrada del modelo y corrige con velocidades IMU.
-
-        Args:
-            gps_positions (N, 2): Posición de GPS (para predicción del modelo).
-            imu_velocities (N, 2): Velocidades medidas por el IMU (como observación de corrección).
-
-        Returns:
-            (N, 4): Estados filtrados [x, y, vx, vy]
-        """
-        filtered = []
-
-        for i in range(len(gps_positions)):
-            # Predicción (con modelo)
-            self.x = self.F @ self.x
-            self.P = self.F @ self.P @ self.F.T + self.Q
-
-            # Corrección con velocidad IMU (si está disponible)
-            z_vel = imu_velocities[i]
-            if not np.isnan(z_vel).any():
-                # Solo velocidad: observamos vx, vy (últimas dos componentes)
-                H_vel = np.array([
-                    [0, 0, 1, 0],
-                    [0, 0, 0, 1]
-                ])
-                R_vel = np.eye(2) * 1.0  # Ajusta si hace falta
-
-                y = z_vel - H_vel @ self.x
-                S = H_vel @ self.P @ H_vel.T + R_vel
-                K = self.P @ H_vel.T @ np.linalg.inv(S)
-
-                self.x += K @ y
-                self.P = (np.eye(4) - K @ H_vel) @ self.P
-
-            filtered.append(self.x.copy())
-
-        return np.vstack(filtered)
+        return self.state[:2] # Retorna la posición (x, y) estimada
