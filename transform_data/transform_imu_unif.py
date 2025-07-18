@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("-f", "--file_paths", type=str, nargs="+", required=True, help="Paths to one or more Excel files")
     parser.add_argument('-v', '--verbose', type=int, default=3, help='Verbosity level')
     parser.add_argument('-c', '--config', type=str, default='.config.yaml', help='Path to the configuration file')
-    parser.add_argument('--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots: 'screen', 'save', or 'both'")
+    parser.add_argument('-om','--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots: 'screen', 'save', or 'both'")
     parser.add_argument('-o', '--output_dir', type=str, default=None, help='Directory to save output plots')
     parser.add_argument('-m','--methods', nargs='+', choices=['madgwick_imu', 'madgwick_marg', 'mahony_imu', 'mahony_marg'], required=True, help="Algoritmos a ejecutar (elige uno o varios)")
     parser.add_argument('-g','--plot_mode', choices=['split', 'all', 'interactive'], default='split', help="How to plot trajectories: 'split' (default), 'all', or 'interactive'")

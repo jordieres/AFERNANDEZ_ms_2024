@@ -153,52 +153,6 @@ class DataPreprocessor:
 
 
 
-    # def compute_positions(self, df, config):
-    #     """
-    #     Convierte coordenadas GPS a posiciones cartesianas locales usando proyección,
-    #     filtrando cambios reales de posición GPS.
-
-    #     :param df: DataFrame con columnas 'lat', 'lng', 'time'.
-    #     :param config: Diccionario de configuración con parámetros de proyección.
-    #     :return: DataFrame GPS filtrado, matriz de posiciones (N,2), última posición GPS.
-    #     """
-    #     location_cfg = config["Location"]
-    #     proj = Proj(
-    #         proj=location_cfg["proj"],
-    #         zone=location_cfg["zone"],
-    #         ellps=location_cfg["ellps"],
-    #         south=location_cfg["south"]
-    #     )
-
-    #     # 1. Extraer columnas necesarias y eliminar NaNs
-    #     df_gps = df[['lat', 'lng', 'time']].dropna().copy()
-
-    #     # 2. Redondear lat/lng para evitar falsos cambios por ruido decimal
-    #     num_decimales = 7
-    #     df_gps['lat_r'] = df_gps['lat'].round(num_decimales)
-    #     df_gps['lng_r'] = df_gps['lng'].round(num_decimales)
-
-    #     # 3. Detectar cambios reales en posición GPS
-    #     cambio_lat = df_gps['lat_r'].diff().abs() > 10**(-num_decimales) / 2
-    #     cambio_lng = df_gps['lng_r'].diff().abs() > 10**(-num_decimales) / 2
-    #     cambios_reales = (cambio_lat | cambio_lng).fillna(True)
-
-    #     # 4. Filtrar solo las filas donde hubo un cambio real
-    #     df_gps_filtrado = df_gps[cambios_reales].reset_index(drop=True)
-
-    #     # 5. Proyectar a coordenadas locales
-    #     lat = df_gps_filtrado['lat'].to_numpy()
-    #     lng = df_gps_filtrado['lng'].to_numpy()
-    #     x, y = proj(lng, lat)
-    #     gps_pos = np.stack((x - x[0], y - y[0]), axis=1)
-
-    #     df_gps_filtrado =  df_gps_filtrado[['time', 'lat', 'lng']]
-
-    #     return df_gps_filtrado, gps_pos, gps_pos[-1]
-
-
-
-
 class IMUProcessor:
     """
     Class for processing IMU data: gravity estimation, motion detection, and position estimation.
@@ -610,7 +564,7 @@ class PlotProcessor:
         folium.Marker(location=gps_coords[-1], popup="End", icon=folium.Icon(color='red')).add_to(gps_group)
         gps_group.add_to(fmap)
 
-        color_list = ['cadetblue','#5DA5DA','#FAA43A', "#056641",'#F17CB0',"#F04BF0",'#DECF3F','#F15854']
+        color_list = ['cadetblue','#F04BF0','#FAA43A', "#056641",'#F17CB0','#DECF3F','#F15854','#5DA5DA']
         for i, (name, traj) in enumerate(resultados.items()):
             x_coords = traj[:, 0]
             y_coords = traj[:, 1]

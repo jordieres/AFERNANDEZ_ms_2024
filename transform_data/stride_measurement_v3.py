@@ -12,9 +12,11 @@ def parse_args():
     parser.add_argument("-f", "--file_path", type=str, required=True, help="Path to the Excel file")
     parser.add_argument('-v', '--verbose', type=int, default=3, help='Verbosity level')
     parser.add_argument('-c', '--config', type=str, default='.config.yaml', help='Path to the configuration file')
-    parser.add_argument('--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots")
+    parser.add_argument('-om','--output_mode', choices=["screen", "save", "both"], default="screen", help="How to handle output plots")
     parser.add_argument('-o', '--output_dir', type=str, default=None, help='Directory to save output plots')
     parser.add_argument('-e','--export_excel', choices=["yes", "no"], default="yes", help="Export Excel with time, lat, lng, pos, vel, distance")
+    parser.add_argument('-m','--map_html', choices=["yes", "no"], default="no", help="Generate interactive map with trajectories")
+
     return parser.parse_args()
 
 
@@ -58,7 +60,8 @@ def main():
 
         dt = np.mean(np.diff(time))
         if kf is None:
-            kf = KalmanFilter2D(dt=dt, q=0.05, r=5.0)
+            # kf = KalmanFilter2D(dt=dt, q=0.05, r=5.0)
+            kf = KalmanFilter2D(dt=dt, q=0.1, r=0.5)
 
         # === Fusión IMU + GPS usando filtro de Kalman paso a paso ===
         fused_trajectory = []
@@ -97,15 +100,6 @@ def main():
             print_metrics("Kalman", pos_kalman)
             print(f"Pasos detectados (modG): {len(triplets_gyr[triplets_gyr['peak_type'] == 'main'])}")
             print(f"Pasos detectados (modA): {len(triplets_acc[triplets_acc['peak_type'] == 'main'])}")
-            # total_time = time[-1]
-            # print(f"\nValidación de pasos detectados en ventanas de {int(total_time)}s para {triplets_gyr.columns.tolist()}")
-            # print(triplets_gyr.head())  # o muestra por tipo "main"
-            # dp.analyze_step_robustness(triplets_gyr, "modG", total_time)
-            # dp.analyze_step_robustness(triplets_acc, "modA", total_time)
-
-            print("pos antes de Kalman (primeros 3):", pos[:3])
-            print("pos después de Kalman (primeros 3):", pos_kalman[:3])
-
 
         plotter.plot_results_madwick(
             time, pos, vel, gps_pos=gps_pos,
@@ -155,6 +149,15 @@ def main():
             excel_path = os.path.join(args.output_dir or ".", f"{base_name}_stride.xlsx")
             df_steps.to_excel(excel_path, index=False)
             print(f"\n Excel saved: {excel_path}")
+
+        if args.map_html == "yes":
+            map_out_path = os.path.join(args.output_dir or ".", f"{base_name}_map.html")
+            resultados_mapa = {
+                "IMU": pos[:, :2],
+                "Kalman": pos_kalman[:, :2]
+            }
+            plotter.generate_map_with_estimates(df_gps, resultados_mapa, map_out_path, preprocessor.config)
+
 
     except Exception as e:
         print(f"Error processing {file_path}: {e}")
