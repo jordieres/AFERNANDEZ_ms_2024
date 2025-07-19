@@ -1,22 +1,19 @@
 import numpy as np
 import pandas as pd
-from scipy.interpolate import CubicSpline
-from scipy import signal
 import yaml
-from typing import Tuple
+import plotly.graph_objects as go
+import folium
+import os
+
 from ahrs.filters import Madgwick, Mahony
 from ahrs.common.orientation import q_conj, q_rot, axang2quat
 from matplotlib import pyplot as plt
 from pyproj import Proj, Transformer
 from filterpy.kalman import KalmanFilter
-from filterpy.common import Q_discrete_white_noise
-import plotly.graph_objects as go
-import folium
-from folium.plugins import PolyLineTextPath
-from folium import FeatureGroup, LayerControl
-import os
+from scipy.interpolate import CubicSpline
+from scipy import signal
 from scipy.signal import find_peaks
-
+from geopy.distance import geodesic
 
 class DataPreprocessor:
     """
@@ -158,7 +155,9 @@ class IMUProcessor:
     Class for processing IMU data: gravity estimation, motion detection, and position estimation.
     """
 
-    def __init__(self):
+    def __init__(self, sample_rate, sample_period):
+        self.sample_period = sample_period
+        self.sample_rate = sample_rate
         pass
 
     def estimate_gravity_vector(self, acc, alpha = 0.9):
@@ -272,7 +271,7 @@ class IMUProcessor:
         """
 
         if method == "madgwick":
-            base_gain = 0.005
+            base_gain = 0.02
             filter_ = Madgwick(frequency=sample_rate, gain=base_gain)
             q = axang2quat([0, 0, 1], np.deg2rad(45))
         elif method == "mahony":
@@ -300,13 +299,15 @@ class IMUProcessor:
                 q = q_new
             quats[t] = q
 
+        gravity = self.estimate_gravity_vector(acc, 0.95)
         acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
-        acc_earth -= self.estimate_gravity_vector(acc, 0.95)
+        acc_earth -= gravity
         acc_earth *= 9.81
+
 
         vel = np.zeros_like(acc_earth)
         for t in range(1, len(vel)):
-            vel[t] = vel[t - 1] + acc_earth[t] * (1 / sample_rate)
+            vel[t] = vel[t - 1] + acc_earth[t] * (self.sample_period)
             if stationary[t]:
                 vel[t] = 0
 
@@ -320,127 +321,199 @@ class IMUProcessor:
 
         pos = np.zeros_like(vel)
         for t in range(1, len(pos)):
-            pos[t] = pos[t - 1] + vel[t] * (1 / sample_rate)
+            pos[t] = pos[t - 1] + vel[t] * self.sample_period
 
         return pos
 
 
-class KalmanProcessor:
+class PositionVelocityEstimator:
     """
-    Class for applying Kalman filters to fuse IMU and GPS position data.
+    Estimates orientation, acceleration, velocity, and position from IMU sensors (gyroscope, accelerometer, magnetometer).
+    Uses the Madgwick filter with adaptive gain for ZUPH and velocity corrections using ZUPT.
     """
+    def __init__(self, sample_rate, sample_period):
+        self.sample_rate = sample_rate
+        self.sample_period = sample_period
+        # self.base_gain = 0.041
+        self.base_gain = 0.02
+        # self.low_gain = 0.001
+        self.low_gain = 0.001
+        self.imu_proc = IMUProcessor(sample_rate, sample_period)
 
-    def apply_filter1(self, pos_imu, gps_pos, sample_rate):
+    def estimate_orientation_and_position(self, time, gyr, acc, mag, stationary):
         """
-        Apply a Kalman filter using filterpy to fuse IMU and GPS data.
+        Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
+        and zero-velocity updates.
 
-        :param pos_imu: IMU-estimated positions array of shape (N, 2).
-        :type pos_imu: np.ndarray
-        :param gps_pos: GPS positions array of shape (N, 2).
-        :type gps_pos: np.ndarray
+        Applies orientation estimation with adaptive gain based on motion state (ZUPH),
+        and velocity correction during stationary periods (ZUPT).
+
+        :param time: Array of time stamps.
+        :type time: np.ndarray
+        :param gyr: Gyroscope data array with shape (N, 3), in rad/s.
+        :type gyr: np.ndarray
+        :param acc: Accelerometer data array with shape (N, 3), in m/s².
+        :type acc: np.ndarray
+        :param mag: Magnetometer data array with shape (N, 3), in µT.
+        :type mag: np.ndarray
+        :param sample_period: Time between samples, in seconds.
+        :type sample_period: float
         :param sample_rate: Sampling rate in Hz.
         :type sample_rate: float
-        :return: Kalman-filtered fused positions of shape (N, 2).
-        :rtype: np.ndarray
+        :param stationary: Boolean array indicating stationary states (True for stationary).
+        :type stationary: np.ndarray
+        :return: Tuple (quats, acc_earth, vel, pos) where:
+                - quats: Quaternion orientation estimates.
+                - acc_earth: Linear acceleration in earth frame (gravity removed).
+                - vel: Estimated velocity with ZUPT correction.
+                - pos: Estimated position.
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        :raises ValueError: If input shapes are inconsistent.
         """
+        
+        madgwick = Madgwick(frequency=self.sample_rate, gain=self.base_gain)
+        q = np.array([1.0, 0.0, 0.0, 0.0])
+        quats = np.zeros((len(time), 4))
+        quats[0] = q
 
-        n = pos_imu.shape[0]
-        dt = 1.0 / sample_rate
+        no_rotation = self.imu_proc.detect_no_rotation(gyr)
+        no_motion = stationary & no_rotation
 
-        kf = KalmanFilter(dim_x=4, dim_z=2)
-        kf.F = np.array([[1, 0, dt, 0],
-                            [0, 1, 0, dt],
-                            [0, 0, 1,  0],
-                            [0, 0, 0,  1]])
-        kf.H = np.array([[1, 0, 0, 0],
-                            [0, 1, 0, 0]])
-        kf.R = np.eye(2) * 20.0
-        kf.P = np.eye(4) * 10.0
-        kf.Q = Q_discrete_white_noise(dim=4, dt=dt, var=2)
+        for t in range(1, len(time)):
+            madgwick.gain = self.low_gain if no_motion[t] else self.base_gain
+            q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
+            quats[t] = q
 
-        # Estado inicial: posición y velocidad estimada por IMU
-        vel_imu = np.gradient(pos_imu, dt, axis=0)
-        kf.x = np.zeros((4, 1))
-        kf.x[:2] = pos_imu[0, :2].reshape(2, 1)
-        kf.x[2:] = vel_imu[0, :2].reshape(2, 1)
+        
+        gravity = self.imu_proc.estimate_gravity_vector(acc, 0.95)
+        acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
+        acc_earth -= gravity
+        acc_earth *= 9.81
 
-        fused = np.zeros((n, 2))
-        for i in range(n):
-            # Predicción basada en modelo (usa estado anterior)
-            kf.predict()
+        # gravity_est = np.array([q_rot(q_conj(qt), [0, 0, 1]) for qt in quats]) * 9.81
+        # acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)]) * 9.81
+        # acc_earth -= gravity_est
 
-            # Corrección basada en GPS si disponible
-            if i < gps_pos.shape[0]:
-                z = gps_pos[i].reshape(2, 1)
-                kf.update(z)
+        vel = np.zeros_like(acc_earth)
+        for t in range(1, len(vel)):
+            vel[t] = vel[t - 1] + acc_earth[t] * self.sample_period
+            if stationary[t] and not stationary[t - 1]:
+                vel[t] = 0  
 
-            fused[i] = kf.x[:2, 0]
+        vel_drift = np.zeros_like(vel)
+        starts = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
+        ends = np.where(np.diff(stationary.astype(int)) == 1)[0] + 1
+        for s, e in zip(starts, ends):
+            if e > s:
+                drift_rate = vel[e - 1] / (e - s)
+                vel_drift[s:e] = np.outer(np.arange(e - s), drift_rate)
+        vel -= vel_drift
 
-        return fused
+        pos = np.zeros_like(vel)
+        for t in range(1, len(pos)):
+            pos[t] = pos[t - 1] + vel[t] * self.sample_period
+
+        return quats, acc_earth, vel, pos
 
 
-    def apply_filter2(self, pos_imu, gps_pos, time):
-        """
-        Apply a 2D Kalman filter to adjust IMU trajectory using GPS corrections.
+class KalmanProcessor:
+    def __init__(self, dt, q, r):
+        # dt: tiempo entre muestras
+        # q: covarianza del ruido del proceso (modelo de movimiento del IMU)
+        # r: covarianza del ruido de la medición (GPS)
 
-        :param pos_imu: IMU-estimated positions array of shape (N, 3).
-        :type pos_imu: np.ndarray
-        :param gps_pos: GPS projected positions array of shape (N, 2).
-        :type gps_pos: np.ndarray
-        :param time: Time vector array of shape (N,).
-        :type time: np.ndarray
-        :return: Kalman-corrected position array of shape (N, 3).
-        :rtype: np.ndarray
-        """
-        dt = np.mean(np.diff(time))
-        n = len(time)
+        # Estado inicial (ej. [x, y, vx, vy])
+        self.state = np.zeros(4)
+        # Covarianza del estado
+        self.P = np.eye(4) * 1000 # Gran incertidumbre inicial
 
-        # Estado: [x, y, vx, vy]
-        X = np.zeros((4, n))
-        X[:2, 0] = gps_pos[0]  # posición inicial GPS
-        X[2:, 0] = 0  # velocidad inicial 0
-
-        # Matriz de transición del estado
-        F = np.array([
-            [1, 0, dt, 0],
-            [0, 1, 0, dt],
-            [0, 0, 1, 0 ],
-            [0, 0, 0, 1 ]
+        # Matriz de Transición de Estado (F) - Modelo de movimiento (ej. Posición = Posición anterior + Velocidad*dt)
+        # Asumiendo un modelo de velocidad constante o aceleración constante
+        self.F = np.array([
+            [1, 0, dt, 0],  # x = x + vx*dt
+            [0, 1, 0, dt],  # y = y + vy*dt
+            [0, 0, 1, 0],   # vx = vx
+            [0, 0, 0, 1]    # vy = vy
         ])
 
-        # Matriz de observación (solo medimos x, y del GPS)
-        H = np.array([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0]
+        # Matriz de Control (B) - Si aplicas entradas de control (aceleraciones del IMU)
+        # Si usas aceleraciones del IMU para predecir, B sería:
+        self.B = np.array([
+            [0.5 * dt**2, 0],
+            [0, 0.5 * dt**2],
+            [dt, 0],
+            [0, dt]
+        ])
+        # Y necesitarías pasar 'acc' a la predicción. 
+
+        # Matriz de Ruido del Proceso (Q) - Incertidumbre en nuestro modelo de movimiento
+        self.Q = np.eye(4) * q
+
+        # Matriz de Observación (H) - Cómo las mediciones se relacionan con el estado (GPS mide [x, y])
+        self.H = np.array([
+            [1, 0, 0, 0],  # Medición de x
+            [0, 1, 0, 0]   # Medición de y
         ])
 
-        # Matrices de covarianza
-        Q = np.eye(4) * 0.05   # Ruido del proceso (más alto si confías poco en la IMU)
-        R = np.eye(2) * 5.0    # Ruido de la medición GPS
-        P = np.eye(4) * 1.0    # Inicialización de incertidumbre
+        # Matriz de Ruido de la Medición (R) - Incertidumbre del sensor GPS
+        self.R = np.eye(2) * r
 
-        estimated = np.zeros((n, 4))
-        for k in range(1, n):
-            # Predicción
-            X[:, k] = F @ X[:, k - 1]
-            P = F @ P @ F.T + Q
+    def initialize(self, initial_gps_pos):
+        # Inicializa el estado con la primera posición del GPS. Velocidad inicial cero.
+        self.state = np.array([initial_gps_pos[0], initial_gps_pos[1], 0.0, 0.0])
+        # Resetea la incertidumbre para la inicialización
+        self.P = np.eye(4) * 1.0 # Menor incertidumbre si estamos seguros del punto de partida
 
-            # Solo corregimos si hay dato GPS
-            if k < len(gps_pos):
-                Z = gps_pos[k]  # medición GPS
-                y = Z - H @ X[:, k]  # error de innovación
-                S = H @ P @ H.T + R
-                K = P @ H.T @ np.linalg.inv(S)  # ganancia de Kalman
-                X[:, k] += K @ y
-                P = (np.eye(4) - K @ H) @ P
+    def predict(self, acc_imu=None):
+        # Predicción del estado: x_k = F * x_{k-1} (+ B * u)
+        # Si usaras las aceleraciones del IMU directamente en el modelo de predicción:
+        if acc_imu is not None:
+            u = np.array([acc_imu[0], acc_imu[1]]) # Asumiendo acc_earth ya en 2D
+            self.state = self.F @ self.state + self.B @ u  
 
-            estimated[k] = X[:, k]
+        else:
+          self.state = self.F @ self.state
 
-        pos_kalman = np.copy(pos_imu)
-        pos_kalman[:, 0] = estimated[:, 0]
-        pos_kalman[:, 1] = estimated[:, 1]
-        return pos_kalman
+        # Predicción de la covarianza: P_k = F * P_{k-1} * F^T + Q
+        self.P = self.F @ self.P @ self.F.T + self.Q
+
+    def update(self, measurement_gps):
+        # Innovación/Error de Medición: y = z - H * x_k
+        y = measurement_gps - (self.H @ self.state)
+
+        # Covarianza de Innovación: S = H * P_k * H^T + R
+        S = self.H @ self.P @ self.H.T + self.R
+
+        # Ganancia de Kalman: K = P_k * H^T * S^-1
+        K = self.P @ self.H.T @ np.linalg.inv(S)
+
+        # Actualización del estado: x_k = x_k + K * y
+        self.state = self.state + (K @ y)
+
+        # Actualización de la covarianza: P_k = (I - K * H) * P_k
+        I = np.eye(self.P.shape[0])
+        self.P = (I - K @ self.H) @ self.P
+
+        return self.state[:2] # Retorna la posición (x, y) estimada
     
+
+    
+    def initialize_kalman(self, gps_pos, sample_rate):
+        dt = 1.0 / sample_rate
+        kf = KalmanFilter(dt=dt, q=0.1, r=0.5)
+        kf.initialize(gps_pos[0])
+        return kf
+
+
+    def run_filter_with_acc_and_gps(self, acc_earth, gps_pos):
+        fused = []
+        for i in range(len(acc_earth)):
+            self.predict(acc_imu=acc_earth[i, :2])
+            self.update(gps_pos[i])
+            fused.append(self.state[:2])
+        return np.array(fused)
+
+
 
 
 
@@ -616,7 +689,7 @@ class PlotProcessor:
             plt.savefig(save_path)
 
         
-    def plot_results_madwick(self,time, pos, vel, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", verbose=3, traj_label="IMU" ):
+    def plot_macroscopic_comparision(self, pos, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", traj_label= None ):
         """
         Plot diagnostic and trajectory figures for IMU data, and optionally save them.
 
@@ -624,85 +697,16 @@ class PlotProcessor:
         velocity, 2D and 3D trajectory. If GPS data is provided, it includes a comparative plot. 
         Depending on the verbosity level and output directory, plots can also be saved.
 
-        :param time: Array of timestamps in seconds.
-        :type time: np.ndarray
-        :param acc_lp: Low-pass filtered acceleration magnitude.
-        :type acc_lp: np.ndarray
-        :param threshold: Threshold value used to detect stationary periods.
-        :type threshold: float
+
         :param pos: Estimated position array of shape (N, 3).
         :type pos: np.ndarray
-        :param vel: Estimated velocity array of shape (N, 3).
-        :type vel: np.ndarray
         :param gps_pos: Optional GPS position array of shape (N, 2). Defaults to None.
         :type gps_pos: np.ndarray or None
-        :param output_dir: Directory to save plots. If None, figures are displayed but not saved.
-        :type output_dir: str or None
         :param title: Title used in trajectory comparison plots.
         :type title: str
-        :param base_name: Base filename for saving output plots (without extension).
-        :type base_name: str
-        :param verbose: Verbosity level:
-                        - 1: No plots
-                        - 2: Show/save trajectory plots
-                        - 3: Show/save all plots (acceleration, velocity, etc.)
-        :type verbose: int
+
         """
-        def save_figure(title):
-            if output_dir:
-                filename = f"{base_name}_{title.lower().replace(' ', '_')}.png"
-                path = os.path.join(output_dir, filename)
-                plt.savefig(path, bbox_inches='tight')
-
-        # Filtered acceleration
-        if verbose == 3:
-            # Position
-            plt.figure(figsize=(15, 5))
-            plt.plot(time, pos[:, 0], 'r', label='x')
-            plt.plot(time, pos[:, 1], 'g', label='y')
-            plt.plot(time, pos[:, 2], 'b', label='z')
-            plt.title("Position")
-            plt.xlabel("Time (s)")
-            plt.ylabel("Position (m)")
-            plt.legend()
-            plt.grid()
-            save_figure("Position")
-
-            # Velocity
-            plt.figure(figsize=(15, 5))
-            plt.plot(time, vel[:, 0], 'r', label='x')
-            plt.plot(time, vel[:, 1], 'g', label='y')
-            plt.plot(time, vel[:, 2], 'b', label='z')
-            plt.title("Velocity")
-            plt.xlabel("Time (s)")
-            plt.ylabel("Velocity (m/s)")
-            plt.legend()
-            plt.grid()
-            save_figure("Velocity")
-
-            # XY Trajectory
-            plt.figure()
-            plt.plot(pos[:, 0], pos[:, 1])
-            plt.axis('equal')
-            plt.title("XY Trajectory")
-            plt.grid()
-            save_figure("XY Trajectory")
-
-            # 3D Trajectory
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax.plot(pos[:, 0], pos[:, 1], pos[:, 2])
-            ax.set_title("3D Trajectory")
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax.set_zlabel("Z")
-            if output_dir:
-                filename = f"{base_name}_3d_trajectory.png"
-                path = os.path.join(output_dir, filename)
-                plt.savefig(path, bbox_inches='tight')
-
-        # IMU vs GPS comparison (always in verbose 2 or 3)
-        if gps_pos is not None and verbose >= 2:
+        if gps_pos is not None:
             plt.figure(figsize=(10, 8))
             plt.plot(pos[:, 0], pos[:, 1], label=f'{traj_label} Trajectory')
             plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label='GPS Reference')
@@ -713,7 +717,57 @@ class PlotProcessor:
             plt.axis("equal")
             plt.grid()
             plt.legend()
-            save_figure(f"Trajectory Comparison ({traj_label} vs GPS)")
+
+    def plot_resume(self, time, pos, vel, output_dir=None, base_name="summary"):
+        """
+        Plot position, velocity, and 3D trajectory of the estimated movement.
+
+        This function summarizes motion-related variables: 1D time series of position and velocity
+        (in x, y, z), and a 3D trajectory plot in space.
+
+        :param time: Time vector in seconds.
+        :type time: np.ndarray
+        :param pos: Estimated position array of shape (N, 3).
+        :type pos: np.ndarray
+        :param vel: Estimated velocity array of shape (N, 3).
+        :type vel: np.ndarray
+        :param output_dir: (Not used anymore; figures are not saved).
+        :type output_dir: str or None
+        :param base_name: (Unused). Name that would be used for saving if enabled.
+        :type base_name: str
+        """
+
+        # Position over time
+        plt.figure(figsize=(15, 5))
+        plt.plot(time, pos[:, 0], 'r', label='x')
+        plt.plot(time, pos[:, 1], 'g', label='y')
+        plt.plot(time, pos[:, 2], 'b', label='z')
+        plt.title("Position over Time")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Position (m)")
+        plt.legend()
+        plt.grid()
+
+        # Velocity over time
+        plt.figure(figsize=(15, 5))
+        plt.plot(time, vel[:, 0], 'r', label='vx')
+        plt.plot(time, vel[:, 1], 'g', label='vy')
+        plt.plot(time, vel[:, 2], 'b', label='vz')
+        plt.title("Velocity over Time")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Velocity (m/s)")
+        plt.legend()
+        plt.grid()
+
+        # 3D Trajectory
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(pos[:, 0], pos[:, 1], pos[:, 2])
+        ax.set_title("3D Trajectory")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        ax.set_zlabel("Z (m)")
+
 
 
 
@@ -750,11 +804,11 @@ class DetectPeaks:
             prev_val, curr_val, next_val = values[prev_idx], values[curr_idx], values[next_idx]
             if curr_val > prev_val and curr_val > next_val:
                 triplet_peaks.extend([
-                    {"timestamp": df.iloc[prev_idx]["time"], "value": prev_val, "peak_type": "entry"},
-                    {"timestamp": df.iloc[curr_idx]["time"], "value": curr_val, "peak_type": "main"},
-                    {"timestamp": df.iloc[next_idx]["time"], "value": next_val, "peak_type": "exit"}
-
+                {"timestamp": df.iloc[prev_idx]["time"], "value": prev_val, "peak_type": "entry", "orig_index": prev_idx},
+                {"timestamp": df.iloc[curr_idx]["time"], "value": curr_val, "peak_type": "main", "orig_index": curr_idx},
+                {"timestamp": df.iloc[next_idx]["time"], "value": next_val, "peak_type": "exit", "orig_index": next_idx},
                 ])
+
     
         return pd.DataFrame(triplet_peaks)
     
@@ -801,307 +855,347 @@ class DetectPeaks:
             ]
             print(f" Ventana {i+1}: {len(in_window)} pasos detectados entre {start_t:.1f}s y {end_t:.1f}s")
 
+    def compute_stride_stats_per_minute(self, df_steps, pos_kalman, step_peaks, output_dir=None):
+        df_steps = df_steps.reset_index(drop=True)
+
+        stride_data = []
+        for i in range(1, len(step_peaks)):
+            idx_start = step_peaks[i - 1]
+            idx_end = step_peaks[i]
+
+            if idx_start >= len(df_steps) or idx_end >= len(df_steps):
+                continue
+
+            timetride = df_steps.loc[idx_end, 'time']
+            stride_length = np.linalg.norm(pos_kalman[idx_end, :2] - pos_kalman[idx_start, :2])
+
+            stride_data.append({
+                'time': timetride,
+                'stride_length_m': stride_length,
+                'datetime': df_steps.loc[idx_end, 'datetime']
+            })
+
+        df_stride = pd.DataFrame(stride_data)
+        df_stride['minute'] = df_stride['time'].astype(int) // 60
+
+        summary = []
+        for minute, group in df_stride.groupby('minute'):
+            start_time = group['datetime'].min().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            end_time = group['datetime'].max().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            summary.append({
+                'minute': minute,
+                'steps': len(group),
+                'mean_stride_length': group['stride_length_m'].mean(),
+                'std_stride_length': group['stride_length_m'].std(),
+                'distance_m': group['stride_length_m'].sum(),
+                'start_time': start_time,
+                'end_time': end_time
+            })
+
+        df_stats = pd.DataFrame(summary)
+        return df_stats, df_stride
 
 
 
 
 
 
-class PositionVelocityEstimator:
+class ResultsProcessor:
     """
-    Estimates orientation, acceleration, velocity, and position from IMU sensors (gyroscope, accelerometer, magnetometer).
-    Uses the Madgwick filter with adaptive gain for ZUPH and velocity corrections using ZUPT.
+    Class for preparing and exporting final results such as step-wise metrics, positions, and velocities.
     """
-    def __init__(self, sample_rate, sample_period):
-        self.sample_rate = sample_rate
-        self.sample_period = sample_period
-        self.base_gain = 0.041
-        self.low_gain = 0.001
 
-    def estimate_orientation_and_position(self, time, gyr, acc, mag, stationary):
+    def __init__(self):
+        pass
+
+    def prepare_step_dataframe(self, time, gps_lat, gps_lng, pos_kalman, vel, df_inter):
         """
-        Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
-        and zero-velocity updates.
+        Generate a DataFrame with step-wise position, velocity, and GPS data.
 
-        Applies orientation estimation with adaptive gain based on motion state (ZUPH),
-        and velocity correction during stationary periods (ZUPT).
-
-        :param time: Array of time stamps.
+        :param time: Time vector in seconds.
         :type time: np.ndarray
-        :param gyr: Gyroscope data array with shape (N, 3), in rad/s.
-        :type gyr: np.ndarray
-        :param acc: Accelerometer data array with shape (N, 3), in m/s².
-        :type acc: np.ndarray
-        :param mag: Magnetometer data array with shape (N, 3), in µT.
-        :type mag: np.ndarray
-        :param sample_period: Time between samples, in seconds.
-        :type sample_period: float
-        :param sample_rate: Sampling rate in Hz.
-        :type sample_rate: float
-        :param stationary: Boolean array indicating stationary states (True for stationary).
-        :type stationary: np.ndarray
-        :return: Tuple (quats, acc_earth, vel, pos) where:
-                - quats: Quaternion orientation estimates.
-                - acc_earth: Linear acceleration in earth frame (gravity removed).
-                - vel: Estimated velocity with ZUPT correction.
-                - pos: Estimated position.
-        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
-        :raises ValueError: If input shapes are inconsistent.
+        :param gps_lat: GPS latitude array.
+        :type gps_lat: np.ndarray
+        :param gps_lng: GPS longitude array.
+        :type gps_lng: np.ndarray
+        :param pos_kalman: Kalman-filtered position array (N, 2+).
+        :type pos_kalman: np.ndarray
+        :param vel: Velocity array (N, 3).
+        :type vel: np.ndarray
+        :return: DataFrame with time, position, velocity, and step distance.
+        :rtype: pd.DataFrame
         """
-        madgwick = Madgwick(frequency=self.sample_rate, gain=self.base_gain)
-        q = np.array([1.0, 0.0, 0.0, 0.0])
-        quats = np.zeros((len(time), 4))
-        quats[0] = q
+        step_distance = np.zeros(len(time))
+        step_distance[1:] = np.linalg.norm(pos_kalman[1:, :2] - pos_kalman[:-1, :2], axis=1)
 
-        gyro_norm = np.linalg.norm(gyr, axis=1)
-        no_rotation = gyro_norm < 0.1
-        no_motion = stationary & no_rotation
+        df_steps = pd.DataFrame({
+            'time': time,
+            'lat': gps_lat,
+            'lng': gps_lng,
+            'pos_x_m': pos_kalman[:, 0],
+            'pos_y_m': pos_kalman[:, 1],
+            'velocity_m_s': np.linalg.norm(vel, axis=1),
+            'step_distance_m': step_distance,
+            'datetime': df_inter['_time'].values
+        })
 
-        for t in range(1, len(time)):
-            madgwick.gain = self.low_gain if no_motion[t] else self.base_gain
-            q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
-            quats[t] = q
+        return df_steps
+    
+    def print_metrics(self, name, traj, gps_final):
+        final_err = np.linalg.norm(traj[-1, :2] - gps_final)
+        total_dist = np.sum(np.linalg.norm(np.diff(traj[:, :2], axis=0), axis=1))
+        print(f"- {name}   -> Final error: {final_err:.2f} m | Distance: {total_dist:.2f} m")
 
-        imu_proc = IMUProcessor()
-        gravity = imu_proc.estimate_gravity_vector(acc, 0.95)
-
-        acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
-        acc_earth -= gravity
-        acc_earth *= 9.81
-        
-        vel = np.zeros_like(acc_earth)
-        for t in range(1, len(vel)):
-            vel[t] = vel[t - 1] + acc_earth[t] * self.sample_period
-            if stationary[t] and not stationary[t - 1]:
-                vel[t] = 0  
-
-        vel_drift = np.zeros_like(vel)
-        starts = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
-        ends = np.where(np.diff(stationary.astype(int)) == 1)[0] + 1
-        for s, e in zip(starts, ends):
-            if e > s:
-                drift_rate = vel[e - 1] / (e - s)
-                vel_drift[s:e] = np.outer(np.arange(e - s), drift_rate)
-        vel -= vel_drift
-
-        pos = np.zeros_like(vel)
-        for t in range(1, len(pos)):
-            pos[t] = pos[t - 1] + vel[t] * self.sample_period
-
-        return quats, acc_earth, vel, pos
-
-
-
-class SensorFusionFilters:
-    """
-    Class containing filtering and correction methods for sensor fusion,
-    including an Extended Kalman Filter (EKF), complementary filter, and linear drift correction.
-    """
-
-    def __init__(self, alpha: float = 0.98):
-        """
-        Initialize the filter with a default weighting factor for complementary fusion.
-
-        :param alpha: Weighting factor for the complementary filter (0 < alpha < 1).
-        """
-        self.alpha = alpha
-
-
-
+    def export_to_excel(self, df: pd.DataFrame, file_path: str):
+        try:
+            df.to_excel(file_path, index=False)
+            print(f"\n Excel saved: {file_path}")
+        except Exception as e:
+            print(f" Error saving Excel {file_path}: {e}")
+    
+    def get_output_path(self, filename: str, args) -> str:
+        return os.path.join(args.output_dir or ".", filename)
     
 
-    def ekf_fusion_2d(self,gps_pos, imu_acc, time):
+
+
+
+class StrideCleaner:
+    def __init__(self, min_stride=0.2, max_stride=2.5):
         """
-        Extended Kalman Filter (EKF) for 2D position estimation using GPS and IMU acceleration.
+        Filtro para eliminar zancadas fuera de rango razonable.
 
-        :param gps_pos: GPS positions, shape (N, 2).
-        :type gps_pos: np.ndarray
-        :param imu_acc: IMU accelerations, shape (N, 2).
-        :type imu_acc: np.ndarray
-        :param time: Time stamps, shape (N,).
-        :type time: np.ndarray
-        :return: Estimated 2D positions, shape (N, 2).
-        :rtype: np.ndarray
+        :param min_stride: Mínima longitud válida de zancada (m)
+        :param max_stride: Máxima longitud válida de zancada (m)
         """
-        N = len(time)
-        dt = np.mean(np.diff(time))
+        self.min_stride = min_stride
+        self.max_stride = max_stride
 
-        # Initial state: [x, y, vx, vy, ax, ay]
-        x = np.array([gps_pos[0, 0], gps_pos[0, 1], 0.0, 0.0, imu_acc[0, 0], imu_acc[0, 1]])
-        P = np.eye(6) * 10.0
-
-        Q = np.diag([0.05, 0.05, 0.05, 0.05, 0.1, 0.1])  # Process noise
-        R = np.eye(2) * 3.0                             # Measurement noise
-
-        estimates = np.zeros((N, 6))
-
-        for k in range(1, N):
-            u = imu_acc[k]
-
-            # Prediction step
-            x_pred = np.zeros(6)
-            x_pred[0] = x[0] + x[2]*dt + 0.5*u[0]*dt**2
-            x_pred[1] = x[1] + x[3]*dt + 0.5*u[1]*dt**2
-            x_pred[2] = x[2] + u[0]*dt
-            x_pred[3] = x[3] + u[1]*dt
-            x_pred[4] = 0.9 * x[4] + 0.1 * u[0]  # Smooth update of acceleration
-            x_pred[5] = 0.9 * x[5] + 0.1 * u[1]
-
-            # Jacobian of motion model
-            F = np.array([
-                [1, 0, dt, 0, 0.5*dt**2, 0],
-                [0, 1, 0, dt, 0, 0.5*dt**2],
-                [0, 0, 1, 0, dt, 0],
-                [0, 0, 0, 1, 0, dt],
-                [0, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 1]
-            ])
-
-            P = F @ P @ F.T + Q
-
-            # Correction step
-            H = np.array([
-                [1, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0]
-            ])
-            z = gps_pos[k]
-            y = z - H @ x_pred
-            S = H @ P @ H.T + R
-            K = P @ H.T @ np.linalg.inv(S)
-            x = x_pred + K @ y
-            P = (np.eye(6) - K @ H) @ P
-
-            # Optional: clip extreme values
-            x = np.clip(x, -1e6, 1e6)
-
-            estimates[k] = x
-
-        return estimates[:, :2]
-
-    def complementary_filter(self,pos_imu, gps_pos):
+    def clean_stride_data(self, df_stride_raw: pd.DataFrame) -> pd.DataFrame:
         """
-        Fuse IMU and GPS positions using a complementary filter.
+        Elimina zancadas con longitud fuera del rango especificado.
 
-        :param pos_imu: IMU-estimated positions, shape (N, 3).
-        :type pos_imu: np.ndarray
-        :param gps_pos: GPS positions, shape (N, 2).
-        :type gps_pos: np.ndarray
-        :param alpha: Weighting factor for IMU data (0 < alpha < 1). Default is 0.98.
-        :type alpha: float
-        :return: Fused position estimate, shape (N, 3).
-        :rtype: np.ndarray
+        :param df_stride_raw: DataFrame de zancadas individuales
+        :return: DataFrame filtrado
         """
-        fused = np.zeros_like(pos_imu)
-        fused[:, :2] = self.alpha * pos_imu[:, :2] + (1 - self.alpha) * gps_pos
-        fused[:, 2] = pos_imu[:, 2]  # Retain IMU Z-axis
-        return fused
+        before = len(df_stride_raw)
+        cleaned = df_stride_raw[
+            (df_stride_raw["stride_length_m"] >= self.min_stride) &
+            (df_stride_raw["stride_length_m"] <= self.max_stride)
+        ].copy()
+        after = len(cleaned)
+        return cleaned
 
-
-        
-    def linear_drift_correction(self,pos_imu, gps_start, gps_end):
+    def recompute_stats_per_minute(self, df_stride_clean: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply linear correction to IMU position to reduce drift between known GPS start and end points.
+        Recalcula estadísticas por minuto tras filtrar.
 
-        The correction is applied progressively across the time series to match GPS anchors.
-
-        :param pos_imu: IMU-estimated positions (N, 3).
-        :type pos_imu: np.ndarray
-        :param gps_start: 2D GPS start position (2,).
-        :type gps_start: np.ndarray
-        :param gps_end: 2D GPS end position (2,).
-        :type gps_end: np.ndarray
-        :return: Drift-corrected IMU position array (N, 3).
-        :rtype: np.ndarray
+        :param df_stride_clean: DataFrame de zancadas válidas
+        :return: DataFrame de estadísticas por minuto
         """
-        N = len(pos_imu)
-        imu_start = pos_imu[0, :2]
-        imu_end = pos_imu[-1, :2]
-        drift = (gps_end - gps_start) - (imu_end - imu_start)
-        correction = np.linspace(0, 1, N).reshape(-1, 1) * drift
-        corrected = pos_imu.copy()
-        corrected[:, :2] += correction
-        return corrected
+        df_stats_clean = df_stride_clean.groupby('minute').agg(
+            steps=('stride_length_m', 'count'),
+            mean_stride_length=('stride_length_m', 'mean'),
+            std_stride_length=('stride_length_m', 'std'),
+            distance_m=('stride_length_m', 'sum')
+        ).reset_index()
+        return df_stats_clean
+    
+    def check_distance_similarity(self, df_stats: pd.DataFrame, gps_distance: float, tolerance: float = 0.15) -> pd.DataFrame:
+        """
+        Comprueba si la distancia estimada por minuto es razonablemente cercana al GPS (±tolerancia).
+
+        :param df_stats: DataFrame con columnas 'minute' y 'distance_m'
+        :param gps_distance: Distancia total medida por GPS (m)
+        :param tolerance: Porcentaje permitido de desviación (ej. 0.15 = ±15%)
+        :return: DataFrame con columna adicional 'gps_consistent': True/False por minuto
+        """
+        total_stride_distance = df_stats['distance_m'].sum()
+        ratio = total_stride_distance / gps_distance if gps_distance > 0 else 0
+        df_stats['gps_consistent'] = np.abs(ratio - 1) <= tolerance
+        return df_stats
+
+    def check_stride_length_range(self, df_stats: pd.DataFrame, min_valid=0.2, max_valid=1.5) -> pd.DataFrame:
+        """
+        Verifica si la longitud media de zancada está dentro de un rango razonable.
+
+        :param df_stats: DataFrame con columna 'mean_stride_length'
+        :param min_valid: Longitud mínima aceptable (m)
+        :param max_valid: Longitud máxima aceptable (m)
+        :return: DataFrame con columna adicional 'stride_length_valid': True/False
+        """
+        df_stats['stride_length_valid'] = (
+            (df_stats['mean_stride_length'] >= min_valid) &
+            (df_stats['mean_stride_length'] <= max_valid)
+        )
+        return df_stats
+
+    def check_trajectory_smoothness(self, df_steps: pd.DataFrame, velocity_threshold: float = 3.0) -> pd.DataFrame:
+        """
+        Detecta saltos/picos en la velocidad (ruido) como indicio de errores de trayectoria.
+
+        :param df_steps: DataFrame con columna 'velocity_m_s'
+        :param velocity_threshold: Límite superior para velocidad razonable (m/s)
+        :return: DataFrame con columna 'velocity_spike': True si hay un pico brusco
+        """
+        df_steps = df_steps.copy()
+        df_steps['velocity_spike'] = df_steps['velocity_m_s'].diff().abs() > velocity_threshold
+        num_spikes = df_steps['velocity_spike'].sum()
+        return df_steps
+
+    def check_spatial_alignment(self, pos_est: np.ndarray, pos_gps: np.ndarray, threshold: float = 10.0) -> np.ndarray:
+        """
+        Evalúa el error espacial entre posición estimada y GPS (por paso).
+
+        :param pos_est: Array (N, 2) de posiciones estimadas
+        :param pos_gps: Array (N, 2) de posiciones GPS (mismos timestamps)
+        :param threshold: Umbral máximo de error permitido (en metros)
+        :return: Array booleano (N,) donde True indica alineación GPS aceptable
+        """
+        if pos_est.shape != pos_gps.shape:
+            raise ValueError("Las posiciones estimadas y GPS deben tener la misma forma.")
+        spatial_error = np.linalg.norm(pos_est - pos_gps, axis=1)
+        alignment = spatial_error <= threshold
+        percent_ok = 100 * np.mean(alignment)
+        return alignment,percent_ok
+
+
+    def evaluate_quality_segments(self,df_stride_stats: pd.DataFrame,df_steps: pd.DataFrame,gps_pos: np.ndarray, imu_pos: np.ndarray, 
+                                  velocity_threshold: float = 3.0, gps_distance: float = None, error_tolerance_m: float = 10.0, min_alignment_ratio: float = 0.95 ) -> pd.DataFrame:
+        """
+        Evalúa por minuto si todos los criterios de calidad se cumplen.
+
+        :param df_stride_stats: DataFrame de estadísticas de zancada por minuto (filtrado)
+        :param df_steps: DataFrame paso a paso con columnas ['time', 'velocity_m_s']
+        :param gps_pos: Posiciones GPS (Nx2)
+        :param imu_pos: Posiciones estimadas IMU (Nx2)
+        :param velocity_threshold: Umbral de velocidad para considerar un pico
+        :param gps_distance: Distancia total medida por GPS (para ratio de distancia)
+        :param error_tolerance_m: Tolerancia en metros para error espacial
+        :param min_alignment_ratio: Mínimo % de puntos bien alineados (0-1)
+        :return: DataFrame de calidad por minuto con columna 'all_criteria_ok'
+        """
+        stats = df_stride_stats.copy()
+        stats["gps_consistent"] = False
+        stats["velocity_ok"] = False
+        stats["spatially_aligned"] = False
+
+        if gps_distance is not None:
+            # Comprobar coherencia de distancia
+            stats["gps_consistent"] = stats["distance_m"].between(gps_distance * 0.85, gps_distance * 1.15)
+
+        # Evaluar por minuto si hay picos de velocidad
+        for i, row in stats.iterrows():
+            minute = row["minute"]
+            vel_segment = df_steps[df_steps["minute"] == minute]["velocity_m_s"]
+            stats.at[i, "velocity_ok"] = (vel_segment <= velocity_threshold).all()
+
+            # Error espacial con GPS
+            imu_seg = imu_pos[df_steps["minute"] == minute]
+            gps_seg = gps_pos[df_steps["minute"] == minute]
+
+            if len(imu_seg) > 0 and len(gps_seg) == len(imu_seg):
+                dists = np.linalg.norm(imu_seg - gps_seg, axis=1)
+                aligned_ratio = np.mean(dists < error_tolerance_m)
+                stats.at[i, "spatially_aligned"] = aligned_ratio >= min_alignment_ratio
+
+        # Combinar todo
+        stats["all_criteria_ok"] = (
+            stats["gps_consistent"] &
+            stats["stride_length_valid"] &
+            stats["velocity_ok"] &
+            stats["spatially_aligned"]
+        )
+
+        return stats
+
+    def plot_stride_filtering(self,df_stride_raw, df_stride_raw_clean,min_stride=0.2, max_stride=2.5, y_max=3.0, title="Zancadas antes y después del filtrado"):
+        """
+        Visualiza la longitud de zancadas antes y después del filtrado.
+
+        Parameters:
+            df_stride_raw (pd.DataFrame): DataFrame original con todas las zancadas.
+            df_stride_raw_clean (pd.DataFrame): DataFrame tras aplicar el filtrado por longitud.
+            min_stride (float): Umbral mínimo de longitud válida (m).
+            max_stride (float): Umbral máximo de longitud válida (m).
+            title (str): Título del gráfico.
+        """
+        plt.figure(figsize=(12, 4))
+        plt.plot(df_stride_raw["time"], df_stride_raw["stride_length_m"], label="Zancadas brutas")
+        plt.scatter(df_stride_raw_clean["time"], df_stride_raw_clean["stride_length_m"], label="Zancadas válidas", color="green")
+        plt.axhline(max_stride, color="red", linestyle="--", label="Umbral máx")
+        plt.axhline(min_stride, color="red", linestyle="--", label="Umbral mín")
+        plt.xlabel("Tiempo (s)")
+        plt.ylabel("Longitud de zancada (m)")
+        plt.legend()
+        plt.title(title)
+        plt.tight_layout()
 
 
 
-import numpy as np
+class StrideRegionAnalyzer:
+    def __init__(self, window_sec=6.0):
+        """
+        Initializes the analyzer with a temporal window in seconds.
 
-class KalmanFilter2D:
-    def __init__(self, dt, q, r):
-        # dt: tiempo entre muestras
-        # q: covarianza del ruido del proceso (modelo de movimiento del IMU)
-        # r: covarianza del ruido de la medición (GPS)
+        :param window_sec: Time before and after each stride to extract.
+        """
+        self.window = window_sec
 
-        # Estado inicial (ej. [x, y, vx, vy])
-        self.state = np.zeros(4)
-        # Covarianza del estado
-        self.P = np.eye(4) * 1000 # Gran incertidumbre inicial
+    def extract_region(self, df_imu, df_gps, stride_time):
+        """
+        Extracts IMU and GPS data in a window around a given stride.
 
-        # Matriz de Transición de Estado (F) - Modelo de movimiento (ej. Posición = Posición anterior + Velocidad*dt)
-        # Asumiendo un modelo de velocidad constante o aceleración constante
-        self.F = np.array([
-            [1, 0, dt, 0],  # x = x + vx*dt
-            [0, 1, 0, dt],  # y = y + vy*dt
-            [0, 0, 1, 0],   # vx = vx
-            [0, 0, 0, 1]    # vy = vy
-        ])
+        :param df_imu: DataFrame with columns ['time', 'Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz']
+        :param df_gps: DataFrame with columns ['time', 'lat', 'lng']
+        :param stride_time: Central time of the stride (in seconds)
+        :return: imu_window, gps_window, gps_distance_m
+        """
+        start = stride_time - self.window
+        end = stride_time + self.window
 
-        # Matriz de Control (B) - Si aplicas entradas de control (aceleraciones del IMU)
-        # Si usas aceleraciones del IMU para predecir, B sería:
-        self.B = np.array([
-            [0.5 * dt**2, 0],
-            [0, 0.5 * dt**2],
-            [dt, 0],
-            [0, dt]
-        ])
-        # Y necesitarías pasar 'acc' a la predicción. 
+        imu_window = df_imu[(df_imu["time"] >= start) & (df_imu["time"] <= end)].copy()
+        gps_window = df_gps[(df_gps["time"] >= start) & (df_gps["time"] <= end)].copy()
 
-        # Matriz de Ruido del Proceso (Q) - Incertidumbre en nuestro modelo de movimiento
-        self.Q = np.eye(4) * q
-
-        # Matriz de Observación (H) - Cómo las mediciones se relacionan con el estado (GPS mide [x, y])
-        self.H = np.array([
-            [1, 0, 0, 0],  # Medición de x
-            [0, 1, 0, 0]   # Medición de y
-        ])
-
-        # Matriz de Ruido de la Medición (R) - Incertidumbre del sensor GPS
-        self.R = np.eye(2) * r
-
-    def initialize(self, initial_gps_pos):
-        # Inicializa el estado con la primera posición del GPS. Velocidad inicial cero.
-        self.state = np.array([initial_gps_pos[0], initial_gps_pos[1], 0.0, 0.0])
-        # Resetea la incertidumbre para la inicialización
-        self.P = np.eye(4) * 1.0 # Menor incertidumbre si estamos seguros del punto de partida
-
-    def predict(self, acc_imu=None):
-        # Predicción del estado: x_k = F * x_{k-1} (+ B * u)
-        # Si usaras las aceleraciones del IMU directamente en el modelo de predicción:
-        if acc_imu is not None:
-            u = np.array([acc_imu[0], acc_imu[1]]) # Asumiendo acc_earth ya en 2D
-            self.state = self.F @ self.state + self.B @ u  
-
+        if len(gps_window) < 2:
+            distance = None
         else:
-          self.state = self.F @ self.state
+            coord_start = (gps_window.iloc[0]['lat'], gps_window.iloc[0]['lng'])
+            coord_end = (gps_window.iloc[-1]['lat'], gps_window.iloc[-1]['lng'])
+            distance = geodesic(coord_start, coord_end).meters
 
-        # Predicción de la covarianza: P_k = F * P_{k-1} * F^T + Q
-        self.P = self.F @ self.P @ self.F.T + self.Q
+        return imu_window, gps_window, distance
 
-    def update(self, measurement_gps):
-        # Innovación/Error de Medición: y = z - H * x_k
-        y = measurement_gps - (self.H @ self.state)
+    def analyze_strides(self, df_imu, df_gps, df_strides, output_dir=None, stride_type="invalid"):
+        """
+        Analyzes multiple strides and optionally saves the extracted regions for inspection.
 
-        # Covarianza de Innovación: S = H * P_k * H^T + R
-        S = self.H @ self.P @ self.H.T + self.R
+        :param df_imu: IMU signal DataFrame.
+        :param df_gps: GPS position DataFrame.
+        :param df_strides: DataFrame with a 'time' column indicating stride times.
+        :param output_dir: Directory to save Excel files. If None, no files are saved.
+        :param stride_type: 'valid' or 'invalid' (used in output filenames).
+        :return: List of dictionaries with information per stride.
+        """
+        results = []
+        for i, row in df_strides.iterrows():
+            t = row["time"]
+            imu_data, gps_data, gps_dist = self.extract_region(df_imu, df_gps, t)
 
-        # Ganancia de Kalman: K = P_k * H^T * S^-1
-        K = self.P @ self.H.T @ np.linalg.inv(S)
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
+                excel_path = os.path.join(output_dir, f"stride_{stride_type}_{i}.xlsx")
+                with pd.ExcelWriter(excel_path) as writer:
+                    imu_data.to_excel(writer, sheet_name="IMU", index=False)
+                    gps_data.to_excel(writer, sheet_name="GPS", index=False)
 
-        # Actualización del estado: x_k = x_k + K * y
-        self.state = self.state + (K @ y)
+            results.append({
+                "stride_index": i,
+                "stride_time": t,
+                "gps_distance_m": gps_dist,
+                "imu_window": imu_data,
+                "gps_window": gps_data
+            })
 
-        # Actualización de la covarianza: P_k = (I - K * H) * P_k
-        I = np.eye(self.P.shape[0])
-        self.P = (I - K @ self.H) @ self.P
+        return results
 
-        return self.state[:2] # Retorna la posición (x, y) estimada

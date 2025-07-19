@@ -25,12 +25,15 @@ def main():
     if args.output_dir:
         os.makedirs(args.output_dir, exist_ok=True)
 
+    sample_rate = 40
+    sample_period = 1 / sample_rate
     preprocessor = DataPreprocessor(args.config)
-    imu_processor = IMUProcessor()
-    estimator = PositionVelocityEstimator(sample_rate=40, sample_period=1/40)
+    imu_processor = IMUProcessor(sample_rate, sample_period)
+    estimator = PositionVelocityEstimator(sample_rate, sample_period)
     plotter = PlotProcessor()
     dp = DetectPeaks()
-    kf = None
+    rp = ResultsProcessor()
+    kf= None
 
     file_path = args.file_path
     base_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -61,7 +64,7 @@ def main():
         dt = np.mean(np.diff(time))
         if kf is None:
             # kf = KalmanFilter2D(dt=dt, q=0.05, r=5.0)
-            kf = KalmanFilter2D(dt=dt, q=0.1, r=0.5)
+            kf = KalmanProcessor(dt=dt, q=0.1, r=0.5)
 
         # === Fusión IMU + GPS usando filtro de Kalman paso a paso ===
         fused_trajectory = []
@@ -85,9 +88,6 @@ def main():
         triplets_gyr = dp.detect_triplet_peaks(df_inter, column='modG')
         dp.plot_peaks(df_inter, signal_column='modG', peak_df=triplets_gyr, signal_name='modG')
 
-        triplets_acc = dp.detect_triplet_peaks(df_inter, column='modA')
-        dp.plot_peaks(df_inter, signal_column='modA', peak_df=triplets_acc, signal_name='modA')
-
         def print_metrics(name, traj):
             final_err = np.linalg.norm(traj[-1, :2] - gps_final)
             total_dist = np.sum(np.linalg.norm(np.diff(traj[:, :2], axis=0), axis=1))
@@ -99,25 +99,25 @@ def main():
             print_metrics("IMU", pos)
             print_metrics("Kalman", pos_kalman)
             print(f"Pasos detectados (modG): {len(triplets_gyr[triplets_gyr['peak_type'] == 'main'])}")
-            print(f"Pasos detectados (modA): {len(triplets_acc[triplets_acc['peak_type'] == 'main'])}")
+            print("Total main peaks:", len(triplets_gyr[triplets_gyr['peak_type'] == 'main']))
+            print("Unique timestamps:", triplets_gyr[triplets_gyr['peak_type'] == 'main']['timestamp'].nunique())
 
-        plotter.plot_results_madwick(
-            time, pos, vel, gps_pos=gps_pos,
-            output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
-            title=f"Trajectory - {foot_label} (IMU vs GPS)",
-            base_name=base_name + "_pre_kalman",
-            verbose=args.verbose,
-            traj_label="IMU"
-        )
 
-        plotter.plot_results_madwick(
-            time, pos_kalman, vel, gps_pos=gps_pos,
-            output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
-            title=f"Trajectory - {foot_label} (Kalman vs GPS)",
-            base_name=base_name + "_post_kalman",
-            verbose=args.verbose,
-            traj_label="Kalman"
-        )
+            plotter.plot_macroscopic_comparision(
+                pos, gps_pos,
+                output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
+                title=f"Trajectory - {foot_label} (IMU vs GPS)",
+                base_name=base_name + "_pre_kalman",
+                traj_label="IMU"
+            )
+
+            plotter.plot_macroscopic_comparision(
+                pos_kalman, gps_pos,
+                output_dir=args.output_dir if args.output_mode in ("save", "both") else None,
+                title=f"Trajectory - {foot_label} (Kalman vs GPS)",
+                base_name=base_name + "_post_kalman",
+                traj_label="Kalman"
+            )
 
         # === Exportar Excel con zancadas ===
         gps_lat = df_gps['lat'] if not df_gps.empty else np.full(len(pos_kalman), np.nan)
@@ -141,13 +141,29 @@ def main():
             'velocity_m_s': vel_magnitude,
             'step_distance_m': step_distance
         })
-
+        
         print("\n Primeras 5 filas del resultado (stride measurement):")
         print(df_steps.head())
+
+        step_peaks = triplets_gyr[triplets_gyr['peak_type'] == 'main'].index.values
+
+        # Calcular estadísticas por minuto (para tabla + Excel)
+        df_stride_stats, df_stride_raw = dp.compute_stride_stats_per_minute(
+            df_steps=df_steps,
+            pos_kalman=pos_kalman,
+            step_peaks=step_peaks,
+            output_dir = None,
+            base_name=base_name
+        )
+
+        print("\nPrimeras 5 filas de estadísticas por minuto:")
+        print(df_stride_stats.head())
 
         if args.export_excel == "yes":
             excel_path = os.path.join(args.output_dir or ".", f"{base_name}_stride.xlsx")
             df_steps.to_excel(excel_path, index=False)
+            stats_excel_path = os.path.join(args.output_dir or ".", f"{base_name}_stride_stats_per_minute.xlsx")
+            df_stride_stats.to_excel(stats_excel_path, index=False)
             print(f"\n Excel saved: {excel_path}")
 
         if args.map_html == "yes":
@@ -165,9 +181,13 @@ def main():
     if args.output_dir and args.output_mode in ("save", "both"):
         print(f"{'-'*80}")
         print(f"\nTrajectory plots saved to: {args.output_dir}")
+
     if args.output_mode in ("screen", "both"):
         plt.show()
 
 
 if __name__ == "__main__":
     main()
+
+
+
