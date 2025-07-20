@@ -1,32 +1,33 @@
 Introduction
 ============
 
-The main purpose of this package is to help in the indetification of Gait features.
-The ambition is to characterize the fine grain attributes of the walking process
-in particular for people with Multiple Sclerosis (MS) disease.
+The main purpose of this package is to assist in the identification and analysis of gait features.
+The ambition is to characterize the fine-grain attributes of the walking process, particularly for
+individuals affected by Multiple Sclerosis (MS).
 
 Motivation
 ==========
 
-The focus is to seamless integrated the work carried out at edge, by collecting high
-frequency data obtained from Sensoria heath \copyright instrumented socks via BLE 
-from Android or iOS developed app to upload it into a timeseries database in InfluxDB
+The project focuses on seamlessly integrating data collected at the edge. High-frequency sensor data
+from Sensoria Health© instrumented socks is transmitted via BLE through custom Android or iOS apps
+and uploaded into an InfluxDB time-series database.
 
-In addition, other tools analyze the collected data and extract relevant periods where
-data is available and store them into a RDBMS in PostgreSQL. Indeed, through different 
-algorithms, periods larger than 7s of walk are also identified.
+Additional tools analyze this data to identify valid activity periods and store them in a PostgreSQL
+relational database. Using specialized algorithms, walking periods longer than 7 seconds are detected
+and further analyzed.
 
-Now, it is the time to identify detailed low level gait features, such as the swing distance,
-cadence, and others.
-
+The current goal is to extract detailed low-level gait features, such as stride length, cadence,
+swing distance, and other movement metrics to enable precise assessment of mobility impairments.
 
 General Structure
 =================
 
 The application includes:
 
-* One package named ``InfluxDBms`` containing several classes for managing and querying InfluxDB.
-* One module named ``test_InfluxDB`` with several scripts to extract and present data from InfluxDB.
-* One module named ``gps_trajectory`` for generating and visualizing GPS trajectories using Folium.
+* A package named ``InfluxDBms`` containing classes for managing and querying InfluxDB.
+* A package named ``msGeom`` containing processing tools for IMU + GPS fusion, step detection, 
+  stride analysis, and visualization.
+* A main execution script ``test_InfluxDB\extract_data.py`` that extract data from InfluxDB.
+* A main execution script ``transform_data/stride_measurement.py`` to run the full processing pipeline.
 
-Detailed information can be found in the modules below.
+Detailed information can be found in the modules listed below.

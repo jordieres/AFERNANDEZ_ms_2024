@@ -158,7 +158,7 @@ class IMUProcessor:
     def __init__(self, sample_rate, sample_period):
         self.sample_period = sample_period
         self.sample_rate = sample_rate
-        pass
+        
 
     def estimate_gravity_vector(self, acc, alpha = 0.9):
         """
@@ -324,6 +324,75 @@ class IMUProcessor:
             pos[t] = pos[t - 1] + vel[t] * self.sample_period
 
         return pos
+    
+
+        
+    def estimate_position_madwick(self, time, gyr, acc, mag, stationary):
+        """
+        Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
+        and zero-velocity updates.
+
+        Applies orientation estimation with adaptive gain based on motion state (ZUPH),
+        and velocity correction during stationary periods (ZUPT).
+
+        :param time: Array of time stamps.
+        :type time: np.ndarray
+        :param gyr: Gyroscope data array with shape (N, 3), in rad/s.
+        :type gyr: np.ndarray
+        :param acc: Accelerometer data array with shape (N, 3), in m/s².
+        :type acc: np.ndarray
+        :param mag: Magnetometer data array with shape (N, 3), in µT.
+        :type mag: np.ndarray
+        :param stationary: Boolean array indicating stationary states (True for stationary).
+        :type stationary: np.ndarray
+        :return: Tuple (quats, acc_earth, vel, pos) where:
+                - quats: Quaternion orientation estimates.
+                - acc_earth: Linear acceleration in earth frame (gravity removed).
+                - vel: Estimated velocity with ZUPT correction.
+                - pos: Estimated position.
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        :raises ValueError: If input shapes are inconsistent.
+        """
+        madgwick = Madgwick(frequency=self.sample_rate, gain=0.02)
+        low_gain = 0.001
+        q = np.array([1.0, 0.0, 0.0, 0.0])
+        quats = np.zeros((len(time), 4))
+        quats[0] = q
+
+        no_rotation = self.detect_no_rotation(gyr)
+        no_motion = stationary & no_rotation
+
+        for t in range(1, len(time)):
+            madgwick.gain = low_gain if no_motion[t] else 0.02
+            q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
+            quats[t] = q
+
+        gravity = self.estimate_gravity_vector(acc, 0.95)
+        acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
+        acc_earth -= gravity
+        acc_earth *= 9.81
+
+        vel = np.zeros_like(acc_earth)
+        for t in range(1, len(vel)):
+            vel[t] = vel[t - 1] + acc_earth[t] * self.sample_period
+            if stationary[t] and not stationary[t - 1]:
+                vel[t] = 0  
+
+        vel_drift = np.zeros_like(vel)
+        starts = np.where(np.diff(stationary.astype(int)) == -1)[0] + 1
+        ends = np.where(np.diff(stationary.astype(int)) == 1)[0] + 1
+        for s, e in zip(starts, ends):
+            if e > s:
+                drift_rate = vel[e - 1] / (e - s)
+                vel_drift[s:e] = np.outer(np.arange(e - s), drift_rate)
+        vel -= vel_drift
+
+        pos = np.zeros_like(vel)
+        for t in range(1, len(pos)):
+            pos[t] = pos[t - 1] + vel[t] * self.sample_period
+
+        return quats, acc_earth, vel, pos
+
 
 
 class PositionVelocityEstimator:
@@ -340,7 +409,7 @@ class PositionVelocityEstimator:
         self.low_gain = 0.001
         self.imu_proc = IMUProcessor(sample_rate, sample_period)
 
-    def estimate_orientation_and_position(self, time, gyr, acc, mag, stationary):
+    def estimate_position_madwick(self, time, gyr, acc, mag, stationary):
         """
         Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
         and zero-velocity updates.
@@ -414,6 +483,7 @@ class PositionVelocityEstimator:
             pos[t] = pos[t - 1] + vel[t] * self.sample_period
 
         return quats, acc_earth, vel, pos
+
 
 
 class KalmanProcessor:
@@ -960,16 +1030,18 @@ class ResultsProcessor:
 
 
 
-class StrideCleaner:
-    def __init__(self, min_stride=0.2, max_stride=2.5):
+class StrideProcessor:
+    def __init__(self, min_stride=0.2, max_stride=2.5, window_sec=6.0):
         """
         Filtro para eliminar zancadas fuera de rango razonable.
 
         :param min_stride: Mínima longitud válida de zancada (m)
         :param max_stride: Máxima longitud válida de zancada (m)
+        :param window_sec: Time before and after each stride to extract.
         """
         self.min_stride = min_stride
         self.max_stride = max_stride
+        self.window = window_sec
 
     def clean_stride_data(self, df_stride_raw: pd.DataFrame) -> pd.DataFrame:
         """
@@ -1131,19 +1203,6 @@ class StrideCleaner:
         plt.title(title)
         plt.tight_layout()
 
-
-from geopy.distance import geodesic
-import pandas as pd
-
-class StrideRegionAnalyzer:
-    def __init__(self, window_sec=6.0):
-        """
-        Initializes the analyzer with a temporal window in seconds.
-
-        :param window_sec: Time before and after each stride to extract.
-        """
-        self.window = window_sec
-
     def extract_region(self, df_imu, df_gps, stride_time):
         """
         Extracts IMU and GPS data in a window around a given stride.
@@ -1195,3 +1254,5 @@ class StrideRegionAnalyzer:
             })
 
         return results
+
+    

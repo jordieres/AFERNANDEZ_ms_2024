@@ -1,0 +1,429 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msGeom.stride_processor &mdash; Gait-Measurement 1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=56dcb7b8"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Gait-Measurement
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Gait-Measurement</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msGeom.stride_processor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msGeom.stride_processor</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">geopy.distance</span> <span class="kn">import</span> <span class="n">geodesic</span>
+
+
+<div class="viewcode-block" id="StrideProcessor">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor">[docs]</a>
+<span class="k">class</span> <span class="nc">StrideProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processor class for filtering, validating, and analyzing stride-based gait data.</span>
+<span class="sd">    It includes tools for quality checks, spatial alignment, and segment-level diagnostics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_stride</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_stride</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">6.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the stride processor with stride length constraints.</span>
+
+<span class="sd">        :param min_stride: Minimum valid stride length (in meters).</span>
+<span class="sd">        :type min_stride: float</span>
+<span class="sd">        :param max_stride: Maximum valid stride length (in meters).</span>
+<span class="sd">        :type max_stride: float</span>
+<span class="sd">        :param window_sec: Time window (in seconds) around each stride for data extraction.</span>
+<span class="sd">        :type window_sec: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_stride</span> <span class="o">=</span> <span class="n">min_stride</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_stride</span> <span class="o">=</span> <span class="n">max_stride</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="n">window_sec</span>
+
+
+<div class="viewcode-block" id="StrideProcessor.clean_stride_data">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.clean_stride_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">clean_stride_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_stride_raw</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filter out strides whose length falls outside the valid range.</span>
+
+<span class="sd">        :param df_stride_raw: DataFrame containing raw stride data.</span>
+<span class="sd">        :type df_stride_raw: pd.DataFrame</span>
+<span class="sd">        :return: Filtered DataFrame with valid strides.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">before</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_stride_raw</span><span class="p">)</span>
+        <span class="n">cleaned</span> <span class="o">=</span> <span class="n">df_stride_raw</span><span class="p">[</span>
+            <span class="p">(</span><span class="n">df_stride_raw</span><span class="p">[</span><span class="s2">&quot;stride_length_m&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_stride</span><span class="p">)</span> <span class="o">&amp;</span>
+            <span class="p">(</span><span class="n">df_stride_raw</span><span class="p">[</span><span class="s2">&quot;stride_length_m&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_stride</span><span class="p">)</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">after</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cleaned</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cleaned</span></div>
+
+    
+
+<div class="viewcode-block" id="StrideProcessor.recompute_stats_per_minute">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.recompute_stats_per_minute">[docs]</a>
+    <span class="k">def</span> <span class="nf">recompute_stats_per_minute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_stride_clean</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recompute per-minute stride statistics after filtering.</span>
+
+<span class="sd">        :param df_stride_clean: DataFrame of valid strides.</span>
+<span class="sd">        :type df_stride_clean: pd.DataFrame</span>
+<span class="sd">        :return: Summary DataFrame grouped by minute.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df_stats_clean</span> <span class="o">=</span> <span class="n">df_stride_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;minute&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+            <span class="n">steps</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;stride_length_m&#39;</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">),</span>
+            <span class="n">mean_stride_length</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;stride_length_m&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">),</span>
+            <span class="n">std_stride_length</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;stride_length_m&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">),</span>
+            <span class="n">distance_m</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;stride_length_m&#39;</span><span class="p">,</span> <span class="s1">&#39;sum&#39;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">df_stats_clean</span></div>
+
+    
+    
+<div class="viewcode-block" id="StrideProcessor.check_distance_similarity">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.check_distance_similarity">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_distance_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_stats</span><span class="p">,</span> <span class="n">gps_distance</span><span class="p">,</span> <span class="n">tolerance</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">)</span> <span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether estimated distance is consistent with GPS total distance.</span>
+
+<span class="sd">        :param df_stats: DataFrame with stride statistics including &#39;distance_m&#39;.</span>
+<span class="sd">        :type df_stats: pd.DataFrame</span>
+<span class="sd">        :param gps_distance: Total GPS-measured distance (in meters).</span>
+<span class="sd">        :type gps_distance: float</span>
+<span class="sd">        :param tolerance: Acceptable deviation ratio (e.g., 0.15 = ±15%).</span>
+<span class="sd">        :type tolerance: float</span>
+<span class="sd">        :return: Updated DataFrame with a new column &#39;gps_consistent&#39;.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_stride_distance</span> <span class="o">=</span> <span class="n">df_stats</span><span class="p">[</span><span class="s1">&#39;distance_m&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">total_stride_distance</span> <span class="o">/</span> <span class="n">gps_distance</span> <span class="k">if</span> <span class="n">gps_distance</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">df_stats</span><span class="p">[</span><span class="s1">&#39;gps_consistent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ratio</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tolerance</span>
+        <span class="k">return</span> <span class="n">df_stats</span></div>
+
+    
+
+<div class="viewcode-block" id="StrideProcessor.check_stride_length_range">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.check_stride_length_range">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_stride_length_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_stats</span><span class="p">,</span> <span class="n">min_valid</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_valid</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span> <span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether average stride lengths fall within an expected range.</span>
+
+<span class="sd">        :param df_stats: DataFrame with &#39;mean_stride_length&#39; column.</span>
+<span class="sd">        :type df_stats: pd.DataFrame</span>
+<span class="sd">        :param min_valid: Minimum acceptable mean stride length (meters).</span>
+<span class="sd">        :type min_valid: float</span>
+<span class="sd">        :param max_valid: Maximum acceptable mean stride length (meters).</span>
+<span class="sd">        :type max_valid: float</span>
+<span class="sd">        :return: Updated DataFrame with &#39;stride_length_valid&#39; column.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df_stats</span><span class="p">[</span><span class="s1">&#39;stride_length_valid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">df_stats</span><span class="p">[</span><span class="s1">&#39;mean_stride_length&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">min_valid</span><span class="p">)</span> <span class="o">&amp;</span>
+            <span class="p">(</span><span class="n">df_stats</span><span class="p">[</span><span class="s1">&#39;mean_stride_length&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">max_valid</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">df_stats</span></div>
+
+    
+
+<div class="viewcode-block" id="StrideProcessor.check_trajectory_smoothness">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.check_trajectory_smoothness">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_trajectory_smoothness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_steps</span><span class="p">,</span> <span class="n">velocity_threshold</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">)</span> <span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect abrupt velocity spikes in trajectory as potential noise indicators.</span>
+
+<span class="sd">        :param df_steps: DataFrame with &#39;velocity_m_s&#39; column.</span>
+<span class="sd">        :type df_steps: pd.DataFrame</span>
+<span class="sd">        :param velocity_threshold: Maximum allowed velocity change (in m/s).</span>
+<span class="sd">        :type velocity_threshold: float</span>
+<span class="sd">        :return: DataFrame with a &#39;velocity_spike&#39; column indicating anomalies.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">df_steps</span> <span class="o">=</span> <span class="n">df_steps</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">df_steps</span><span class="p">[</span><span class="s1">&#39;velocity_spike&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_steps</span><span class="p">[</span><span class="s1">&#39;velocity_m_s&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">velocity_threshold</span>
+        <span class="n">num_spikes</span> <span class="o">=</span> <span class="n">df_steps</span><span class="p">[</span><span class="s1">&#39;velocity_spike&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">df_steps</span></div>
+
+    
+
+<div class="viewcode-block" id="StrideProcessor.check_spatial_alignment">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.check_spatial_alignment">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_spatial_alignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos_est</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pos_gps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate spatial error between estimated and GPS positions.</span>
+
+<span class="sd">        :param pos_est: Estimated positions (N, 2).</span>
+<span class="sd">        :type pos_est: np.ndarray</span>
+<span class="sd">        :param pos_gps: GPS positions (N, 2), matching timestamps.</span>
+<span class="sd">        :type pos_gps: np.ndarray</span>
+<span class="sd">        :param threshold: Maximum acceptable spatial error (in meters).</span>
+<span class="sd">        :type threshold: float</span>
+<span class="sd">        :return: Tuple of (alignment mask, percentage of aligned samples).</span>
+<span class="sd">        :rtype: tuple[np.ndarray, float]</span>
+<span class="sd">        :raises ValueError: If input shapes do not match.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">pos_est</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">pos_gps</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Estimated and GPS positions must have the same shape.&quot;</span><span class="p">)</span>
+        <span class="n">spatial_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">pos_est</span> <span class="o">-</span> <span class="n">pos_gps</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">alignment</span> <span class="o">=</span> <span class="n">spatial_error</span> <span class="o">&lt;=</span> <span class="n">threshold</span>
+        <span class="n">percent_ok</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">alignment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">alignment</span><span class="p">,</span><span class="n">percent_ok</span></div>
+
+
+
+<div class="viewcode-block" id="StrideProcessor.evaluate_quality_segments">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.evaluate_quality_segments">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_quality_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_stride_stats</span><span class="p">,</span> <span class="n">df_steps</span> <span class="p">,</span><span class="n">gps_pos</span><span class="p">,</span> <span class="n">imu_pos</span><span class="p">,</span> <span class="n">velocity_threshold</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">gps_distance</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">error_tolerance_m</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">min_alignment_ratio</span> <span class="o">=</span> <span class="mf">0.95</span> <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assess per-minute gait quality by combining multiple criteria:</span>
+<span class="sd">        distance consistency, stride length, velocity smoothness, and GPS alignment.</span>
+
+<span class="sd">        :param df_stride_stats: Per-minute stride statistics (filtered).</span>
+<span class="sd">        :type df_stride_stats: pd.DataFrame</span>
+<span class="sd">        :param df_steps: Step-level DataFrame with &#39;velocity_m_s&#39; and &#39;minute&#39; columns.</span>
+<span class="sd">        :type df_steps: pd.DataFrame</span>
+<span class="sd">        :param gps_pos: GPS positions (N, 2).</span>
+<span class="sd">        :type gps_pos: np.ndarray</span>
+<span class="sd">        :param imu_pos: Estimated IMU positions (N, 2).</span>
+<span class="sd">        :type imu_pos: np.ndarray</span>
+<span class="sd">        :param velocity_threshold: Maximum velocity allowed before being marked as a spike.</span>
+<span class="sd">        :type velocity_threshold: float</span>
+<span class="sd">        :param gps_distance: Total GPS distance (used to validate distance estimates).</span>
+<span class="sd">        :type gps_distance: float</span>
+<span class="sd">        :param error_tolerance_m: Maximum allowed spatial error (in meters).</span>
+<span class="sd">        :type error_tolerance_m: float</span>
+<span class="sd">        :param min_alignment_ratio: Minimum proportion of aligned points per segment (0-1).</span>
+<span class="sd">        :type min_alignment_ratio: float</span>
+<span class="sd">        :return: DataFrame with an &#39;all_criteria_ok&#39; column summarizing segment validity.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">df_stride_stats</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;gps_consistent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;velocity_ok&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;spatially_aligned&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">gps_distance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;gps_consistent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;distance_m&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">gps_distance</span> <span class="o">*</span> <span class="mf">0.85</span><span class="p">,</span> <span class="n">gps_distance</span> <span class="o">*</span> <span class="mf">1.15</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">stats</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;minute&quot;</span><span class="p">]</span>
+            <span class="n">vel_segment</span> <span class="o">=</span> <span class="n">df_steps</span><span class="p">[</span><span class="n">df_steps</span><span class="p">[</span><span class="s2">&quot;minute&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">minute</span><span class="p">][</span><span class="s2">&quot;velocity_m_s&quot;</span><span class="p">]</span>
+            <span class="n">stats</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;velocity_ok&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">vel_segment</span> <span class="o">&lt;=</span> <span class="n">velocity_threshold</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+            <span class="n">imu_seg</span> <span class="o">=</span> <span class="n">imu_pos</span><span class="p">[</span><span class="n">df_steps</span><span class="p">[</span><span class="s2">&quot;minute&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">minute</span><span class="p">]</span>
+            <span class="n">gps_seg</span> <span class="o">=</span> <span class="n">gps_pos</span><span class="p">[</span><span class="n">df_steps</span><span class="p">[</span><span class="s2">&quot;minute&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">minute</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">imu_seg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gps_seg</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">imu_seg</span><span class="p">):</span>
+                <span class="n">dists</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">imu_seg</span> <span class="o">-</span> <span class="n">gps_seg</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">aligned_ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dists</span> <span class="o">&lt;</span> <span class="n">error_tolerance_m</span><span class="p">)</span>
+                <span class="n">stats</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;spatially_aligned&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_ratio</span> <span class="o">&gt;=</span> <span class="n">min_alignment_ratio</span>
+
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;all_criteria_ok&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;gps_consistent&quot;</span><span class="p">]</span> <span class="o">&amp;</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;stride_length_valid&quot;</span><span class="p">]</span> <span class="o">&amp;</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;velocity_ok&quot;</span><span class="p">]</span> <span class="o">&amp;</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;spatially_aligned&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stats</span></div>
+
+
+<div class="viewcode-block" id="StrideProcessor.plot_stride_filtering">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.plot_stride_filtering">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_stride_filtering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">df_stride_raw</span><span class="p">,</span> <span class="n">df_stride_raw_clean</span><span class="p">,</span><span class="n">min_stride</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_stride</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">y_max</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Strides before and after filtering&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Visualize stride lengths before and after length-based filtering.</span>
+
+<span class="sd">        :param df_stride_raw: Original DataFrame containing all stride lengths.</span>
+<span class="sd">        :type df_stride_raw: pd.DataFrame</span>
+<span class="sd">        :param df_stride_raw_clean: Filtered DataFrame with valid strides.</span>
+<span class="sd">        :type df_stride_raw_clean: pd.DataFrame</span>
+<span class="sd">        :param min_stride: Minimum valid stride length (meters).</span>
+<span class="sd">        :type min_stride: float</span>
+<span class="sd">        :param max_stride: Maximum valid stride length (meters).</span>
+<span class="sd">        :type max_stride: float</span>
+<span class="sd">        :param y_max: Maximum y-axis limit (not used explicitly).</span>
+<span class="sd">        :type y_max: float</span>
+<span class="sd">        :param title: Plot title.</span>
+<span class="sd">        :type title: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">df_stride_raw</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">df_stride_raw</span><span class="p">[</span><span class="s2">&quot;stride_length_m&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Raw strides&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df_stride_raw_clean</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">df_stride_raw_clean</span><span class="p">[</span><span class="s2">&quot;stride_length_m&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Valid strides&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">max_stride</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Max. threshold&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">min_stride</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Min. threshold&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Stride length (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="StrideProcessor.extract_region">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.extract_region">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_region</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_imu</span><span class="p">,</span> <span class="n">df_gps</span><span class="p">,</span> <span class="n">stride_time</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts a time window around a given stride from IMU and GPS signals.</span>
+
+<span class="sd">        :param df_imu: DataFrame with IMU columns [&#39;time&#39;, &#39;Ax&#39;, &#39;Ay&#39;, &#39;Az&#39;, &#39;Gx&#39;, &#39;Gy&#39;, &#39;Gz&#39;].</span>
+<span class="sd">        :type df_imu: pd.DataFrame</span>
+<span class="sd">        :param df_gps: DataFrame with GPS columns [&#39;time&#39;, &#39;lat&#39;, &#39;lng&#39;].</span>
+<span class="sd">        :type df_gps: pd.DataFrame</span>
+<span class="sd">        :param stride_time: Center time of the stride (in seconds).</span>
+<span class="sd">        :type stride_time: float</span>
+<span class="sd">        :return: Tuple of IMU/GPS windows, geodesic distance, start and end times.</span>
+<span class="sd">        :rtype: tuple[pd.DataFrame, pd.DataFrame, float, float, float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="n">stride_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">stride_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span>
+
+        <span class="n">imu_window</span> <span class="o">=</span> <span class="n">df_imu</span><span class="p">[(</span><span class="n">df_imu</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df_imu</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">gps_window</span> <span class="o">=</span> <span class="n">df_gps</span><span class="p">[(</span><span class="n">df_gps</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df_gps</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gps_window</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">coord_start</span> <span class="o">=</span> <span class="p">(</span><span class="n">gps_window</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">gps_window</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;lng&#39;</span><span class="p">])</span>
+            <span class="n">coord_end</span> <span class="o">=</span> <span class="p">(</span><span class="n">gps_window</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">gps_window</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;lng&#39;</span><span class="p">])</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="n">geodesic</span><span class="p">(</span><span class="n">coord_start</span><span class="p">,</span> <span class="n">coord_end</span><span class="p">)</span><span class="o">.</span><span class="n">meters</span>
+
+        <span class="k">return</span> <span class="n">imu_window</span><span class="p">,</span> <span class="n">gps_window</span><span class="p">,</span> <span class="n">distance</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span></div>
+
+
+<div class="viewcode-block" id="StrideProcessor.analyze_strides">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.analyze_strides">[docs]</a>
+    <span class="k">def</span> <span class="nf">analyze_strides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_imu</span><span class="p">,</span> <span class="n">df_gps</span><span class="p">,</span> <span class="n">df_strides</span><span class="p">,</span> <span class="n">stride_type</span><span class="o">=</span><span class="s2">&quot;invalid&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze and extract data windows around multiple strides.</span>
+
+<span class="sd">        :param df_imu: IMU signal DataFrame.</span>
+<span class="sd">        :type df_imu: pd.DataFrame</span>
+<span class="sd">        :param df_gps: GPS data DataFrame.</span>
+<span class="sd">        :type df_gps: pd.DataFrame</span>
+<span class="sd">        :param df_strides: DataFrame with a &#39;time&#39; column marking each stride.</span>
+<span class="sd">        :type df_strides: pd.DataFrame</span>
+<span class="sd">        :param stride_type: Label assigned to the analyzed strides (e.g., &#39;valid&#39;, &#39;invalid&#39;).</span>
+<span class="sd">        :type stride_type: str</span>
+<span class="sd">        :return: List of dictionaries, each containing stride-level analysis data.</span>
+<span class="sd">        :rtype: list[dict]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_strides</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span>
+            <span class="n">imu_data</span><span class="p">,</span> <span class="n">gps_data</span><span class="p">,</span> <span class="n">gps_dist</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_region</span><span class="p">(</span><span class="n">df_imu</span><span class="p">,</span> <span class="n">df_gps</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;stride_index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                <span class="s2">&quot;stride_time&quot;</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
+                <span class="s2">&quot;stride_type&quot;</span><span class="p">:</span> <span class="n">stride_type</span><span class="p">,</span>
+                <span class="s2">&quot;gps_distance_m&quot;</span><span class="p">:</span> <span class="n">gps_dist</span><span class="p">,</span>
+                <span class="s2">&quot;time_window_start&quot;</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
+                <span class="s2">&quot;time_window_end&quot;</span><span class="p">:</span> <span class="n">end</span><span class="p">,</span>
+                <span class="s2">&quot;imu_window&quot;</span><span class="p">:</span> <span class="n">imu_data</span><span class="p">,</span>
+                <span class="s2">&quot;gps_window&quot;</span><span class="p">:</span> <span class="n">gps_data</span>
+            <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+</div>
+
+
+    
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Ángela Fernández.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

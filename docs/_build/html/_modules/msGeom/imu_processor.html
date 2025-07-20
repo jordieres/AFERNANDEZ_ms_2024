@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msGeom.imu_processor &mdash; Gait-Measurement 1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=56dcb7b8"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Gait-Measurement
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Gait-Measurement</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msGeom.imu_processor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msGeom.imu_processor</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">from</span> <span class="nn">ahrs.filters</span> <span class="kn">import</span> <span class="n">Madgwick</span><span class="p">,</span> <span class="n">Mahony</span>
+<span class="kn">from</span> <span class="nn">ahrs.common.orientation</span> <span class="kn">import</span> <span class="n">q_conj</span><span class="p">,</span> <span class="n">q_rot</span><span class="p">,</span> <span class="n">axang2quat</span>
+
+<div class="viewcode-block" id="IMUProcessor">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.imu_processor.IMUProcessor">[docs]</a>
+<span class="k">class</span> <span class="nc">IMUProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for processing IMU data from gyroscope, accelerometer, and magnetometer sensors.</span>
+
+<span class="sd">    Provides methods for:</span>
+<span class="sd">    - Estimating the gravity vector</span>
+<span class="sd">    - Detecting motion and stationary periods</span>
+<span class="sd">    - Estimating position using sensor fusion algorithms (Madgwick or Mahony)</span>
+<span class="sd">    - Applying ZUPT/ZUPH corrections to reduce drift</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">sample_period</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span> <span class="o">=</span> <span class="n">sample_period</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
+        
+
+<div class="viewcode-block" id="IMUProcessor.estimate_gravity_vector">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.imu_processor.IMUProcessor.estimate_gravity_vector">[docs]</a>
+    <span class="k">def</span> <span class="nf">estimate_gravity_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Estimate normalized gravity vector from accelerometer data using exponential moving average.</span>
+
+<span class="sd">        :param acc: Acceleration data array with shape (N, 3).</span>
+<span class="sd">        :type acc: np.ndarray</span>
+<span class="sd">        :param alpha: Smoothing coefficient (0 &lt; alpha &lt; 1).</span>
+<span class="sd">        :type alpha: float</span>
+<span class="sd">        :return: Normalized gravity vectors.</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        :raises ValueError: If input shape is invalid or alpha is out of bounds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">acc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">acc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input array must have shape (N, 3) with columns [Ax, Ay, Az].&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter alpha must be in the range (0, 1).&quot;</span><span class="p">)</span>
+
+        <span class="n">gravity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span>
+        <span class="n">gravity</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">acc</span><span class="p">)):</span>
+            <span class="n">gravity</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">gravity</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">acc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Normalización segura</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gravity</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">norm</span><span class="p">[</span><span class="n">norm</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Evita división por cero</span>
+        <span class="n">gravity_normalized</span> <span class="o">=</span> <span class="n">gravity</span> <span class="o">/</span> <span class="n">norm</span>
+
+        <span class="k">return</span> <span class="n">gravity_normalized</span></div>
+
+
+<div class="viewcode-block" id="IMUProcessor.detect_stationary">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.imu_processor.IMUProcessor.detect_stationary">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_stationary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect stationary periods from accelerometer data using filtering and thresholding.</span>
+
+<span class="sd">        :param acc: Acceleration data array with shape (N, 3).</span>
+<span class="sd">        :type acc: np.ndarray</span>
+<span class="sd">        :param sample_rate: Sampling rate of the accelerometer signal in Hz.</span>
+<span class="sd">        :type sample_rate: float</span>
+<span class="sd">        :return: A tuple containing stationary: Boolean array indicating stationary (True) or moving (False) states.</span>
+<span class="sd">        :rtype: tuple[np.ndarray]</span>
+<span class="sd">        :raises ValueError: If input shape is invalid or sample_rate is non-positive.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">acc_mag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">acc_mag_clipped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">acc_mag</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.01</span> <span class="o">/</span> <span class="p">(</span><span class="n">sample_rate</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;highpass&#39;</span><span class="p">)</span>
+        <span class="n">acc_hp</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">acc_mag_clipped</span><span class="p">)</span>
+
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">5.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">sample_rate</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;lowpass&#39;</span><span class="p">)</span>
+        <span class="n">acc_lp</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">acc_hp</span><span class="p">))</span>
+
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">acc_lp</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+        <span class="n">stationary</span> <span class="o">=</span> <span class="n">acc_lp</span> <span class="o">&lt;</span> <span class="n">threshold</span>
+
+        <span class="k">return</span> <span class="n">stationary</span></div>
+
+
+    <span class="c1"># Agregación de ZUPH</span>
+<div class="viewcode-block" id="IMUProcessor.detect_no_rotation">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.imu_processor.IMUProcessor.detect_no_rotation">[docs]</a>
+    <span class="k">def</span> <span class="nf">detect_no_rotation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gyr</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">duration_samples</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detect periods where there is negligible angular velocity on Z-axis (i.e., no yaw rotation).</span>
+
+<span class="sd">        :param gyr: Gyroscope data array of shape (N, 3), in rad/s.</span>
+<span class="sd">        :type gyr: np.ndarray</span>
+<span class="sd">        :param threshold: Threshold for Z-axis angular velocity (in rad/s) to define no rotation.</span>
+<span class="sd">        :type threshold: float</span>
+<span class="sd">        :param duration_samples: Minimum number of consecutive samples below the threshold to validate no rotation.</span>
+<span class="sd">        :type duration_samples: int</span>
+<span class="sd">        :return: Boolean array of shape (N,), where True indicates no rotation around the Z-axis.</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">gz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gyr</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>  <span class="c1"># Only Z axis</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">gz</span> <span class="o">&lt;</span> <span class="n">threshold</span>
+        <span class="n">stable</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mask</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="n">duration_samples</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">duration_samples</span><span class="p">]):</span>
+                <span class="n">stable</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">duration_samples</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">stable</span></div>
+
+
+<div class="viewcode-block" id="IMUProcessor.estimate_position_generic">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.imu_processor.IMUProcessor.estimate_position_generic">[docs]</a>
+    <span class="k">def</span> <span class="nf">estimate_position_generic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">use_mag</span><span class="p">,</span> <span class="n">gyr</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">stationary</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Estimate the 2D position from IMU sensor data using either the Madgwick or Mahony filter.</span>
+
+<span class="sd">        This method computes orientation quaternions using an AHRS filter, rotates the </span>
+<span class="sd">        acceleration to the earth frame, removes gravity, integrates to velocity and </span>
+<span class="sd">        position, and compensates for drift during stationary periods.</span>
+
+<span class="sd">        :param method: Algorithm to use (&#39;madgwick&#39; or &#39;mahony&#39;).</span>
+<span class="sd">        :type method: str</span>
+<span class="sd">        :param use_mag: Whether to use magnetometer data (True for MARG, False for IMU-only).</span>
+<span class="sd">        :type use_mag: bool</span>
+<span class="sd">        :param gyr: Gyroscope data array of shape (N, 3), in rad/s.</span>
+<span class="sd">        :type gyr: np.ndarray</span>
+<span class="sd">        :param acc: Accelerometer data array of shape (N, 3), in m/s^2.</span>
+<span class="sd">        :type acc: np.ndarray</span>
+<span class="sd">        :param mag: Magnetometer data array of shape (N, 3), in arbitrary units.</span>
+<span class="sd">        :type mag: np.ndarray</span>
+<span class="sd">        :param time: Time vector of shape (N,), in seconds.</span>
+<span class="sd">        :type time: np.ndarray</span>
+<span class="sd">        :param sample_rate: Sampling frequency in Hz.</span>
+<span class="sd">        :type sample_rate: float</span>
+<span class="sd">        :param stationary: Boolean array of shape (N,) indicating stationary periods.</span>
+<span class="sd">        :type stationary: np.ndarray</span>
+<span class="sd">        :return: Estimated position array of shape (N, 3).</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        :raises ValueError: If the method is not recognized.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;madgwick&quot;</span><span class="p">:</span>
+            <span class="n">base_gain</span> <span class="o">=</span> <span class="mf">0.02</span>
+            <span class="n">filter_</span> <span class="o">=</span> <span class="n">Madgwick</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="n">base_gain</span><span class="p">)</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">axang2quat</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">45</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;mahony&quot;</span><span class="p">:</span>
+            <span class="n">base_kp</span> <span class="o">=</span> <span class="mf">1.5</span>
+            <span class="n">filter_</span> <span class="o">=</span> <span class="n">Mahony</span><span class="p">(</span><span class="n">Kp</span><span class="o">=</span><span class="n">base_kp</span><span class="p">,</span> <span class="n">Ki</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+            <span class="n">acc_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2000</span><span class="p">):</span>
+                <span class="n">q</span> <span class="o">=</span> <span class="n">filter_</span><span class="o">.</span><span class="n">updateIMU</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">gyr</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc_init</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown method. Use &#39;madgwick&#39; or &#39;mahony&#39;.&quot;</span><span class="p">)</span>
+
+        <span class="n">quats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">no_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detect_no_rotation</span><span class="p">(</span><span class="n">gyr</span><span class="p">)</span>
+        <span class="n">no_motion</span> <span class="o">=</span> <span class="n">stationary</span> <span class="o">&amp;</span> <span class="n">no_rotation</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;madgwick&quot;</span><span class="p">:</span>
+                <span class="n">filter_</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="mf">0.001</span> <span class="k">if</span> <span class="n">no_motion</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">else</span> <span class="n">base_gain</span>
+                <span class="n">q_new</span> <span class="o">=</span> <span class="n">filter_</span><span class="o">.</span><span class="n">updateMARG</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">gyr</span><span class="o">=</span><span class="n">gyr</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">mag</span><span class="o">=</span><span class="n">mag</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="k">if</span> <span class="n">use_mag</span> <span class="k">else</span> <span class="n">filter_</span><span class="o">.</span><span class="n">updateIMU</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">gyr</span><span class="o">=</span><span class="n">gyr</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">filter_</span><span class="o">.</span><span class="n">Kp</span> <span class="o">=</span> <span class="n">base_kp</span> <span class="o">*</span> <span class="mf">0.1</span> <span class="k">if</span> <span class="n">no_motion</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">else</span> <span class="p">(</span><span class="n">base_kp</span> <span class="k">if</span> <span class="n">stationary</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+                <span class="n">q_new</span> <span class="o">=</span> <span class="n">filter_</span><span class="o">.</span><span class="n">updateMARG</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">gyr</span><span class="o">=</span><span class="n">gyr</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">mag</span><span class="o">=</span><span class="n">mag</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="k">if</span> <span class="n">use_mag</span> <span class="k">else</span> <span class="n">filter_</span><span class="o">.</span><span class="n">updateIMU</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">gyr</span><span class="o">=</span><span class="n">gyr</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">q_new</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">q</span> <span class="o">=</span> <span class="n">q_new</span>
+            <span class="n">quats</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">q</span>
+
+        <span class="n">gravity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_gravity_vector</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+        <span class="n">acc_earth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">q_rot</span><span class="p">(</span><span class="n">q_conj</span><span class="p">(</span><span class="n">qt</span><span class="p">),</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">qt</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">quats</span><span class="p">,</span> <span class="n">acc</span><span class="p">)])</span>
+        <span class="n">acc_earth</span> <span class="o">-=</span> <span class="n">gravity</span>
+        <span class="n">acc_earth</span> <span class="o">*=</span> <span class="mf">9.81</span>
+
+
+        <span class="n">vel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">acc_earth</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vel</span><span class="p">)):</span>
+            <span class="n">vel</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">vel</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">acc_earth</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stationary</span><span class="p">[</span><span class="n">t</span><span class="p">]:</span>
+                <span class="n">vel</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">drift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">vel</span><span class="p">)</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">stationary</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">stationary</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">starts</span><span class="p">,</span> <span class="n">ends</span><span class="p">):</span>
+            <span class="n">drift_rate</span> <span class="o">=</span> <span class="n">vel</span><span class="p">[</span><span class="n">e</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">e</span> <span class="o">-</span> <span class="n">s</span><span class="p">)</span>
+            <span class="n">drift</span><span class="p">[</span><span class="n">s</span><span class="p">:</span><span class="n">e</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">e</span> <span class="o">-</span> <span class="n">s</span><span class="p">),</span> <span class="n">drift_rate</span><span class="p">)</span>
+        <span class="n">vel</span> <span class="o">-=</span> <span class="n">drift</span>
+
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">vel</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)):</span>
+            <span class="n">pos</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">vel</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span>
+
+        <span class="k">return</span> <span class="n">pos</span></div>
+
+    
+
+        
+<div class="viewcode-block" id="IMUProcessor.estimate_position_madwick">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.imu_processor.IMUProcessor.estimate_position_madwick">[docs]</a>
+    <span class="k">def</span> <span class="nf">estimate_position_madwick</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">gyr</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">stationary</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter</span>
+<span class="sd">        and zero-velocity updates.</span>
+
+<span class="sd">        Applies orientation estimation with adaptive gain based on motion state (ZUPH),</span>
+<span class="sd">        and velocity correction during stationary periods (ZUPT).</span>
+
+<span class="sd">        :param time: Array of time stamps.</span>
+<span class="sd">        :type time: np.ndarray</span>
+<span class="sd">        :param gyr: Gyroscope data array with shape (N, 3), in rad/s.</span>
+<span class="sd">        :type gyr: np.ndarray</span>
+<span class="sd">        :param acc: Accelerometer data array with shape (N, 3), in m/s².</span>
+<span class="sd">        :type acc: np.ndarray</span>
+<span class="sd">        :param mag: Magnetometer data array with shape (N, 3), in µT.</span>
+<span class="sd">        :type mag: np.ndarray</span>
+<span class="sd">        :param stationary: Boolean array indicating stationary states (True for stationary).</span>
+<span class="sd">        :type stationary: np.ndarray</span>
+<span class="sd">        :return: Tuple (quats, acc_earth, vel, pos) where:</span>
+<span class="sd">                - quats: Quaternion orientation estimates.</span>
+<span class="sd">                - acc_earth: Linear acceleration in earth frame (gravity removed).</span>
+<span class="sd">                - vel: Estimated velocity with ZUPT correction.</span>
+<span class="sd">                - pos: Estimated position.</span>
+<span class="sd">        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]</span>
+<span class="sd">        :raises ValueError: If input shapes are inconsistent.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">madgwick</span> <span class="o">=</span> <span class="n">Madgwick</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+        <span class="n">low_gain</span> <span class="o">=</span> <span class="mf">0.001</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">quats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">quats</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">q</span>
+
+        <span class="n">no_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detect_no_rotation</span><span class="p">(</span><span class="n">gyr</span><span class="p">)</span>
+        <span class="n">no_motion</span> <span class="o">=</span> <span class="n">stationary</span> <span class="o">&amp;</span> <span class="n">no_rotation</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)):</span>
+            <span class="n">madgwick</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">low_gain</span> <span class="k">if</span> <span class="n">no_motion</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.02</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">madgwick</span><span class="o">.</span><span class="n">updateMARG</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">gyr</span><span class="o">=</span><span class="n">gyr</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">mag</span><span class="o">=</span><span class="n">mag</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="n">quats</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">q</span>
+
+        <span class="n">gravity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_gravity_vector</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+        <span class="n">acc_earth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">q_rot</span><span class="p">(</span><span class="n">q_conj</span><span class="p">(</span><span class="n">qt</span><span class="p">),</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">qt</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">quats</span><span class="p">,</span> <span class="n">acc</span><span class="p">)])</span>
+        <span class="n">acc_earth</span> <span class="o">-=</span> <span class="n">gravity</span>
+        <span class="n">acc_earth</span> <span class="o">*=</span> <span class="mf">9.81</span>
+
+        <span class="n">vel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">acc_earth</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vel</span><span class="p">)):</span>
+            <span class="n">vel</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">vel</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">acc_earth</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span>
+            <span class="k">if</span> <span class="n">stationary</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stationary</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">vel</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  
+
+        <span class="n">vel_drift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">vel</span><span class="p">)</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">stationary</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">stationary</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">starts</span><span class="p">,</span> <span class="n">ends</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">e</span> <span class="o">&gt;</span> <span class="n">s</span><span class="p">:</span>
+                <span class="n">drift_rate</span> <span class="o">=</span> <span class="n">vel</span><span class="p">[</span><span class="n">e</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">e</span> <span class="o">-</span> <span class="n">s</span><span class="p">)</span>
+                <span class="n">vel_drift</span><span class="p">[</span><span class="n">s</span><span class="p">:</span><span class="n">e</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">e</span> <span class="o">-</span> <span class="n">s</span><span class="p">),</span> <span class="n">drift_rate</span><span class="p">)</span>
+        <span class="n">vel</span> <span class="o">-=</span> <span class="n">vel_drift</span>
+
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">vel</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)):</span>
+            <span class="n">pos</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">vel</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_period</span>
+
+        <span class="k">return</span> <span class="n">quats</span><span class="p">,</span> <span class="n">acc_earth</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">pos</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Ángela Fernández.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

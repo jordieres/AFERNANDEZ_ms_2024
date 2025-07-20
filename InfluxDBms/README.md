@@ -1,9 +1,16 @@
 # README - InfluxDBms
 
 ## Description
-This folder contains the tools and configurations needed to interact with an InfluxDB database. It includes scripts for querying, processing, and visualizing data, as well as specific configuration files for database access.
 
-The main goal of this folder is to simplify access to and management of data stored in InfluxDB for projects related to data analysis and processing.
+
+This folder contains a Python package designed to simplify interaction with an **InfluxDB** time-series database. It includes a core module (`influxdb_tools.py`) that provides a class for managing connections, querying sensor data, and retrieving structured results in `pandas` DataFrames.
+
+The main goal of this package is to streamline access to and processing of telemetry or biometric data stored in InfluxDB — particularly for analytical workflows.
+
+This functionality is directly integrated into the script `extract_data.py`, located in the `test_influxdb/` directory. By running that script, an instance of the `cInfluxDB` class from `influxdb_tools` is created and executed to query the database and export the results as an Excel file.
+
+This setup allows for quick extraction of data from InfluxDB using predefined filters (e.g., time range, patient ID, foot side), making it easy to retrieve and analyze relevant subsets of your dataset.
+
 
 ## Setup – Install
 1. Ensure you have the following prerequisites installed:
@@ -50,50 +57,30 @@ influxdb:
 
 
 ## Usage
-This folder includes the following files and their purposes:
 
-- **`cInfluxDB.py`**:  
-  Main class that manages the connection and queries to InfluxDB. It provides methods to:
-  - `query_data()`--> Retrieves sensor data for a specific date range and foot side.
-  - `query_with_aggregate_window() `--> Retrieves data with aggregation using `aggregateWindow`, helpful for smoothing or resampling.
-  - `debug_fields()` --> Prints available metric fields in your InfluxDB bucket.
-  - `show_raw_sample()` --> Fetches a few raw entries for quick inspection.
+This folder includes the following file of interest:
 
-- **`fecha_verbose.py`**:  
-  A utility script to manage batch execution with configurable verbosity:
-  * Use `-v`, `-vv`, or `-vvv` to control output detail.
-  * Accepts arguments for config path and others, designed for extension.
+- **`influxdb_tools.py`**:  
+  Main module that handles connection and advanced queries to InfluxDB. It contains:
 
-- **`plot_functions.py`**:  
-  Utilities to visualize InfluxDB time series data using matplotlib:
-  * `plot_2d`: 2D time series plot of one or two metrics over time.
-  * `plot_3d`: 3D scatter plot of three variables with time coloring.
-  * `plot_4d`: 3D plot with time as a color gradient (4D feel).
-  * `plot_dual_3d`: Side-by-side 3D plots for comparative analysis.
-  Useful for exploratory data analysis and feature inspection.
+  - `InfluxHelper`:
+    * Parses string inputs to `datetime` objects.
+    * Generates default ISO 8601 datetime ranges.
 
-- **`orden.sh`**:  
-  A script file with instructions to install additional dependencies required to interact with InfluxDB.
-
-- **`setup.py`**:  
-  Allows packaging and potential distribution of the module as a Python package.
-
+  - `cInfluxDB`: Core class that wraps the InfluxDB client, with methods to:
+    * `query_data()` → Queries raw time series data and pivots metrics into columns.
+    * `query_with_aggregate_window()` → Queries aggregated data using `aggregateWindow` for resampling.
+    * `debug_fields()` → Prints available field names in the bucket.
+    * `show_raw_sample()` → Prints the first 5 records from a sample query.
+    * `close()` → Closes the InfluxDB connection.
 
 ## Example Workflow
 
-1. Query data from InfluxDB:
+```python
+from influxdb_tools import cInfluxDB
+from datetime import datetime
 
-   ```python
-   from cInfluxDB import cInfluxDB
-   from datetime import datetime
-
-   client = cInfluxDB("config_db.yaml")
-   df = client.query_data(datetime(2024, 1, 1), datetime(2024, 1, 2), qtok="ID123", pie="Right")
-   ```
-
-2. Plot results:
-
-   ```python
-   from plot_functions import plot_2d
-   plot_2d(df, "_time", "Ax", "Ay")
-   ```
+client = cInfluxDB("config_db.yaml")
+df = client.query_data(datetime(2024, 1, 1), datetime(2024, 1, 2), qtok="ID123", pie="Right")
+print(df.head())
+```

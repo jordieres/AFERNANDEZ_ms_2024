@@ -4,23 +4,15 @@ InfluxDBms package
 The ``cInfluxDB`` class
 -----------------------
 
-.. autoclass:: InfluxDBms.cInfluxDB.cInfluxDB
+.. autoclass:: InfluxDBms.influxdb_tools.cInfluxDB
    :members:
    :undoc-members:
    :show-inheritance:
 
-The ``VAction`` class
----------------------
-
-.. autoclass:: InfluxDBms.fecha_verbose.VAction
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-The ``BatchProcess`` class
+The ``InfluxHelper`` class
 --------------------------
 
-.. autoclass:: InfluxDBms.fecha_verbose.BatchProcess
+.. autoclass:: InfluxDBms.influxdb_tools.InfluxHelper
    :members:
    :undoc-members:
    :show-inheritance:

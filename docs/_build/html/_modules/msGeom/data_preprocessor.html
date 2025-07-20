@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msGeom.data_preprocessor &mdash; Gait-Measurement 1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=56dcb7b8"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Gait-Measurement
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Gait-Measurement</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">msGeom.data_preprocessor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for msGeom.data_preprocessor</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">CubicSpline</span>
+<span class="kn">from</span> <span class="nn">pyproj</span> <span class="kn">import</span> <span class="n">Proj</span>
+
+<div class="viewcode-block" id="DataPreprocessor">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.data_preprocessor.DataPreprocessor">[docs]</a>
+<span class="k">class</span> <span class="nc">DataPreprocessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for loading configuration and Excel data, resampling, and preprocessing sensor data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the DataPreprocessor with a configuration file path.</span>
+
+<span class="sd">        :param config_path: Path to the YAML configuration file.</span>
+<span class="sd">        :type config_path: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_path</span> <span class="o">=</span> <span class="n">config_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataPreprocessor.load_config">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.data_preprocessor.DataPreprocessor.load_config">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load YAML configuration file from the specified path.</span>
+
+<span class="sd">        :param config_path: Path to the YAML configuration file.</span>
+<span class="sd">        :type config_path: str</span>
+<span class="sd">        :return: Dictionary containing configuration data.</span>
+<span class="sd">        :rtype: dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">config</span></div>
+
+
+<div class="viewcode-block" id="DataPreprocessor.load_data">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.data_preprocessor.DataPreprocessor.load_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load Excel data from the specified path.</span>
+
+<span class="sd">        :param file_path: Path to the Excel file.</span>
+<span class="sd">        :type file_path: str</span>
+<span class="sd">        :return: DataFrame containing raw data.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+    
+    
+<div class="viewcode-block" id="DataPreprocessor.resample_to_40hz">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.data_preprocessor.DataPreprocessor.resample_to_40hz">[docs]</a>
+    <span class="k">def</span> <span class="nf">resample_to_40hz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">time_col</span> <span class="o">=</span> <span class="s1">&#39;_time&#39;</span><span class="p">,</span> <span class="n">freq_hz</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">gap_threshold_ms</span> <span class="o">=</span> <span class="mi">200</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resample data to the target frequency handling session gaps.</span>
+<span class="sd">        This method detects session gaps larger than `gap_threshold_ms` and resamples each session individually.</span>
+
+<span class="sd">        :param df: Raw DataFrame.</span>
+<span class="sd">        :type df: pd.DataFrame</span>
+<span class="sd">        :param time_col: Name of the time column.</span>
+<span class="sd">        :type time_col: str</span>
+<span class="sd">        :param freq_hz: Target frequency in Hz.</span>
+<span class="sd">        :type freq_hz: int</span>
+<span class="sd">        :param gap_threshold_ms: Gap threshold to split sessions.</span>
+<span class="sd">        :type gap_threshold_ms: int</span>
+<span class="sd">        :return: Interpolated DataFrame.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">time_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">time_col</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">time_col</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">time_col</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">gap_threshold_ms</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+
+        <span class="n">interpolated</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;session&#39;</span><span class="p">):</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">time_col</span><span class="p">)</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+            <span class="n">new_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">group</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">end</span><span class="o">=</span><span class="n">group</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">freq</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span><span class="o">/</span><span class="n">freq_hz</span><span class="p">)</span><span class="si">}</span><span class="s1">ms&#39;</span><span class="p">)</span>
+            <span class="n">df_interp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">new_index</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">difference</span><span class="p">([</span><span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="s1">&#39;session&#39;</span><span class="p">]):</span>
+                <span class="n">clean</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clean</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">clean</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">clean</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                    <span class="n">cs</span> <span class="o">=</span> <span class="n">CubicSpline</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="n">t_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_index</span> <span class="o">-</span> <span class="n">clean</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                    <span class="n">df_interp</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">cs</span><span class="p">(</span><span class="n">t_new</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">df_interp</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="n">df_interp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">df_interp</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="n">time_col</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">df_interp</span><span class="p">[</span><span class="s1">&#39;session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">session_id</span>
+            <span class="n">interpolated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_interp</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">interpolated</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+    
+
+<div class="viewcode-block" id="DataPreprocessor.preprocess_data">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.data_preprocessor.DataPreprocessor.preprocess_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">preprocess_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process the DataFrame to extract sensor arrays and timing information.</span>
+
+<span class="sd">        :param df: Preprocessed DataFrame containing IMU and time data.</span>
+<span class="sd">        :type df: pd.DataFrame</span>
+<span class="sd">        :return: Tuple containing:</span>
+<span class="sd">            - time (np.ndarray): Time vector in seconds.</span>
+<span class="sd">            - sample_rate (float): Sampling frequency in Hz.</span>
+<span class="sd">            - gyr (np.ndarray): Gyroscope data (Nx3) in rad/s.</span>
+<span class="sd">            - acc (np.ndarray): Accelerometer data (Nx3) in m/s².</span>
+<span class="sd">            - mag (np.ndarray): Magnetometer data (Nx3) in µT.</span>
+<span class="sd">        :rtype: tuple[np.ndarray, float, np.ndarray, np.ndarray, np.ndarray]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;_time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">sample_period</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">time</span><span class="p">))</span>
+        <span class="n">sample_rate</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sample_period</span>
+
+        <span class="n">gyr</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Gx&#39;</span><span class="p">,</span> <span class="s1">&#39;Gy&#39;</span><span class="p">,</span> <span class="s1">&#39;Gz&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Ax&#39;</span><span class="p">,</span> <span class="s1">&#39;Ay&#39;</span><span class="p">,</span> <span class="s1">&#39;Az&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> 
+        <span class="n">mag</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Mx&#39;</span><span class="p">,</span> <span class="s1">&#39;My&#39;</span><span class="p">,</span> <span class="s1">&#39;Mz&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">*</span> <span class="mi">100</span>
+        
+        <span class="k">return</span> <span class="n">time</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">gyr</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">mag</span></div>
+
+    
+
+<div class="viewcode-block" id="DataPreprocessor.compute_positions">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.data_preprocessor.DataPreprocessor.compute_positions">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert GPS coordinates to local Cartesian positions using projection configuration.</span>
+
+<span class="sd">        :param df: DataFrame with &#39;lat&#39; and &#39;lng&#39; columns.</span>
+<span class="sd">        :type df: pd.DataFrame</span>
+<span class="sd">        :param config: Configuration dictionary containing &#39;Location&#39; section with projection params.</span>
+<span class="sd">        :type config: dict</span>
+<span class="sd">        :return: Tuple of GPS position array, final GPS position and a DataFrame with valid GPS entries.</span>
+<span class="sd">        :rtype: tuple[pd.DataFrame, np.ndarray, np.ndarray]</span>
+<span class="sd">        :raises KeyError: If required projection parameters are missing in config[&#39;Location&#39;].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">location_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;Location&quot;</span><span class="p">]</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="n">Proj</span><span class="p">(</span>
+            <span class="n">proj</span><span class="o">=</span><span class="n">location_cfg</span><span class="p">[</span><span class="s2">&quot;proj&quot;</span><span class="p">],</span>
+            <span class="n">zone</span><span class="o">=</span><span class="n">location_cfg</span><span class="p">[</span><span class="s2">&quot;zone&quot;</span><span class="p">],</span>
+            <span class="n">ellps</span><span class="o">=</span><span class="n">location_cfg</span><span class="p">[</span><span class="s2">&quot;ellps&quot;</span><span class="p">],</span>
+            <span class="n">south</span><span class="o">=</span><span class="n">location_cfg</span><span class="p">[</span><span class="s2">&quot;south&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">df_gps</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lng&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">lat</span> <span class="o">=</span> <span class="n">df_gps</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">lng</span> <span class="o">=</span> <span class="n">df_gps</span><span class="p">[</span><span class="s1">&#39;lng&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">proj</span><span class="p">(</span><span class="n">lng</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+        <span class="n">gps_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df_gps</span><span class="p">,</span><span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Ángela Fernández.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

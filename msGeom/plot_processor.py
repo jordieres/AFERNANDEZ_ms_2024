@@ -8,7 +8,10 @@ from pyproj import Proj, Transformer
 
 class PlotProcessor:
     """
-    Class for handling various types of trajectory visualizations.
+    Class for visualizing trajectories using Matplotlib, Plotly, and Folium.
+
+    This class provides a variety of plotting methods to compare estimated trajectories with ground truth GPS data,
+    display diagnostic plots, and export results to interactive maps or static images.
     """
 
     def plot_trajectories_interactive(self, resultados, errores, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
@@ -178,7 +181,7 @@ class PlotProcessor:
             plt.savefig(save_path)
 
         
-    def plot_results_madwick(self,time, pos, vel, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", verbose=3, traj_label="IMU" ):
+    def plot_macroscopic_comparision(self, pos, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", traj_label= None ):
         """
         Plot diagnostic and trajectory figures for IMU data, and optionally save them.
 
@@ -186,85 +189,16 @@ class PlotProcessor:
         velocity, 2D and 3D trajectory. If GPS data is provided, it includes a comparative plot. 
         Depending on the verbosity level and output directory, plots can also be saved.
 
-        :param time: Array of timestamps in seconds.
-        :type time: np.ndarray
-        :param acc_lp: Low-pass filtered acceleration magnitude.
-        :type acc_lp: np.ndarray
-        :param threshold: Threshold value used to detect stationary periods.
-        :type threshold: float
+
         :param pos: Estimated position array of shape (N, 3).
         :type pos: np.ndarray
-        :param vel: Estimated velocity array of shape (N, 3).
-        :type vel: np.ndarray
         :param gps_pos: Optional GPS position array of shape (N, 2). Defaults to None.
         :type gps_pos: np.ndarray or None
-        :param output_dir: Directory to save plots. If None, figures are displayed but not saved.
-        :type output_dir: str or None
         :param title: Title used in trajectory comparison plots.
         :type title: str
-        :param base_name: Base filename for saving output plots (without extension).
-        :type base_name: str
-        :param verbose: Verbosity level:
-                        - 1: No plots
-                        - 2: Show/save trajectory plots
-                        - 3: Show/save all plots (acceleration, velocity, etc.)
-        :type verbose: int
+
         """
-        def save_figure(title):
-            if output_dir:
-                filename = f"{base_name}_{title.lower().replace(' ', '_')}.png"
-                path = os.path.join(output_dir, filename)
-                plt.savefig(path, bbox_inches='tight')
-
-        # Filtered acceleration
-        if verbose == 3:
-            # Position
-            plt.figure(figsize=(15, 5))
-            plt.plot(time, pos[:, 0], 'r', label='x')
-            plt.plot(time, pos[:, 1], 'g', label='y')
-            plt.plot(time, pos[:, 2], 'b', label='z')
-            plt.title("Position")
-            plt.xlabel("Time (s)")
-            plt.ylabel("Position (m)")
-            plt.legend()
-            plt.grid()
-            save_figure("Position")
-
-            # Velocity
-            plt.figure(figsize=(15, 5))
-            plt.plot(time, vel[:, 0], 'r', label='x')
-            plt.plot(time, vel[:, 1], 'g', label='y')
-            plt.plot(time, vel[:, 2], 'b', label='z')
-            plt.title("Velocity")
-            plt.xlabel("Time (s)")
-            plt.ylabel("Velocity (m/s)")
-            plt.legend()
-            plt.grid()
-            save_figure("Velocity")
-
-            # XY Trajectory
-            plt.figure()
-            plt.plot(pos[:, 0], pos[:, 1])
-            plt.axis('equal')
-            plt.title("XY Trajectory")
-            plt.grid()
-            save_figure("XY Trajectory")
-
-            # 3D Trajectory
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax.plot(pos[:, 0], pos[:, 1], pos[:, 2])
-            ax.set_title("3D Trajectory")
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax.set_zlabel("Z")
-            if output_dir:
-                filename = f"{base_name}_3d_trajectory.png"
-                path = os.path.join(output_dir, filename)
-                plt.savefig(path, bbox_inches='tight')
-
-        # IMU vs GPS comparison (always in verbose 2 or 3)
-        if gps_pos is not None and verbose >= 2:
+        if gps_pos is not None:
             plt.figure(figsize=(10, 8))
             plt.plot(pos[:, 0], pos[:, 1], label=f'{traj_label} Trajectory')
             plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label='GPS Reference')
@@ -275,5 +209,56 @@ class PlotProcessor:
             plt.axis("equal")
             plt.grid()
             plt.legend()
-            save_figure(f"Trajectory Comparison ({traj_label} vs GPS)")
+
+    def plot_resume(self, time, pos, vel, output_dir=None, base_name="summary"):
+        """
+        Plot position, velocity, and 3D trajectory of the estimated movement.
+
+        This function summarizes motion-related variables: 1D time series of position and velocity
+        (in x, y, z), and a 3D trajectory plot in space.
+
+        :param time: Time vector in seconds.
+        :type time: np.ndarray
+        :param pos: Estimated position array of shape (N, 3).
+        :type pos: np.ndarray
+        :param vel: Estimated velocity array of shape (N, 3).
+        :type vel: np.ndarray
+        :param output_dir: (Not used anymore; figures are not saved).
+        :type output_dir: str or None
+        :param base_name: (Unused). Name that would be used for saving if enabled.
+        :type base_name: str
+        """
+
+        # Position over time
+        plt.figure(figsize=(15, 5))
+        plt.plot(time, pos[:, 0], 'r', label='x')
+        plt.plot(time, pos[:, 1], 'g', label='y')
+        plt.plot(time, pos[:, 2], 'b', label='z')
+        plt.title("Position over Time")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Position (m)")
+        plt.legend()
+        plt.grid()
+
+        # Velocity over time
+        plt.figure(figsize=(15, 5))
+        plt.plot(time, vel[:, 0], 'r', label='vx')
+        plt.plot(time, vel[:, 1], 'g', label='vy')
+        plt.plot(time, vel[:, 2], 'b', label='vz')
+        plt.title("Velocity over Time")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Velocity (m/s)")
+        plt.legend()
+        plt.grid()
+
+        # 3D Trajectory
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(pos[:, 0], pos[:, 1], pos[:, 2])
+        ax.set_title("3D Trajectory")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        ax.set_zlabel("Z (m)")
+
+
 

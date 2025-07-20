@@ -1,9 +1,6 @@
 test\_InfluxDB module
 =====================
 
-Submodules
-----------
-
 test\_InfluxDB.extract\_data module
 -----------------------------------
 

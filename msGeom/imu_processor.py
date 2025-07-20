@@ -3,14 +3,21 @@ from scipy import signal
 from ahrs.filters import Madgwick, Mahony
 from ahrs.common.orientation import q_conj, q_rot, axang2quat
 
-
 class IMUProcessor:
     """
-    Class for processing IMU data: gravity estimation, motion detection, and position estimation.
+    Class for processing IMU data from gyroscope, accelerometer, and magnetometer sensors.
+
+    Provides methods for:
+    - Estimating the gravity vector
+    - Detecting motion and stationary periods
+    - Estimating position using sensor fusion algorithms (Madgwick or Mahony)
+    - Applying ZUPT/ZUPH corrections to reduce drift
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, sample_rate, sample_period):
+        self.sample_period = sample_period
+        self.sample_rate = sample_rate
+        
 
     def estimate_gravity_vector(self, acc, alpha = 0.9):
         """
@@ -123,7 +130,7 @@ class IMUProcessor:
         """
 
         if method == "madgwick":
-            base_gain = 0.005
+            base_gain = 0.02
             filter_ = Madgwick(frequency=sample_rate, gain=base_gain)
             q = axang2quat([0, 0, 1], np.deg2rad(45))
         elif method == "mahony":
@@ -151,13 +158,15 @@ class IMUProcessor:
                 q = q_new
             quats[t] = q
 
+        gravity = self.estimate_gravity_vector(acc, 0.95)
         acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
-        acc_earth -= self.estimate_gravity_vector(acc, 0.95)
+        acc_earth -= gravity
         acc_earth *= 9.81
+
 
         vel = np.zeros_like(acc_earth)
         for t in range(1, len(vel)):
-            vel[t] = vel[t - 1] + acc_earth[t] * (1 / sample_rate)
+            vel[t] = vel[t - 1] + acc_earth[t] * (self.sample_period)
             if stationary[t]:
                 vel[t] = 0
 
@@ -171,25 +180,13 @@ class IMUProcessor:
 
         pos = np.zeros_like(vel)
         for t in range(1, len(pos)):
-            pos[t] = pos[t - 1] + vel[t] * (1 / sample_rate)
+            pos[t] = pos[t - 1] + vel[t] * self.sample_period
 
         return pos
+    
 
-
-
-
-class PositionVelocityEstimator:
-    """
-    Estimates orientation, acceleration, velocity, and position from IMU sensors (gyroscope, accelerometer, magnetometer).
-    Uses the Madgwick filter with adaptive gain for ZUPH and velocity corrections using ZUPT.
-    """
-    def __init__(self, sample_rate, sample_period):
-        self.sample_rate = sample_rate
-        self.sample_period = sample_period
-        self.base_gain = 0.041
-        self.low_gain = 0.001
-
-    def estimate_orientation_and_position(self, time, gyr, acc, mag, stationary):
+        
+    def estimate_position_madwick(self, time, gyr, acc, mag, stationary):
         """
         Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
         and zero-velocity updates.
@@ -205,10 +202,6 @@ class PositionVelocityEstimator:
         :type acc: np.ndarray
         :param mag: Magnetometer data array with shape (N, 3), in µT.
         :type mag: np.ndarray
-        :param sample_period: Time between samples, in seconds.
-        :type sample_period: float
-        :param sample_rate: Sampling rate in Hz.
-        :type sample_rate: float
         :param stationary: Boolean array indicating stationary states (True for stationary).
         :type stationary: np.ndarray
         :return: Tuple (quats, acc_earth, vel, pos) where:
@@ -219,27 +212,25 @@ class PositionVelocityEstimator:
         :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
         :raises ValueError: If input shapes are inconsistent.
         """
-        madgwick = Madgwick(frequency=self.sample_rate, gain=self.base_gain)
+        madgwick = Madgwick(frequency=self.sample_rate, gain=0.02)
+        low_gain = 0.001
         q = np.array([1.0, 0.0, 0.0, 0.0])
         quats = np.zeros((len(time), 4))
         quats[0] = q
 
-        gyro_norm = np.linalg.norm(gyr, axis=1)
-        no_rotation = gyro_norm < 0.1
+        no_rotation = self.detect_no_rotation(gyr)
         no_motion = stationary & no_rotation
 
         for t in range(1, len(time)):
-            madgwick.gain = self.low_gain if no_motion[t] else self.base_gain
+            madgwick.gain = low_gain if no_motion[t] else 0.02
             q = madgwick.updateMARG(q, gyr=gyr[t], acc=acc[t], mag=mag[t])
             quats[t] = q
 
-        imu_proc = IMUProcessor()
-        gravity = imu_proc.estimate_gravity_vector(acc, 0.95)
-
+        gravity = self.estimate_gravity_vector(acc, 0.95)
         acc_earth = np.array([q_rot(q_conj(qt), a) for qt, a in zip(quats, acc)])
         acc_earth -= gravity
         acc_earth *= 9.81
-        
+
         vel = np.zeros_like(acc_earth)
         for t in range(1, len(vel)):
             vel[t] = vel[t - 1] + acc_earth[t] * self.sample_period
@@ -260,4 +251,3 @@ class PositionVelocityEstimator:
             pos[t] = pos[t - 1] + vel[t] * self.sample_period
 
         return quats, acc_earth, vel, pos
-

@@ -4,16 +4,28 @@ extract_data.py : Test_DB_Connection to InfluxDB for Gait
 """
 
 import argparse
-from InfluxDBms.influxdb_tools import cInfluxDB,InfluxPlotter,InfluxHelper
+from InfluxDBms.influxdb_tools import cInfluxDB,InfluxHelper
 
 
 def parse_args():
     """
-    Parses command-line arguments for batch processing.
-    
-    :return: Parsed arguments.
+    Parse command-line arguments for querying gait data from InfluxDB.
+
+    :return: Parsed arguments object containing all user-specified options.
     :rtype: argparse.Namespace
+
+    **Command-line Arguments:**
+
+    - ``-f``, ``--from_time`` (str): Start timestamp in ISO 8601 format (default: now).
+    - ``-u``, ``--until`` (str): End timestamp in ISO 8601 format (default: now + 30min).
+    - ``-q``, ``--qtok`` (str): CodeID to identify the subject/session. (required)
+    - ``-l``, ``--leg`` (str): Select the foot ("Left" or "Right"). (required)
+    - ``-c``, ``--config`` (str): Path to InfluxDB YAML config file (default: ../.config_db.yaml).
+    - ``-o``, ``--output`` (str): Output path for the resulting Excel file. (required)
+    - ``-v``, ``--verbose`` (int): Verbosity level for console output (default: 0).
+    - ``-m``, ``--metrics`` (str): Optional comma-separated list of metrics to query (e.g., "Ax,Ay,Gx,Gy").
     """
+
     helper = InfluxHelper()
     parser = argparse.ArgumentParser(description='Extract data from InfluxDB and save to Excel.')
     default_from, default_until = helper.get_default_dates()
@@ -34,7 +46,18 @@ def parse_args():
 # Main Function
 def main():
     """
-    Main function to execute the InfluxDB query, process the data, and save it to an Excel file.
+    Main execution function to connect to InfluxDB, extract gait data, and export to Excel.
+
+    Workflow:
+    ----------
+    1. Parse input arguments (dates, subject ID, foot, config file).
+    2. Establish connection to InfluxDB using `cInfluxDB` class.
+    3. Query the data using raw query (or optionally `aggregateWindow`).
+    4. Print metrics and dataset stats based on verbosity level.
+    5. Export results to Excel, stripping timezone information.
+    6. Close the connection.
+
+    Requires valid configuration via a YAML file and CodeID + foot selection.
     """
     args = parse_args()
     metrics = args.metrics.split(",") if args.metrics else []

@@ -5,13 +5,18 @@ import yaml
 from scipy.interpolate import CubicSpline
 from pyproj import Proj
 
-
 class DataPreprocessor:
     """
     Class for loading configuration and Excel data, resampling, and preprocessing sensor data.
     """
 
     def __init__(self, config_path):
+        """
+        Initialize the DataPreprocessor with a configuration file path.
+
+        :param config_path: Path to the YAML configuration file.
+        :type config_path: str
+        """
         self.config_path = config_path
         self.config = self.load_config()
 
@@ -39,10 +44,12 @@ class DataPreprocessor:
         """
         df = pd.read_excel(file_path)
         return df
-
+    
+    
     def resample_to_40hz(self, df, time_col = '_time', freq_hz = 40, gap_threshold_ms = 200):
         """
         Resample data to the target frequency handling session gaps.
+        This method detects session gaps larger than `gap_threshold_ms` and resamples each session individually.
 
         :param df: Raw DataFrame.
         :type df: pd.DataFrame
@@ -86,15 +93,21 @@ class DataPreprocessor:
         result = pd.concat(interpolated, ignore_index=True)
         result.dropna(inplace=True)
         return result
+    
 
     def preprocess_data(self, df):
         """
-        Process DataFrame to compute time, sample rate, and sensor arrays.
+        Process the DataFrame to extract sensor arrays and timing information.
 
-        :param df: Preprocessed DataFrame.
+        :param df: Preprocessed DataFrame containing IMU and time data.
         :type df: pd.DataFrame
-        :return: Tuple of time array, sample rate, gyroscope, accelerometer, magnetometer arrays, sample period and filtered GPS DataFrame..
-        :rtype: tuple[np.ndarray, float, np.ndarray, np.ndarray, np.ndarray, float, pd.DataFrame]
+        :return: Tuple containing:
+            - time (np.ndarray): Time vector in seconds.
+            - sample_rate (float): Sampling frequency in Hz.
+            - gyr (np.ndarray): Gyroscope data (Nx3) in rad/s.
+            - acc (np.ndarray): Accelerometer data (Nx3) in m/s².
+            - mag (np.ndarray): Magnetometer data (Nx3) in µT.
+        :rtype: tuple[np.ndarray, float, np.ndarray, np.ndarray, np.ndarray]
         """
         ...
         df['time'] = (df['_time'] - df['_time'].iloc[0]).dt.total_seconds()
@@ -106,10 +119,9 @@ class DataPreprocessor:
         acc = df[['Ax', 'Ay', 'Az']].to_numpy() 
         mag = df[['Mx', 'My', 'Mz']].to_numpy() * 100
         
-        
-
         return time, sample_rate, gyr, acc, mag
     
+
     def compute_positions(self, df, config):
         """
         Convert GPS coordinates to local Cartesian positions using projection configuration.
@@ -118,8 +130,8 @@ class DataPreprocessor:
         :type df: pd.DataFrame
         :param config: Configuration dictionary containing 'Location' section with projection params.
         :type config: dict
-        :return: Tuple of GPS position array and final GPS position.
-        :rtype: tuple[np.ndarray, np.ndarray]
+        :return: Tuple of GPS position array, final GPS position and a DataFrame with valid GPS entries.
+        :rtype: tuple[pd.DataFrame, np.ndarray, np.ndarray]
         :raises KeyError: If required projection parameters are missing in config['Location'].
         """
         location_cfg = config["Location"]
@@ -138,3 +150,4 @@ class DataPreprocessor:
         x, y = proj(lng, lat)
         gps_pos = np.stack((x - x[0], y - y[0]), axis=1)
         return df_gps,gps_pos, gps_pos[-1]
+

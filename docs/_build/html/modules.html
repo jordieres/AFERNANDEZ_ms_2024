@@ -49,8 +49,9 @@
 <li class="toctree-l1"><a class="reference internal" href="intro.html#general-structure">General Structure</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">AFERNANDEZ_ms_2024</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html">msGeom package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gps_trajectory.html">gps_trajectory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transfom_data.html">transform_data module</a></li>
 </ul>
 </li>
 </ul>
@@ -85,29 +86,105 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-cinfluxdb-class">The <code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code> class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB"><code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.close"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.close()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.debug_fields"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.debug_fields()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.query_data"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.query_data()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.query_with_aggregate_window"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.query_with_aggregate_window()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.cInfluxDB.cInfluxDB.show_raw_sample"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.show_raw_sample()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB"><code class="docutils literal notranslate"><span class="pre">cInfluxDB</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB.close"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB.debug_fields"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.debug_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB.query_data"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.query_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB.query_with_aggregate_window"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.query_with_aggregate_window()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB.show_raw_sample"><code class="docutils literal notranslate"><span class="pre">cInfluxDB.show_raw_sample()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-vaction-class">The <code class="docutils literal notranslate"><span class="pre">VAction</span></code> class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.VAction"><code class="docutils literal notranslate"><span class="pre">VAction</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.VAction.values"><code class="docutils literal notranslate"><span class="pre">VAction.values</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-influxhelper-class">The <code class="docutils literal notranslate"><span class="pre">InfluxHelper</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.InfluxHelper"><code class="docutils literal notranslate"><span class="pre">InfluxHelper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.InfluxHelper.get_default_dates"><code class="docutils literal notranslate"><span class="pre">InfluxHelper.get_default_dates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.influxdb_tools.InfluxHelper.parse_datetime"><code class="docutils literal notranslate"><span class="pre">InfluxHelper.parse_datetime()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html#the-batchprocess-class">The <code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code> class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess"><code class="docutils literal notranslate"><span class="pre">BatchProcess</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.config"><code class="docutils literal notranslate"><span class="pre">BatchProcess.config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.get_cnf"><code class="docutils literal notranslate"><span class="pre">BatchProcess.get_cnf()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.main_process"><code class="docutils literal notranslate"><span class="pre">BatchProcess.main_process()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="InfluxDBms.html#InfluxDBms.fecha_verbose.BatchProcess.run"><code class="docutils literal notranslate"><span class="pre">BatchProcess.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="msGeom.html">msGeom package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-datapreprocessor-class">The <code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor.compute_positions"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.compute_positions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor.load_config"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.load_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor.load_data"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.load_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor.preprocess_data"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.preprocess_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor.resample_to_40hz"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.resample_to_40hz()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-imuprocessor-class">The <code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.imu_processor.IMUProcessor"><code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.imu_processor.IMUProcessor.detect_no_rotation"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.detect_no_rotation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.imu_processor.IMUProcessor.detect_stationary"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.detect_stationary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.imu_processor.IMUProcessor.estimate_gravity_vector"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.estimate_gravity_vector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.imu_processor.IMUProcessor.estimate_position_generic"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.estimate_position_generic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.imu_processor.IMUProcessor.estimate_position_madwick"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.estimate_position_madwick()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-kalmanprocessor-class">The <code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.kalman_processor.KalmanProcessor"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.kalman_processor.KalmanProcessor.initialize"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.kalman_processor.KalmanProcessor.initialize_kalman"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.initialize_kalman()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.kalman_processor.KalmanProcessor.predict"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.kalman_processor.KalmanProcessor.run_filter_with_acc_and_gps"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.run_filter_with_acc_and_gps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.kalman_processor.KalmanProcessor.update"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-detectpeaks-class">The <code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.peak_detector.DetectPeaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.peak_detector.DetectPeaks.analyze_step_robustness"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.analyze_step_robustness()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.peak_detector.DetectPeaks.compute_stride_stats_per_minute"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.compute_stride_stats_per_minute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.peak_detector.DetectPeaks.detect_triplet_peaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.detect_triplet_peaks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.peak_detector.DetectPeaks.plot_peaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.plot_peaks()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-strideprocessor-class">The <code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor"><code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.analyze_strides"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.analyze_strides()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.check_distance_similarity"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_distance_similarity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.check_spatial_alignment"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_spatial_alignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.check_stride_length_range"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_stride_length_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.check_trajectory_smoothness"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_trajectory_smoothness()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.clean_stride_data"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.clean_stride_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.evaluate_quality_segments"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.evaluate_quality_segments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.extract_region"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.extract_region()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.plot_stride_filtering"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.plot_stride_filtering()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.stride_processor.StrideProcessor.recompute_stats_per_minute"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.recompute_stats_per_minute()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-resultsprocessor-class">The <code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.result_processor.ResultsProcessor"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.result_processor.ResultsProcessor.export_to_excel"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.export_to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.result_processor.ResultsProcessor.get_output_path"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.get_output_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.result_processor.ResultsProcessor.prepare_step_dataframe"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.prepare_step_dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.result_processor.ResultsProcessor.print_metrics"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.print_metrics()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html#the-plotprocessor-class">The <code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor"><code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.generate_map_with_estimates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_macroscopic_comparision"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_macroscopic_comparision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_resume"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_resume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_all"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories_interactive()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_split"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories_split()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -115,31 +192,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html#module-test_InfluxDB.extract_data">test_InfluxDB.extract_data module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.get_default_dates"><code class="docutils literal notranslate"><span class="pre">get_default_dates()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="test_InfluxDB.html#test_InfluxDB.extract_data.parse_datetime"><code class="docutils literal notranslate"><span class="pre">parse_datetime()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="gps_trajectory.html">gps_trajectory module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="gps_trajectory.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gps_trajectory.html#module-gps_trajectory.gps_map_generator">gps_trajectory.gps_map_generator module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor"><code class="docutils literal notranslate"><span class="pre">GPSTrajectoryProcessor</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor.generate_gps_map"><code class="docutils literal notranslate"><span class="pre">GPSTrajectoryProcessor.generate_gps_map()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor.plot_macroscopic_trajectory"><code class="docutils literal notranslate"><span class="pre">GPSTrajectoryProcessor.plot_macroscopic_trajectory()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="gps_trajectory.html#gps_trajectory.gps_map_generator.GPSTrajectoryProcessor.prepare_gps_dataframe"><code class="docutils literal notranslate"><span class="pre">GPSTrajectoryProcessor.prepare_gps_dataframe()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="gps_trajectory.html#module-gps_trajectory.run_gps_map">gps_trajectory.run_gps_map module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="gps_trajectory.html#gps_trajectory.run_gps_map.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="transfom_data.html">transform_data module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transfom_data.html#transform-data-stride-measurement-module">transform_data.stride_measurement module</a></li>
 </ul>
 </li>
 </ul>

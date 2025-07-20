@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gps_trajectory module" href="gps_trajectory.html" />
-    <link rel="prev" title="InfluxDBms package" href="InfluxDBms.html" /> 
+    <link rel="next" title="transform_data module" href="transfom_data.html" />
+    <link rel="prev" title="msGeom package" href="msGeom.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,18 +49,16 @@
 <li class="toctree-l1"><a class="reference internal" href="intro.html#general-structure">General Structure</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">AFERNANDEZ_ms_2024</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="msGeom.html">msGeom package</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">test_InfluxDB module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-test_InfluxDB.extract_data">test_InfluxDB.extract_data module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#test_InfluxDB.extract_data.get_default_dates"><code class="docutils literal notranslate"><span class="pre">get_default_dates()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#test_InfluxDB.extract_data.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#test_InfluxDB.extract_data.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#test_InfluxDB.extract_data.parse_datetime"><code class="docutils literal notranslate"><span class="pre">parse_datetime()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="gps_trajectory.html">gps_trajectory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transfom_data.html">transform_data module</a></li>
 </ul>
 </li>
 </ul>
@@ -92,64 +90,50 @@
              
   <section id="test-influxdb-module">
 <h1>test_InfluxDB module<a class="headerlink" href="#test-influxdb-module" title="Link to this heading"></a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
-</section>
 <section id="module-test_InfluxDB.extract_data">
 <span id="test-influxdb-extract-data-module"></span><h2>test_InfluxDB.extract_data module<a class="headerlink" href="#module-test_InfluxDB.extract_data" title="Link to this heading"></a></h2>
 <p>extract_data.py : Test_DB_Connection to InfluxDB for Gait</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="test_InfluxDB.extract_data.get_default_dates">
-<span class="sig-prename descclassname"><span class="pre">test_InfluxDB.extract_data.</span></span><span class="sig-name descname"><span class="pre">get_default_dates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_InfluxDB/extract_data.html#get_default_dates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_InfluxDB.extract_data.get_default_dates" title="Link to this definition"></a></dt>
-<dd><p>Retrieves the default start and end dates for querying.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple with start and end date in ISO 8601 format.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[str, str]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="test_InfluxDB.extract_data.main">
 <span class="sig-prename descclassname"><span class="pre">test_InfluxDB.extract_data.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_InfluxDB/extract_data.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_InfluxDB.extract_data.main" title="Link to this definition"></a></dt>
-<dd><p>Main function to execute the InfluxDB query, process the data, and save it to an Excel file.</p>
+<dd><p>Main execution function to connect to InfluxDB, extract gait data, and export to Excel.</p>
+<section id="workflow">
+<h3>Workflow:<a class="headerlink" href="#workflow" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Parse input arguments (dates, subject ID, foot, config file).</p></li>
+<li><p>Establish connection to InfluxDB using <cite>cInfluxDB</cite> class.</p></li>
+<li><p>Query the data using raw query (or optionally <cite>aggregateWindow</cite>).</p></li>
+<li><p>Print metrics and dataset stats based on verbosity level.</p></li>
+<li><p>Export results to Excel, stripping timezone information.</p></li>
+<li><p>Close the connection.</p></li>
+</ol>
+<p>Requires valid configuration via a YAML file and CodeID + foot selection.</p>
+</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="test_InfluxDB.extract_data.parse_args">
 <span class="sig-prename descclassname"><span class="pre">test_InfluxDB.extract_data.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_InfluxDB/extract_data.html#parse_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_InfluxDB.extract_data.parse_args" title="Link to this definition"></a></dt>
-<dd><p>Parses command-line arguments for batch processing.</p>
+<dd><p>Parse command-line arguments for querying gait data from InfluxDB.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Parsed arguments.</p>
+<dd class="field-odd"><p>Parsed arguments object containing all user-specified options.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>argparse.Namespace</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="test_InfluxDB.extract_data.parse_datetime">
-<span class="sig-prename descclassname"><span class="pre">test_InfluxDB.extract_data.</span></span><span class="sig-name descname"><span class="pre">parse_datetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_InfluxDB/extract_data.html#parse_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_InfluxDB.extract_data.parse_datetime" title="Link to this definition"></a></dt>
-<dd><p>Converts a string into a datetime object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>str</em>) – String representation of a date/time.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Parsed datetime object.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>datetime</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>argparse.ArgumentTypeError</strong> – If the date format is invalid.</p>
-</dd>
-</dl>
+<p><strong>Command-line Arguments:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-f</span></code>, <code class="docutils literal notranslate"><span class="pre">--from_time</span></code> (str): Start timestamp in ISO 8601 format (default: now).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-u</span></code>, <code class="docutils literal notranslate"><span class="pre">--until</span></code> (str): End timestamp in ISO 8601 format (default: now + 30min).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-q</span></code>, <code class="docutils literal notranslate"><span class="pre">--qtok</span></code> (str): CodeID to identify the subject/session. (required)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-l</span></code>, <code class="docutils literal notranslate"><span class="pre">--leg</span></code> (str): Select the foot (“Left” or “Right”). (required)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-c</span></code>, <code class="docutils literal notranslate"><span class="pre">--config</span></code> (str): Path to InfluxDB YAML config file (default: ../.config_db.yaml).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-o</span></code>, <code class="docutils literal notranslate"><span class="pre">--output</span></code> (str): Output path for the resulting Excel file. (required)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-v</span></code>, <code class="docutils literal notranslate"><span class="pre">--verbose</span></code> (int): Verbosity level for console output (default: 0).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-m</span></code>, <code class="docutils literal notranslate"><span class="pre">--metrics</span></code> (str): Optional comma-separated list of metrics to query (e.g., “Ax,Ay,Gx,Gy”).</p></li>
+</ul>
 </dd></dl>
 
 </section>
@@ -159,8 +143,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="InfluxDBms.html" class="btn btn-neutral float-left" title="InfluxDBms package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="gps_trajectory.html" class="btn btn-neutral float-right" title="gps_trajectory module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="msGeom.html" class="btn btn-neutral float-left" title="msGeom package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="transfom_data.html" class="btn btn-neutral float-right" title="transform_data module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

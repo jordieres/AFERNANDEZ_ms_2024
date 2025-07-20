@@ -1,0 +1,1056 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>msGeom package &mdash; Gait-Measurement 1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=56dcb7b8"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="test_InfluxDB module" href="test_InfluxDB.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Gait-Measurement
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#general-structure">General Structure</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">AFERNANDEZ_ms_2024</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">msGeom package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-datapreprocessor-class">The <code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-imuprocessor-class">The <code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor"><code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-kalmanprocessor-class">The <code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-detectpeaks-class">The <code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-strideprocessor-class">The <code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor"><code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-resultsprocessor-class">The <code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-plotprocessor-class">The <code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code> class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor"><code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Gait-Measurement</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">AFERNANDEZ_ms_2024</a></li>
+      <li class="breadcrumb-item active">msGeom package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/msGeom.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="msgeom-package">
+<h1>msGeom package<a class="headerlink" href="#msgeom-package" title="Link to this heading"></a></h1>
+<section id="the-datapreprocessor-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code> class<a class="headerlink" href="#the-datapreprocessor-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.data_preprocessor.DataPreprocessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.data_preprocessor.</span></span><span class="sig-name descname"><span class="pre">DataPreprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/data_preprocessor.html#DataPreprocessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.data_preprocessor.DataPreprocessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for loading configuration and Excel data, resampling, and preprocessing sensor data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.data_preprocessor.DataPreprocessor.compute_positions">
+<span class="sig-name descname"><span class="pre">compute_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/data_preprocessor.html#DataPreprocessor.compute_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.data_preprocessor.DataPreprocessor.compute_positions" title="Link to this definition"></a></dt>
+<dd><p>Convert GPS coordinates to local Cartesian positions using projection configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame with ‘lat’ and ‘lng’ columns.</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – Configuration dictionary containing ‘Location’ section with projection params.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of GPS position array, final GPS position and a DataFrame with valid GPS entries.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[pd.DataFrame, np.ndarray, np.ndarray]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If required projection parameters are missing in config[‘Location’].</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.data_preprocessor.DataPreprocessor.load_config">
+<span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/data_preprocessor.html#DataPreprocessor.load_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.data_preprocessor.DataPreprocessor.load_config" title="Link to this definition"></a></dt>
+<dd><p>Load YAML configuration file from the specified path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> (<em>str</em>) – Path to the YAML configuration file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing configuration data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.data_preprocessor.DataPreprocessor.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/data_preprocessor.html#DataPreprocessor.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.data_preprocessor.DataPreprocessor.load_data" title="Link to this definition"></a></dt>
+<dd><p>Load Excel data from the specified path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>str</em>) – Path to the Excel file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame containing raw data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.data_preprocessor.DataPreprocessor.preprocess_data">
+<span class="sig-name descname"><span class="pre">preprocess_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/data_preprocessor.html#DataPreprocessor.preprocess_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.data_preprocessor.DataPreprocessor.preprocess_data" title="Link to this definition"></a></dt>
+<dd><p>Process the DataFrame to extract sensor arrays and timing information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – Preprocessed DataFrame containing IMU and time data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing:
+- time (np.ndarray): Time vector in seconds.
+- sample_rate (float): Sampling frequency in Hz.
+- gyr (np.ndarray): Gyroscope data (Nx3) in rad/s.
+- acc (np.ndarray): Accelerometer data (Nx3) in m/s².
+- mag (np.ndarray): Magnetometer data (Nx3) in µT.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, float, np.ndarray, np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.data_preprocessor.DataPreprocessor.resample_to_40hz">
+<span class="sig-name descname"><span class="pre">resample_to_40hz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_hz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_threshold_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/data_preprocessor.html#DataPreprocessor.resample_to_40hz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.data_preprocessor.DataPreprocessor.resample_to_40hz" title="Link to this definition"></a></dt>
+<dd><p>Resample data to the target frequency handling session gaps.
+This method detects session gaps larger than <cite>gap_threshold_ms</cite> and resamples each session individually.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Raw DataFrame.</p></li>
+<li><p><strong>time_col</strong> (<em>str</em>) – Name of the time column.</p></li>
+<li><p><strong>freq_hz</strong> (<em>int</em>) – Target frequency in Hz.</p></li>
+<li><p><strong>gap_threshold_ms</strong> (<em>int</em>) – Gap threshold to split sessions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Interpolated DataFrame.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-imuprocessor-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code> class<a class="headerlink" href="#the-imuprocessor-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.imu_processor.IMUProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.imu_processor.</span></span><span class="sig-name descname"><span class="pre">IMUProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_period</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/imu_processor.html#IMUProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.imu_processor.IMUProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for processing IMU data from gyroscope, accelerometer, and magnetometer sensors.</p>
+<p>Provides methods for:
+- Estimating the gravity vector
+- Detecting motion and stationary periods
+- Estimating position using sensor fusion algorithms (Madgwick or Mahony)
+- Applying ZUPT/ZUPH corrections to reduce drift</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.imu_processor.IMUProcessor.detect_no_rotation">
+<span class="sig-name descname"><span class="pre">detect_no_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gyr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/imu_processor.html#IMUProcessor.detect_no_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.imu_processor.IMUProcessor.detect_no_rotation" title="Link to this definition"></a></dt>
+<dd><p>Detect periods where there is negligible angular velocity on Z-axis (i.e., no yaw rotation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gyr</strong> (<em>np.ndarray</em>) – Gyroscope data array of shape (N, 3), in rad/s.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Threshold for Z-axis angular velocity (in rad/s) to define no rotation.</p></li>
+<li><p><strong>duration_samples</strong> (<em>int</em>) – Minimum number of consecutive samples below the threshold to validate no rotation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Boolean array of shape (N,), where True indicates no rotation around the Z-axis.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.imu_processor.IMUProcessor.detect_stationary">
+<span class="sig-name descname"><span class="pre">detect_stationary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/imu_processor.html#IMUProcessor.detect_stationary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.imu_processor.IMUProcessor.detect_stationary" title="Link to this definition"></a></dt>
+<dd><p>Detect stationary periods from accelerometer data using filtering and thresholding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acc</strong> (<em>np.ndarray</em>) – Acceleration data array with shape (N, 3).</p></li>
+<li><p><strong>sample_rate</strong> (<em>float</em>) – Sampling rate of the accelerometer signal in Hz.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing stationary: Boolean array indicating stationary (True) or moving (False) states.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input shape is invalid or sample_rate is non-positive.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.imu_processor.IMUProcessor.estimate_gravity_vector">
+<span class="sig-name descname"><span class="pre">estimate_gravity_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/imu_processor.html#IMUProcessor.estimate_gravity_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.imu_processor.IMUProcessor.estimate_gravity_vector" title="Link to this definition"></a></dt>
+<dd><p>Estimate normalized gravity vector from accelerometer data using exponential moving average.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acc</strong> (<em>np.ndarray</em>) – Acceleration data array with shape (N, 3).</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Smoothing coefficient (0 &lt; alpha &lt; 1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalized gravity vectors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input shape is invalid or alpha is out of bounds.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.imu_processor.IMUProcessor.estimate_position_generic">
+<span class="sig-name descname"><span class="pre">estimate_position_generic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_mag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gyr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stationary</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/imu_processor.html#IMUProcessor.estimate_position_generic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.imu_processor.IMUProcessor.estimate_position_generic" title="Link to this definition"></a></dt>
+<dd><p>Estimate the 2D position from IMU sensor data using either the Madgwick or Mahony filter.</p>
+<p>This method computes orientation quaternions using an AHRS filter, rotates the
+acceleration to the earth frame, removes gravity, integrates to velocity and
+position, and compensates for drift during stationary periods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>str</em>) – Algorithm to use (‘madgwick’ or ‘mahony’).</p></li>
+<li><p><strong>use_mag</strong> (<em>bool</em>) – Whether to use magnetometer data (True for MARG, False for IMU-only).</p></li>
+<li><p><strong>gyr</strong> (<em>np.ndarray</em>) – Gyroscope data array of shape (N, 3), in rad/s.</p></li>
+<li><p><strong>acc</strong> (<em>np.ndarray</em>) – Accelerometer data array of shape (N, 3), in m/s^2.</p></li>
+<li><p><strong>mag</strong> (<em>np.ndarray</em>) – Magnetometer data array of shape (N, 3), in arbitrary units.</p></li>
+<li><p><strong>time</strong> (<em>np.ndarray</em>) – Time vector of shape (N,), in seconds.</p></li>
+<li><p><strong>sample_rate</strong> (<em>float</em>) – Sampling frequency in Hz.</p></li>
+<li><p><strong>stationary</strong> (<em>np.ndarray</em>) – Boolean array of shape (N,) indicating stationary periods.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Estimated position array of shape (N, 3).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the method is not recognized.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.imu_processor.IMUProcessor.estimate_position_madwick">
+<span class="sig-name descname"><span class="pre">estimate_position_madwick</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gyr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stationary</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/imu_processor.html#IMUProcessor.estimate_position_madwick"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.imu_processor.IMUProcessor.estimate_position_madwick" title="Link to this definition"></a></dt>
+<dd><p>Estimate orientation, linear acceleration, velocity, and position from sensor data using a Madgwick filter
+and zero-velocity updates.</p>
+<p>Applies orientation estimation with adaptive gain based on motion state (ZUPH),
+and velocity correction during stationary periods (ZUPT).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time</strong> (<em>np.ndarray</em>) – Array of time stamps.</p></li>
+<li><p><strong>gyr</strong> (<em>np.ndarray</em>) – Gyroscope data array with shape (N, 3), in rad/s.</p></li>
+<li><p><strong>acc</strong> (<em>np.ndarray</em>) – Accelerometer data array with shape (N, 3), in m/s².</p></li>
+<li><p><strong>mag</strong> (<em>np.ndarray</em>) – Magnetometer data array with shape (N, 3), in µT.</p></li>
+<li><p><strong>stationary</strong> (<em>np.ndarray</em>) – Boolean array indicating stationary states (True for stationary).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple (quats, acc_earth, vel, pos) where:
+- quats: Quaternion orientation estimates.
+- acc_earth: Linear acceleration in earth frame (gravity removed).
+- vel: Estimated velocity with ZUPT correction.
+- pos: Estimated position.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input shapes are inconsistent.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-kalmanprocessor-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code> class<a class="headerlink" href="#the-kalmanprocessor-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.kalman_processor.KalmanProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.kalman_processor.</span></span><span class="sig-name descname"><span class="pre">KalmanProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/kalman_processor.html#KalmanProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.kalman_processor.KalmanProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implements a 2D Kalman Filter for fusing GPS and IMU (accelerometer) data to estimate position and velocity.</p>
+<p>This class models the system state as [x, y, vx, vy] and supports both prediction using IMU acceleration and
+correction using GPS measurements. It’s useful for sensor fusion in pedestrian navigation or robotics.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.kalman_processor.KalmanProcessor.initialize">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_gps_pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/kalman_processor.html#KalmanProcessor.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.kalman_processor.KalmanProcessor.initialize" title="Link to this definition"></a></dt>
+<dd><p>Initialize the filter state using the first GPS position (assumes zero initial velocity).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>initial_gps_pos</strong> (<em>array-like</em>) – Initial position from GPS [x, y].</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.kalman_processor.KalmanProcessor.initialize_kalman">
+<span class="sig-name descname"><span class="pre">initialize_kalman</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/kalman_processor.html#KalmanProcessor.initialize_kalman"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.kalman_processor.KalmanProcessor.initialize_kalman" title="Link to this definition"></a></dt>
+<dd><p>Convenience method to create and initialize a Kalman filter instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS position array, where the first entry is used for initialization.</p></li>
+<li><p><strong>sample_rate</strong> (<em>float</em>) – Sampling rate of the data (Hz).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Initialized KalmanProcessor instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor" title="msGeom.kalman_processor.KalmanProcessor">KalmanProcessor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.kalman_processor.KalmanProcessor.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc_imu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/kalman_processor.html#KalmanProcessor.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.kalman_processor.KalmanProcessor.predict" title="Link to this definition"></a></dt>
+<dd><p>Predict the next state using the motion model and optional control input (IMU acceleration).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>acc_imu</strong> (<em>array-like</em><em> or </em><em>None</em>) – Acceleration input in earth frame [ax, ay]. If None, uses only velocity model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.kalman_processor.KalmanProcessor.run_filter_with_acc_and_gps">
+<span class="sig-name descname"><span class="pre">run_filter_with_acc_and_gps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc_earth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/kalman_processor.html#KalmanProcessor.run_filter_with_acc_and_gps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.kalman_processor.KalmanProcessor.run_filter_with_acc_and_gps" title="Link to this definition"></a></dt>
+<dd><p>Run the Kalman filter using IMU acceleration and GPS measurements over time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acc_earth</strong> (<em>np.ndarray</em>) – Array of 2D acceleration values (in earth frame), shape (N, 2).</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – Array of GPS positions, shape (N, 2).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of fused position estimates, shape (N, 2).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.kalman_processor.KalmanProcessor.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measurement_gps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/kalman_processor.html#KalmanProcessor.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.kalman_processor.KalmanProcessor.update" title="Link to this definition"></a></dt>
+<dd><p>Update the filter state using a new GPS measurement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>measurement_gps</strong> (<em>array-like</em>) – GPS position measurement [x, y].</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated position estimate [x, y].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-detectpeaks-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code> class<a class="headerlink" href="#the-detectpeaks-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.peak_detector.</span></span><span class="sig-name descname"><span class="pre">DetectPeaks</span></span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for detecting step-related peaks in IMU signals and computing stride statistics.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.analyze_step_robustness">
+<span class="sig-name descname"><span class="pre">analyze_step_robustness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">triplets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.analyze_step_robustness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.analyze_step_robustness" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the consistency of detected steps over time using a sliding window approach.</p>
+<p>The function divides the total duration into time windows and counts the number
+of main peaks (representing steps) in each window, printing the result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>triplets</strong> (<em>pd.DataFrame</em>) – DataFrame containing detected peak triplets with a ‘peak_type’ and ‘timestamp’ column.</p></li>
+<li><p><strong>signal_name</strong> (<em>str</em>) – Name of the signal used (for display in output messages).</p></li>
+<li><p><strong>total_time</strong> (<em>float</em>) – Total duration of the signal in seconds.</p></li>
+<li><p><strong>window_size</strong> (<em>float</em>) – Duration of each window in seconds to count steps. Default is 10 seconds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.compute_stride_stats_per_minute">
+<span class="sig-name descname"><span class="pre">compute_stride_stats_per_minute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_kalman</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_peaks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.compute_stride_stats_per_minute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.compute_stride_stats_per_minute" title="Link to this definition"></a></dt>
+<dd><p>Compute per-minute stride statistics based on detected step peaks and position data.</p>
+<p>Calculates stride lengths between consecutive step peaks and aggregates step counts,
+mean stride length, standard deviation, and total distance covered per minute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_steps</strong> (<em>pd.DataFrame</em>) – DataFrame with time and datetime columns for each detected step.</p></li>
+<li><p><strong>pos_kalman</strong> (<em>np.ndarray</em>) – Array of Kalman-filtered positions with shape (N, 2) or (N, 3).</p></li>
+<li><p><strong>step_peaks</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – List of indices in df_steps indicating the main step peaks.</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em><em> or </em><em>None</em>) – Optional output directory for saving results (currently unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>df_stats: Aggregated stride statistics per minute.</p></li>
+<li><p>df_stride: Raw stride information per individual step.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[pd.DataFrame, pd.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.detect_triplet_peaks">
+<span class="sig-name descname"><span class="pre">detect_triplet_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prominence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.detect_triplet_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.detect_triplet_peaks" title="Link to this definition"></a></dt>
+<dd><p>Detects triplets of peaks (entry-secondary, main, exit-secondary) in gyroscope data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Input DataFrame with a ‘time’ column and a gyroscope signal column.</p></li>
+<li><p><strong>column</strong> (<em>str</em>) – Name of the column containing gyroscope values.</p></li>
+<li><p><strong>distance</strong> (<em>int</em>) – Minimum horizontal distance (in samples) between peaks.</p></li>
+<li><p><strong>prominence</strong> (<em>float</em>) – Minimum prominence of a peak to be considered significant.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame containing time, values, and labels (‘entry’, ‘main’, ‘exit’) of detected peaks.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.plot_peaks">
+<span class="sig-name descname"><span class="pre">plot_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.plot_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.plot_peaks" title="Link to this definition"></a></dt>
+<dd><p>Plot a time series signal with overlaid labeled peak triplets (entry, main, exit).</p>
+<p>This function visualizes a gyroscope or accelerometer signal along with the detected
+peaks classified as entry, main, or exit, using different colors for each label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Original DataFrame containing the time series signal.</p></li>
+<li><p><strong>signal_column</strong> (<em>str</em>) – Name of the column containing the signal values to be plotted.</p></li>
+<li><p><strong>peak_df</strong> (<em>pd.DataFrame</em>) – DataFrame containing labeled peaks with columns ‘timestamp’, ‘value’, and ‘peak_type’.</p></li>
+<li><p><strong>signal_name</strong> (<em>str</em><em> or </em><em>None</em>) – Optional custom name for the signal to display in the plot title. If None, uses <cite>signal_column</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-strideprocessor-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code> class<a class="headerlink" href="#the-strideprocessor-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.stride_processor.</span></span><span class="sig-name descname"><span class="pre">StrideProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Processor class for filtering, validating, and analyzing stride-based gait data.
+It includes tools for quality checks, spatial alignment, and segment-level diagnostics.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.analyze_strides">
+<span class="sig-name descname"><span class="pre">analyze_strides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_imu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_gps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_strides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'invalid'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.analyze_strides"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.analyze_strides" title="Link to this definition"></a></dt>
+<dd><p>Analyze and extract data windows around multiple strides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_imu</strong> (<em>pd.DataFrame</em>) – IMU signal DataFrame.</p></li>
+<li><p><strong>df_gps</strong> (<em>pd.DataFrame</em>) – GPS data DataFrame.</p></li>
+<li><p><strong>df_strides</strong> (<em>pd.DataFrame</em>) – DataFrame with a ‘time’ column marking each stride.</p></li>
+<li><p><strong>stride_type</strong> (<em>str</em>) – Label assigned to the analyzed strides (e.g., ‘valid’, ‘invalid’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of dictionaries, each containing stride-level analysis data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.check_distance_similarity">
+<span class="sig-name descname"><span class="pre">check_distance_similarity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.check_distance_similarity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.check_distance_similarity" title="Link to this definition"></a></dt>
+<dd><p>Check whether estimated distance is consistent with GPS total distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_stats</strong> (<em>pd.DataFrame</em>) – DataFrame with stride statistics including ‘distance_m’.</p></li>
+<li><p><strong>gps_distance</strong> (<em>float</em>) – Total GPS-measured distance (in meters).</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – Acceptable deviation ratio (e.g., 0.15 = ±15%).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated DataFrame with a new column ‘gps_consistent’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.check_spatial_alignment">
+<span class="sig-name descname"><span class="pre">check_spatial_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos_est</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_gps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.check_spatial_alignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.check_spatial_alignment" title="Link to this definition"></a></dt>
+<dd><p>Evaluate spatial error between estimated and GPS positions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pos_est</strong> (<em>np.ndarray</em>) – Estimated positions (N, 2).</p></li>
+<li><p><strong>pos_gps</strong> (<em>np.ndarray</em>) – GPS positions (N, 2), matching timestamps.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Maximum acceptable spatial error (in meters).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (alignment mask, percentage of aligned samples).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[np.ndarray, float]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input shapes do not match.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.check_stride_length_range">
+<span class="sig-name descname"><span class="pre">check_stride_length_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.check_stride_length_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.check_stride_length_range" title="Link to this definition"></a></dt>
+<dd><p>Check whether average stride lengths fall within an expected range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_stats</strong> (<em>pd.DataFrame</em>) – DataFrame with ‘mean_stride_length’ column.</p></li>
+<li><p><strong>min_valid</strong> (<em>float</em>) – Minimum acceptable mean stride length (meters).</p></li>
+<li><p><strong>max_valid</strong> (<em>float</em>) – Maximum acceptable mean stride length (meters).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated DataFrame with ‘stride_length_valid’ column.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.check_trajectory_smoothness">
+<span class="sig-name descname"><span class="pre">check_trajectory_smoothness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.check_trajectory_smoothness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.check_trajectory_smoothness" title="Link to this definition"></a></dt>
+<dd><p>Detect abrupt velocity spikes in trajectory as potential noise indicators.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_steps</strong> (<em>pd.DataFrame</em>) – DataFrame with ‘velocity_m_s’ column.</p></li>
+<li><p><strong>velocity_threshold</strong> (<em>float</em>) – Maximum allowed velocity change (in m/s).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with a ‘velocity_spike’ column indicating anomalies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.clean_stride_data">
+<span class="sig-name descname"><span class="pre">clean_stride_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stride_raw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.clean_stride_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.clean_stride_data" title="Link to this definition"></a></dt>
+<dd><p>Filter out strides whose length falls outside the valid range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df_stride_raw</strong> (<em>pd.DataFrame</em>) – DataFrame containing raw stride data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered DataFrame with valid strides.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.evaluate_quality_segments">
+<span class="sig-name descname"><span class="pre">evaluate_quality_segments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stride_stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imu_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_tolerance_m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_alignment_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.evaluate_quality_segments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.evaluate_quality_segments" title="Link to this definition"></a></dt>
+<dd><p>Assess per-minute gait quality by combining multiple criteria:
+distance consistency, stride length, velocity smoothness, and GPS alignment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_stride_stats</strong> (<em>pd.DataFrame</em>) – Per-minute stride statistics (filtered).</p></li>
+<li><p><strong>df_steps</strong> (<em>pd.DataFrame</em>) – Step-level DataFrame with ‘velocity_m_s’ and ‘minute’ columns.</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions (N, 2).</p></li>
+<li><p><strong>imu_pos</strong> (<em>np.ndarray</em>) – Estimated IMU positions (N, 2).</p></li>
+<li><p><strong>velocity_threshold</strong> (<em>float</em>) – Maximum velocity allowed before being marked as a spike.</p></li>
+<li><p><strong>gps_distance</strong> (<em>float</em>) – Total GPS distance (used to validate distance estimates).</p></li>
+<li><p><strong>error_tolerance_m</strong> (<em>float</em>) – Maximum allowed spatial error (in meters).</p></li>
+<li><p><strong>min_alignment_ratio</strong> (<em>float</em>) – Minimum proportion of aligned points per segment (0-1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with an ‘all_criteria_ok’ column summarizing segment validity.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.extract_region">
+<span class="sig-name descname"><span class="pre">extract_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_imu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_gps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.extract_region"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.extract_region" title="Link to this definition"></a></dt>
+<dd><p>Extracts a time window around a given stride from IMU and GPS signals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_imu</strong> (<em>pd.DataFrame</em>) – DataFrame with IMU columns [‘time’, ‘Ax’, ‘Ay’, ‘Az’, ‘Gx’, ‘Gy’, ‘Gz’].</p></li>
+<li><p><strong>df_gps</strong> (<em>pd.DataFrame</em>) – DataFrame with GPS columns [‘time’, ‘lat’, ‘lng’].</p></li>
+<li><p><strong>stride_time</strong> (<em>float</em>) – Center time of the stride (in seconds).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of IMU/GPS windows, geodesic distance, start and end times.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[pd.DataFrame, pd.DataFrame, float, float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.plot_stride_filtering">
+<span class="sig-name descname"><span class="pre">plot_stride_filtering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stride_raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_stride_raw_clean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Strides</span> <span class="pre">before</span> <span class="pre">and</span> <span class="pre">after</span> <span class="pre">filtering'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.plot_stride_filtering"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.plot_stride_filtering" title="Link to this definition"></a></dt>
+<dd><p>Visualize stride lengths before and after length-based filtering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_stride_raw</strong> (<em>pd.DataFrame</em>) – Original DataFrame containing all stride lengths.</p></li>
+<li><p><strong>df_stride_raw_clean</strong> (<em>pd.DataFrame</em>) – Filtered DataFrame with valid strides.</p></li>
+<li><p><strong>min_stride</strong> (<em>float</em>) – Minimum valid stride length (meters).</p></li>
+<li><p><strong>max_stride</strong> (<em>float</em>) – Maximum valid stride length (meters).</p></li>
+<li><p><strong>y_max</strong> (<em>float</em>) – Maximum y-axis limit (not used explicitly).</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – Plot title.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.recompute_stats_per_minute">
+<span class="sig-name descname"><span class="pre">recompute_stats_per_minute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stride_clean</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.recompute_stats_per_minute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.recompute_stats_per_minute" title="Link to this definition"></a></dt>
+<dd><p>Recompute per-minute stride statistics after filtering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df_stride_clean</strong> (<em>pd.DataFrame</em>) – DataFrame of valid strides.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Summary DataFrame grouped by minute.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-resultsprocessor-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code> class<a class="headerlink" href="#the-resultsprocessor-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.result_processor.ResultsProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.result_processor.</span></span><span class="sig-name descname"><span class="pre">ResultsProcessor</span></span><a class="reference internal" href="_modules/msGeom/result_processor.html#ResultsProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.result_processor.ResultsProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for preparing and exporting step-wise movement metrics, including position,
+velocity, and GPS data. Supports exporting results to Excel and computing key metrics.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.result_processor.ResultsProcessor.export_to_excel">
+<span class="sig-name descname"><span class="pre">export_to_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/result_processor.html#ResultsProcessor.export_to_excel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.result_processor.ResultsProcessor.export_to_excel" title="Link to this definition"></a></dt>
+<dd><p>Export a DataFrame to an Excel file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame to export.</p></li>
+<li><p><strong>file_path</strong> (<em>str</em>) – Path where the Excel file should be saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – If the Excel file cannot be saved.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.result_processor.ResultsProcessor.get_output_path">
+<span class="sig-name descname"><span class="pre">get_output_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/result_processor.html#ResultsProcessor.get_output_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.result_processor.ResultsProcessor.get_output_path" title="Link to this definition"></a></dt>
+<dd><p>Construct full output path using provided filename and CLI arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Name of the file to be saved.</p></li>
+<li><p><strong>args</strong> (<em>argparse.Namespace</em>) – Argument object containing <cite>output_dir</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Full file path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.result_processor.ResultsProcessor.prepare_step_dataframe">
+<span class="sig-name descname"><span class="pre">prepare_step_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_lng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_kalman</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_inter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/result_processor.html#ResultsProcessor.prepare_step_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.result_processor.ResultsProcessor.prepare_step_dataframe" title="Link to this definition"></a></dt>
+<dd><p>Generate a DataFrame with step-wise position, velocity, and GPS data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time</strong> (<em>np.ndarray</em>) – Time vector in seconds.</p></li>
+<li><p><strong>gps_lat</strong> (<em>np.ndarray</em>) – GPS latitude array.</p></li>
+<li><p><strong>gps_lng</strong> (<em>np.ndarray</em>) – GPS longitude array.</p></li>
+<li><p><strong>pos_kalman</strong> (<em>np.ndarray</em>) – Kalman-filtered position array (N, 2+).</p></li>
+<li><p><strong>vel</strong> (<em>np.ndarray</em>) – Velocity array (N, 3).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with time, position, velocity, and step distance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.result_processor.ResultsProcessor.print_metrics">
+<span class="sig-name descname"><span class="pre">print_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/result_processor.html#ResultsProcessor.print_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.result_processor.ResultsProcessor.print_metrics" title="Link to this definition"></a></dt>
+<dd><p>Print final error and total distance of a given trajectory compared to GPS final point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name/label of the trajectory method.</p></li>
+<li><p><strong>traj</strong> (<em>np.ndarray</em>) – Estimated position trajectory (N, 2 or 3).</p></li>
+<li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final reference GPS coordinate [x, y].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="the-plotprocessor-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code> class<a class="headerlink" href="#the-plotprocessor-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msGeom.plot_processor.</span></span><span class="sig-name descname"><span class="pre">PlotProcessor</span></span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for visualizing trajectories using Matplotlib, Plotly, and Folium.</p>
+<p>This class provides a variety of plotting methods to compare estimated trajectories with ground truth GPS data,
+display diagnostic plots, and export results to interactive maps or static images.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.generate_map_with_estimates">
+<span class="sig-name descname"><span class="pre">generate_map_with_estimates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_gps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_html_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.generate_map_with_estimates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates" title="Link to this definition"></a></dt>
+<dd><p>Generates an interactive map with GPS and estimated IMU/Kalman trajectories using Folium.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_gps</strong> (<em>pd.DataFrame</em>) – DataFrame with ‘lat’ and ‘lng’ columns.</p></li>
+<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of trajectory name to estimated XY positions.</p></li>
+<li><p><strong>output_html_path</strong> (<em>str</em>) – Path to save HTML map.</p></li>
+<li><p><strong>config</strong> (<em>dict</em>) – YAML configuration with ‘Location’ projection info.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_macroscopic_comparision">
+<span class="sig-name descname"><span class="pre">plot_macroscopic_comparision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'trajectory'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_macroscopic_comparision"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_macroscopic_comparision" title="Link to this definition"></a></dt>
+<dd><p>Plot diagnostic and trajectory figures for IMU data, and optionally save them.</p>
+<p>This function generates several plots based on filtered acceleration, position,
+velocity, 2D and 3D trajectory. If GPS data is provided, it includes a comparative plot.
+Depending on the verbosity level and output directory, plots can also be saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pos</strong> (<em>np.ndarray</em>) – Estimated position array of shape (N, 3).</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em><em> or </em><em>None</em>) – Optional GPS position array of shape (N, 2). Defaults to None.</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – Title used in trajectory comparison plots.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_resume">
+<span class="sig-name descname"><span class="pre">plot_resume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'summary'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_resume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_resume" title="Link to this definition"></a></dt>
+<dd><p>Plot position, velocity, and 3D trajectory of the estimated movement.</p>
+<p>This function summarizes motion-related variables: 1D time series of position and velocity
+(in x, y, z), and a 3D trajectory plot in space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time</strong> (<em>np.ndarray</em>) – Time vector in seconds.</p></li>
+<li><p><strong>pos</strong> (<em>np.ndarray</em>) – Estimated position array of shape (N, 3).</p></li>
+<li><p><strong>vel</strong> (<em>np.ndarray</em>) – Estimated velocity array of shape (N, 3).</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em><em> or </em><em>None</em>) – (Not used anymore; figures are not saved).</p></li>
+<li><p><strong>base_name</strong> (<em>str</em>) – (Unused). Name that would be used for saving if enabled.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories">
+<span class="sig-name descname"><span class="pre">plot_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories" title="Link to this definition"></a></dt>
+<dd><p>Plot estimated and GPS trajectories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
+<li><p><strong>errores</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of position errors.</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
+<li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS position.</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – Title for the plot.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em><em> or </em><em>None</em>) – If given, path to save the plot image.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories_all">
+<span class="sig-name descname"><span class="pre">plot_trajectories_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_all" title="Link to this definition"></a></dt>
+<dd><p>Plot all estimated trajectories together using Matplotlib.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>all_results</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>np.ndarray</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Dictionary with keys as method names and values as (positions, error).</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
+<li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS position.</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – Plot title.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive">
+<span class="sig-name descname"><span class="pre">plot_trajectories_interactive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_interactive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive" title="Link to this definition"></a></dt>
+<dd><p>Create an interactive Plotly plot comparing estimated and GPS trajectories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
+<li><p><strong>errores</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of position errors.</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
+<li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS position.</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – Plot title.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em><em> or </em><em>None</em>) – Optional path to save the HTML plot.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories_split">
+<span class="sig-name descname"><span class="pre">plot_trajectories_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_split" title="Link to this definition"></a></dt>
+<dd><p>Plot each estimated trajectory separately using Matplotlib.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
+<li><p><strong>errores</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of errors per method.</p></li>
+<li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
+<li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS point.</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – Plot title.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em><em> or </em><em>None</em>) – Optional path to save plot.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="test_InfluxDB.html" class="btn btn-neutral float-left" title="test_InfluxDB module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Ángela Fernández.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
