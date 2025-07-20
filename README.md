@@ -1,13 +1,13 @@
 # AFERNANDEZ\_ms\_2024
 
-**Position calculation using IMU9**
+## Position calculation using IMU9
 This project processes, transforms, and stores data from IMU9 sensors for motion tracking, trajectory estimation, and analysis using time-series databases such as InfluxDB.
 
-**Introduction**
+## Introduction
 
 The main purpose of this project is to assist in the identification and analysis of gait features. The ambition is to characterize fine-grain attributes of the walking process, particularly for individuals affected by Multiple Sclerosis (MS).
 
-**Motivation**
+## Motivation
 
 This project focuses on seamlessly integrating data collected at the edge. High-frequency sensor data from Sensoria Health© instrumented socks is transmitted via BLE through custom Android or iOS apps and uploaded into an InfluxDB time-series database.
 
