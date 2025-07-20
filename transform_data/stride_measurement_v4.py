@@ -190,41 +190,32 @@ def main():
 
 
 
-                valid_results = analyzer.analyze_strides(df_imu, df_gps, df_stride_valid, output_dir=None, stride_type="valid")
-                invalid_results = analyzer.analyze_strides(df_imu, df_gps, df_stride_invalid, output_dir=None, stride_type="invalid")
+                # Extraer regiones para inspección manual en Grafana 
+                valid_results = analyzer.analyze_strides(df_imu, df_gps, df_stride_valid,  stride_type="valid")
+                invalid_results = analyzer.analyze_strides(df_imu, df_gps, df_stride_invalid,  stride_type="invalid")
 
-                # Print summary for valid strides
-                print("\nSummary of VALID strides extracted:")
-                for r in valid_results:
-                    print(f"Stride #{r['stride_index']} | Time: {r['stride_time']:.2f}s | GPS Distance: {r['gps_distance_m']:.2f} m")
+                print(f"\n{'*'*23} GRAFANA INSPECTION WINDOWS {'*'*23}\n")
 
-                # Print summary for invalid strides
-                print("\nSummary of INVALID strides extracted:")
+                print("VALID STRIDES:")
+                for r in valid_results:  
+                    print(f"- Stride #{r['stride_index']} | Time: {r['stride_time']:.2f}s | Window: [{r['time_window_start']:.2f}s – {r['time_window_end']:.2f}s] | GPS Distance: {r['gps_distance_m']:.2f} m")
+
+                print("\nINVALID STRIDES:")
                 for r in invalid_results:
-                    print(f"Stride #{r['stride_index']} | Time: {r['stride_time']:.2f}s | GPS Distance: {r['gps_distance_m']:.2f} m")
+                    print(f"- Stride #{r['stride_index']} | Time: {r['stride_time']:.2f}s | Window: [{r['time_window_start']:.2f}s – {r['time_window_end']:.2f}s] | GPS Distance: {r['gps_distance_m']:.2f} m")
 
-
+                
                 valid_dists = [r["gps_distance_m"] for r in valid_results if r["gps_distance_m"] is not None]
                 invalid_dists = [r["gps_distance_m"] for r in invalid_results if r["gps_distance_m"] is not None]
 
                 print(f"\nAverage GPS distance (valid strides): {np.mean(valid_dists):.2f} m")
                 print(f"Average GPS distance (invalid strides): {np.mean(invalid_dists):.2f} m")
-                first_invalid = invalid_results[0]
-                print(f"\nStride #{first_invalid['stride_index']} | Time: {first_invalid['stride_time']} s")
-                print("IMU window:")
-                print(first_invalid['imu_window'].head())
-                print("GPS window:")
-                print(first_invalid['gps_window'].head())
+                print(f"{'-'*80}\n")
 
         if args.export_excel == "yes":
             rp.export_to_excel(df_steps, rp.get_output_path(f"{base_name}_stride.xlsx", args))
             # rp.export_to_excel(df_stride_stats, rp.get_output_path(f"{base_name}_stride_stats_per_minute.xlsx", args))
             # rp.export_to_excel(df_stride_raw, rp.get_output_path(f"{base_name}_individual_strides.xlsx", args))
-            
-
-            analyzer.analyze_strides(df_imu, df_gps, df_stride_valid, output_dir=args.output_dir, stride_type="valid")
-            analyzer.analyze_strides(df_imu, df_gps, df_stride_invalid, output_dir=args.output_dir, stride_type="invalid")
-
 
         if args.map_html == "yes":
             map_out_path = os.path.join(args.output_dir or ".", f"{base_name}_map.html")

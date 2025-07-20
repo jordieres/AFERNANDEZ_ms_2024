@@ -1132,6 +1132,8 @@ class StrideCleaner:
         plt.tight_layout()
 
 
+from geopy.distance import geodesic
+import pandas as pd
 
 class StrideRegionAnalyzer:
     def __init__(self, window_sec=6.0):
@@ -1149,7 +1151,7 @@ class StrideRegionAnalyzer:
         :param df_imu: DataFrame with columns ['time', 'Ax', 'Ay', 'Az', 'Gx', 'Gy', 'Gz']
         :param df_gps: DataFrame with columns ['time', 'lat', 'lng']
         :param stride_time: Central time of the stride (in seconds)
-        :return: imu_window, gps_window, gps_distance_m
+        :return: imu_window, gps_window, gps_distance_m, start, end
         """
         start = stride_time - self.window
         end = stride_time + self.window
@@ -1164,38 +1166,32 @@ class StrideRegionAnalyzer:
             coord_end = (gps_window.iloc[-1]['lat'], gps_window.iloc[-1]['lng'])
             distance = geodesic(coord_start, coord_end).meters
 
-        return imu_window, gps_window, distance
+        return imu_window, gps_window, distance, start, end
 
-    def analyze_strides(self, df_imu, df_gps, df_strides, output_dir=None, stride_type="invalid"):
+    def analyze_strides(self, df_imu, df_gps, df_strides, stride_type="invalid"):
         """
-        Analyzes multiple strides and optionally saves the extracted regions for inspection.
+        Analyzes multiple strides without saving files, returns key data for visualization and comparison.
 
         :param df_imu: IMU signal DataFrame.
         :param df_gps: GPS position DataFrame.
         :param df_strides: DataFrame with a 'time' column indicating stride times.
-        :param output_dir: Directory to save Excel files. If None, no files are saved.
-        :param stride_type: 'valid' or 'invalid' (used in output filenames).
-        :return: List of dictionaries with information per stride.
+        :param stride_type: 'valid' or 'invalid' (for classification).
+        :return: List of dictionaries with analysis per stride.
         """
         results = []
         for i, row in df_strides.iterrows():
             t = row["time"]
-            imu_data, gps_data, gps_dist = self.extract_region(df_imu, df_gps, t)
-
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
-                excel_path = os.path.join(output_dir, f"stride_{stride_type}_{i}.xlsx")
-                with pd.ExcelWriter(excel_path) as writer:
-                    imu_data.to_excel(writer, sheet_name="IMU", index=False)
-                    gps_data.to_excel(writer, sheet_name="GPS", index=False)
+            imu_data, gps_data, gps_dist, start, end = self.extract_region(df_imu, df_gps, t)
 
             results.append({
                 "stride_index": i,
                 "stride_time": t,
+                "stride_type": stride_type,
                 "gps_distance_m": gps_dist,
+                "time_window_start": start,
+                "time_window_end": end,
                 "imu_window": imu_data,
                 "gps_window": gps_data
             })
 
         return results
-
