@@ -113,6 +113,9 @@ Both are compared to GPS reference paths.
   <img src="figures/trajectory_kalman_vs_gps.png" width="48%"/>
 </div>
 
+
+<img src="figures/trajectory.png" width="1000"/>
+
 **Key insights:**
 
 * IMU-only trajectory shows substantial drift.
