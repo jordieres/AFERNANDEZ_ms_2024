@@ -20,13 +20,15 @@ It supports multiple stages in the processing pipeline, including:
 
 ```text
 msGeom/
+├── __init__.py       
 ├── data_preprocessor.py        
 ├── imu_processor.py
 ├── kalman_processor.py  
 ├── peak_detector.py  
 ├── stride_processor.py  
 ├── result_processor.py                      
-├── plot_processor.py   
+├── plot_processor.pyy
+├── requirements.txt   
 └── README.md               
 ```
 
