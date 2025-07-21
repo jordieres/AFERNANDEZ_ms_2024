@@ -84,12 +84,13 @@ A dedicated package for handling InfluxDB connections and queries. It includes t
 
 2. **Extract data**:
 
-   * Use the script `transform_data/extract_data.py`  for export data from InfluxDB
+   * Use the script `test_InfluxDB/extract_data.py`  for export data from InfluxDB
 
 
 3. **Transform and analyze data**:
 
-   * Use scripts in `transform_data/` and `msGeom/` for motion processing, visualization, and export
+   * Use scripts in `transform_data/` and `msGeom/` for motion processing, visualization, and export. 
+   * The main analysis script is `transform_data/stride_measurement.py`, which performs stride detection, filtering, and feature extraction.
 
 
 ## Results and Visualizations
@@ -98,7 +99,7 @@ This section presents a summary of the results obtained using sensor data collec
 
 ---
 
-## Trajectory Estimation: IMU vs. GPS
+### Trajectory Estimation: IMU vs. GPS
 
 The two plots below compare estimated 2D trajectories using:
 
@@ -107,10 +108,10 @@ The two plots below compare estimated 2D trajectories using:
 
 Both are compared to GPS reference paths.
 
-<p float="left">
-  <img src="figures/trajectory_imu_vs_gps.png" width="450"/>
-  <img src="figures/trajectory_kalman_vs_gps.png" width="450"/>
-</p>
+<div style="display: flex; gap: 20px;">
+  <img src="figures/trajectory_imu_vs_gps.png" width="48%"/>
+  <img src="figures/trajectory_kalman_vs_gps.png" width="48%"/>
+</div>
 
 **Key insights:**
 
@@ -119,7 +120,7 @@ Both are compared to GPS reference paths.
 
 ---
 
-## Quantitative Comparison Summary
+### Quantitative Comparison Summary
 
 | Metric                          | IMU       | Kalman Filter |
 | ------------------------------- | --------- | ------------- |
@@ -136,15 +137,15 @@ Both are compared to GPS reference paths.
 
 ---
 
-## Step Detection using modG Signal
+### Step Detection using modG Signal
 
 The signal below shows the modG magnitude from the IMU accelerometer. Steps are detected as peak triplets: entry (blue), main (red), and exit (green).
 
-<img src="detected_peak_modG.png" width="1000"/>
+<img src="figures/detected_peak_modG.png" width="1000"/>
 
 ---
 
-## Valid Stride Samples (After Filtering)
+### Valid Stride Samples (After Filtering)
 
 Six valid strides were detected after applying distance and GPS consistency filters:
 
@@ -159,7 +160,7 @@ Six valid strides were detected after applying distance and GPS consistency filt
 
 ---
 
-## Summary
+### Summary
 
 The combination of sensor fusion (Kalman filtering), peak detection, and stride validation yielded reliable gait metrics with high alignment to GPS reference data. The Kalman-based trajectory estimation showed strong spatial accuracy, suggesting that this pipeline is viable for detailed gait feature extraction in real-world walking scenarios.
 
