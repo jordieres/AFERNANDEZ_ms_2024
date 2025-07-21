@@ -1,9 +1,22 @@
-*.xlsx
+# Ignora todos los archivos .txt excepto requirements.txt
 *.txt
-venv/*
-vpy/*
-.vscode/*
-*.pyc
-.config.yaml
-out/*
+!requirements.txt
 
+# Ignora archivos Excel
+*.xlsx
+
+# Ignora entornos virtuales
+venv/
+vpy/
+
+# Ignora configuraciones de VSCode
+.vscode/
+
+# Ignora bytecode
+*.pyc
+
+# Ignora configuración sensible
+.config.yaml
+
+# Ignora salidas o resultados
+out/

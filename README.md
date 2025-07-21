@@ -108,12 +108,6 @@ The two plots below compare estimated 2D trajectories using:
 
 Both are compared to GPS reference paths.
 
-<div style="display: flex; gap: 20px;">
-  <img src="figures/trajectory_imu_vs_gps.png" width="48%"/>
-  <img src="figures/trajectory_kalman_vs_gps.png" width="48%"/>
-</div>
-
-
 <img src="figures/trajectory.png" width="1000"/>
 
 **Key insights:**

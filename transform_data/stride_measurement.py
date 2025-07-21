@@ -6,7 +6,14 @@ import argparse
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from class_transform_imu import *
+from msGeom.data_preprocessor import DataPreprocessor
+from msGeom.imu_processor import IMUProcessor
+from msGeom.kalman_processor import KalmanProcessor
+from msGeom.peak_detector import DetectPeaks
+from msGeom.stride_processor import StrideProcessor
+from msGeom.result_processor import ResultsProcessor
+from msGeom.plot_processor import PlotProcessor
+
 
 def parse_args():
     """
