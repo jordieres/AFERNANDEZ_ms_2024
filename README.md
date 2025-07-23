@@ -54,9 +54,9 @@ poetry install
 
 ## Module Descriptions
 
-### `transform_data`
+### `InfluxDBms`
 
-This folder contains scripts and classes for processing IMU and GPS data. It includes orientation estimation filters (Madgwick, Mahony), position refinement methods (Kalman, EKF, complementary filters), and tools for drift correction. It also supports static plots and interactive maps for data visualization.
+A dedicated package for handling InfluxDB connections and queries. It includes the `influxdb_tools.py` module, which defines the `cInfluxDB` class for querying and retrieving data into `pandas` DataFrames. It's tightly integrated with `test_InfluxDB/extract_data.py` for streamlined querying.
 
 ### `test_InfluxDB`
 
@@ -72,9 +72,10 @@ This module provides core classes for preprocessing sensor data, step detection,
 * Step and stride detection
 * Metric computation and visualization using Plotly, Matplotlib, or Folium
 
-### `InfluxDBms`
+### `transform_data`
 
-A dedicated package for handling InfluxDB connections and queries. It includes the `influxdb_tools.py` module, which defines the `cInfluxDB` class for querying and retrieving data into `pandas` DataFrames. It's tightly integrated with `test_InfluxDB/extract_data.py` for streamlined querying.
+This folder contains scripts and classes for processing IMU and GPS data. It includes orientation estimation filters (Madgwick, Mahony), position refinement methods (Kalman, EKF, complementary filters), and tools for drift correction. It also supports static plots and interactive maps for data visualization.
+
 
 ## Usage
 

@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from ahrs.common.orientation import q2R
 
 
-filePath = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
+filePath = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\old\dat_2024_tabuenca_left.xlsx"
 startTime = 0
 stopTime = 359.971
 samplePeriod = 0.03150455
@@ -105,7 +105,7 @@ def main():
     ax2.set_xlabel("time (s)")
     ax2.set_ylabel("acceleration (g)")
     ax2.legend(["x","y","z"])
-    plt.show(block=False)
+
 
     # Compute orientation
     quat  = np.zeros((time.size, 4), dtype=np.float64)
@@ -162,7 +162,7 @@ def main():
     plt.axhline(0, color='k', linestyle='--')
     plt.title("Aceleración rotada y compensada (m/s²)")
     plt.legend()
-    plt.show(block=False)
+
     acc_global = np.array(acc_global)
     if t < 100:
         print(f"t={t} acc_world={acc_world}")
@@ -178,7 +178,7 @@ def main():
     plt.axhline(0, color='k', linestyle=':')
     plt.legend()
     plt.title("Comparación eje Z antes y después de bias")
-    plt.show(block=False)
+
 
 
     # Aplica la corrección
@@ -224,7 +224,6 @@ def main():
     plt.title("velocity")
     plt.xlabel("time (s)")
     plt.ylabel("velocity (m/s)")
-    plt.show(block=False)
 
     # -------------------------------------------------------------------------
     # Compute translational position
@@ -240,7 +239,7 @@ def main():
     plt.title("position")
     plt.xlabel("time (s)")
     plt.ylabel("position (m)")
-    plt.show(block=False)
+
 
     # -------------------------------------------------------------------------
     # Plot 3D foot trajectory
@@ -263,7 +262,41 @@ def main():
     ax.set_xlabel("x position (m)")
     ax.set_ylabel("y position (m)")
     ax.set_zlabel("z position (m)")
-    plt.show(block=False)
+
+    # Gráfico XY
+    plt.figure()
+    plt.plot(posPlot[:,0], posPlot[:, 1])
+    plt.title("Trayectoria (X vs Y)")
+    plt.xlabel("X (m)")
+    plt.ylabel("Y (m)")
+    plt.axis('equal')
+    plt.grid()
+
+    print("\n--- Validación de resultados ---")
+
+    # Rango de velocidades
+    print("Rango de velocidades (m/s):")
+    print("X:", np.min(vel[:, 0]), "a", np.max(vel[:, 0]))
+    print("Y:", np.min(vel[:, 1]), "a", np.max(vel[:, 1]))
+    print("Z:", np.min(vel[:, 2]), "a", np.max(vel[:, 2]))
+
+    # Rango de posiciones
+    print("\nRango de posiciones (m):")
+    print("X:", np.min(pos[:, 0]), "a", np.max(pos[:, 0]))
+    print("Y:", np.min(pos[:, 1]), "a", np.max(pos[:, 1]))
+    print("Z:", np.min(pos[:, 2]), "a", np.max(pos[:, 2]))
+
+    # Módulo de velocidad
+    modulo_vel = np.linalg.norm(vel, axis=1)
+    print("\nVelocidad media:", np.mean(modulo_vel), "m/s")
+    print("Velocidad máxima:", np.max(modulo_vel), "m/s")
+
+    # Duración y distancia total
+    duracion_seg = time[-1] - time[0]
+    distancia_total = np.linalg.norm(pos[-1])
+    print("\nDuración (s):", duracion_seg)
+    print("Distancia total estimada (m):", distancia_total)
+    print("Velocidad media estimada:", distancia_total / duracion_seg, "m/s")
     
     plt.show()
 

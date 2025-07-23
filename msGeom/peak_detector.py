@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
-
+from geopy.distance import geodesic
 from matplotlib import pyplot as plt
 from scipy.signal import find_peaks
+from tabulate import tabulate
 
 class DetectPeaks:
     """
@@ -177,3 +178,190 @@ class DetectPeaks:
 
         df_stats = pd.DataFrame(summary)
         return df_stats, df_stride
+    
+
+
+    def plot_trajectory_with_strides(self,pos, gps_pos, time_pos, df_stride_raw_clean, title="Trajectory with Valid Strides", traj_label="Kalman"):
+        """
+        Plot the estimated trajectory versus GPS and mark valid strides as green points.
+
+        This function displays the macroscopic comparison between an estimated trajectory (e.g., from a Kalman filter)
+        and the GPS reference path. Additionally, it highlights the positions of valid strides by interpolating their
+        timestamps onto the trajectory.
+
+        :param pos: Estimated trajectory with shape (N, 3) or (N, 2). If 3D, only X and Y are used.
+        :type pos: np.ndarray
+        :param gps_pos: GPS reference trajectory with shape (N, 2).
+        :type gps_pos: np.ndarray
+        :param time_pos: Timestamps associated with the estimated trajectory.
+        :type time_pos: np.ndarray
+        :param df_stride_raw_clean: DataFrame containing valid strides. Must include a "time" column.
+        :type df_stride_raw_clean: pd.DataFrame
+        :param title: Title of the plot. Default is "Trajectory with Valid Strides".
+        :type title: str
+        :param traj_label: Label for the estimated trajectory line. Default is "Kalman".
+        :type traj_label: str
+        :return: None. The function produces a matplotlib plot of the trajectory and valid stride points.
+        :rtype: None
+        """
+
+        # Ensure that `pos` has only X, Y if it comes with Z
+        if pos.shape[1] == 3:
+            pos = pos[:, :2]
+
+  
+        stride_times = df_stride_raw_clean["time"].values
+        stride_x = np.interp(stride_times, time_pos, pos[:, 0])
+        stride_y = np.interp(stride_times, time_pos, pos[:, 1])
+        stride_positions = np.vstack((stride_x, stride_y)).T
+
+        # Plot
+        plt.figure(figsize=(10, 8))
+        plt.plot(pos[:, 0], pos[:, 1], label=f'{traj_label} Trajectory')
+        plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label='GPS Reference')
+        plt.plot(gps_pos[-1, 0], gps_pos[-1, 1], 'ko', label='Final GPS')
+        plt.scatter(stride_positions[:, 0], stride_positions[:, 1], color='green', label='Valid Strides', zorder=5)
+        plt.title(title)
+        plt.xlabel("X (m)")
+        plt.ylabel("Y (m)")
+        plt.axis("equal")
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+
+
+
+    # def generate_stride_and_gps_jump_table1(self, df_stride_raw_clean, gps_pos, gps_time, gps_jump_threshold=10.0, start_datetime=None):
+    #     """
+    #     Generate a table showing valid stride times and significant GPS jumps.
+
+    #     This function combines:
+    #     - The timestamps of valid strides (typically shown as green points).
+    #     - The timestamps and locations where GPS shows a sudden jump (e.g., >10 meters).
+    #     - Optionally includes a datetime column if start_datetime is provided.
+
+    #     :param df_stride_raw_clean: DataFrame with valid strides. Must include 'time'.
+    #     :type df_stride_raw_clean: pd.DataFrame
+    #     :param gps_pos: Numpy array of GPS positions (shape: Nx2).
+    #     :type gps_pos: np.ndarray
+    #     :param gps_time: Numpy array of timestamps corresponding to gps_pos (shape: N,).
+    #     :type gps_time: np.ndarray
+    #     :param gps_jump_threshold: Minimum distance (in meters) to consider a GPS jump.
+    #     :type gps_jump_threshold: float
+    #     :param start_datetime: Optional starting datetime (as pandas.Timestamp or datetime). If given, adds a datetime column.
+    #     :type start_datetime: pd.Timestamp or datetime.datetime or None
+    #     :return: Combined DataFrame with event type, time, coordinates, and optionally datetime.
+    #     :rtype: pd.DataFrame
+    #     """
+    #     # Detect GPS jumps
+    #     gps_diff = np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)
+    #     jump_indices = np.where(gps_diff > gps_jump_threshold)[0] + 1  # +1 to get point *after* jump
+
+    #     gps_jump_times = gps_time[jump_indices]
+    #     gps_jump_coords = gps_pos[jump_indices]
+
+    #     df_jumps = pd.DataFrame({
+    #         "type": "GPS Jump",
+    #         "time": gps_jump_times,
+    #         "x": gps_jump_coords[:, 0],
+    #         "y": gps_jump_coords[:, 1],
+    #         "delta_dist": gps_diff[jump_indices - 1]
+    #     })
+
+    #     # Valid strides
+    #     stride_times = df_stride_raw_clean["time"].values
+    #     stride_x = np.interp(stride_times, gps_time, gps_pos[:, 0])
+    #     stride_y = np.interp(stride_times, gps_time, gps_pos[:, 1])
+
+    #     df_strides = pd.DataFrame({
+    #         "type": "Valid Stride",
+    #         "time": stride_times,
+    #         "x": stride_x,
+    #         "y": stride_y,
+    #         "delta_dist": np.nan
+    #     })
+
+    #     # Combine
+    #     df_combined = pd.concat([df_strides, df_jumps], ignore_index=True)
+    #     df_combined.sort_values(by="time", inplace=True)
+    #     df_combined.reset_index(drop=True, inplace=True)
+
+    #     # Add datetime if reference provided
+    #     if start_datetime is not None:
+    #         df_combined["datetime"] = pd.to_datetime(start_datetime) + pd.to_timedelta(df_combined["time"], unit="s")
+
+    #     return df_combined
+
+
+    def generate_stride_and_gps_jump_table1(self,
+                df_stride_raw_clean,
+                gps_pos,
+                gps_time,
+                gps_jump_threshold=10.0,
+                start_datetime=None,
+                gps_lat=None,
+                gps_lon=None
+            ):
+   
+        # --- 1. Detect GPS jumps ---
+        gps_diff = np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)
+        jump_indices = np.where(gps_diff > gps_jump_threshold)[0] + 1
+
+        df_jumps = pd.DataFrame({
+            "type": "GPS Jump",
+            "time": gps_time[jump_indices],
+            "x": gps_pos[jump_indices, 0],
+            "y": gps_pos[jump_indices, 1],
+            "delta_dist": gps_diff[jump_indices - 1],
+            "source": "event"
+        })
+
+        # --- 2. Add Valid Strides ---
+        if df_stride_raw_clean is not None and not df_stride_raw_clean.empty:
+            stride_times = df_stride_raw_clean["time"].values
+            stride_x = np.interp(stride_times, gps_time, gps_pos[:, 0])
+            stride_y = np.interp(stride_times, gps_time, gps_pos[:, 1])
+            df_strides = pd.DataFrame({
+                "type": "Valid Stride",
+                "time": stride_times,
+                "x": stride_x,
+                "y": stride_y,
+                "delta_dist": np.nan,
+                "source": "event"
+            })
+        else:
+            df_strides = pd.DataFrame(columns=["type", "time", "x", "y", "delta_dist", "source"])
+
+        # --- 3. GPS Samples ---
+        delta_d = np.insert(np.linalg.norm(np.diff(gps_pos, axis=0), axis=1), 0, np.nan)
+        df_samples = pd.DataFrame({
+            "type": "GPS Sample",
+            "time": gps_time,
+            "x": gps_pos[:, 0],
+            "y": gps_pos[:, 1],
+            "delta_dist": delta_d,
+            "source": "gps_sample"
+        })
+
+        if gps_lat is not None and gps_lon is not None:
+            df_samples["lat"] = gps_lat
+            df_samples["lon"] = gps_lon
+
+        # --- 4. Merge ---
+        df_combined = pd.concat([df_samples, df_strides, df_jumps], ignore_index=True)
+        df_combined.sort_values("time", inplace=True)
+        df_combined.reset_index(drop=True, inplace=True)
+
+        # --- 5. Datetime ---
+        if start_datetime is not None:
+            gps_datetime = pd.to_datetime(start_datetime) + pd.to_timedelta(gps_time, unit="s")
+            df_combined["datetime"] = np.interp(
+                df_combined["time"], gps_time, gps_datetime.astype(np.int64)
+            ).astype("datetime64[ns]")
+
+        # --- 6. Lat/lon interpolation ---
+        if gps_lat is not None and gps_lon is not None:
+            df_combined["lat"] = np.interp(df_combined["time"], gps_time, gps_lat)
+            df_combined["lon"] = np.interp(df_combined["time"], gps_time, gps_lon)
+
+        return df_combined

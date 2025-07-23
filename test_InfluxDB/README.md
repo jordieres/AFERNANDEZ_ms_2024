@@ -14,6 +14,7 @@ The folder also includes an `out/` directory, which is used to store the resulti
 
 ```text
 test_InfluxDB/
+├── __init__.py             # Package initializer
 ├── extract_data.py         # Script to extract data from InfluxDB and export to Excel
 ├── out/                    # Output folder for resulting Excel files
 └── README.md               
@@ -42,12 +43,12 @@ It uses command-line arguments to control input parameters such as:
 You can run the script directly from the terminal:
 
 ```bash
-python extract_data.py \
+python test_influxDB\extract_data.py \
   -f "2024-04-25T14:20:52Z" \
   -u "2024-04-25T14:21:52Z" \
   -l Right \
   -q "********" \
-  -c .config.yaml \
+  -c config.yaml \
   -o test_InfluxDB/out/test.xlsx \
   -v 3 \
   -m Ax,Ay,Az,Gx,Gy,Gz,Mx,My,Mz

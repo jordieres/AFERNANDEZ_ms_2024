@@ -8,8 +8,9 @@ import pandas as pd
 from ahrs.common.orientation import q_conj, q_rot
 from set_var import compute_time_parameters
 
+
 # === CONFIGURACIÓN ===
-file_path = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\dat_2024_tabuenca_left.xlsx"
+file_path = r"C:\Users\Gliglo\OneDrive - Universidad Politécnica de Madrid\Documentos\UPM\TFG\Proyecto_TFG\AFERNANDEZ_ms_2024\test_InfluxDB\out\old\dat_2024_tabuenca_left.xlsx"
 
 # === CARGA Y CÁLCULO DE PARÁMETROS TEMPORALES ===
 results = compute_time_parameters(file_path)
@@ -207,6 +208,33 @@ ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
 
+
+# === VALIDACIÓN DE RESULTADOS ===
+print("\n--- Validación de resultados ---")
+
+# Rango de velocidades
+print("Rango de velocidades (m/s):")
+print("X:", np.min(vel[:, 0]), "a", np.max(vel[:, 0]))
+print("Y:", np.min(vel[:, 1]), "a", np.max(vel[:, 1]))
+print("Z:", np.min(vel[:, 2]), "a", np.max(vel[:, 2]))
+
+# Rango de posiciones
+print("\nRango de posiciones (m):")
+print("X:", np.min(pos[:, 0]), "a", np.max(pos[:, 0]))
+print("Y:", np.min(pos[:, 1]), "a", np.max(pos[:, 1]))
+print("Z:", np.min(pos[:, 2]), "a", np.max(pos[:, 2]))
+
+# Velocidades
+modulo_vel = np.linalg.norm(vel, axis=1)
+print("\nVelocidad media:", np.mean(modulo_vel), "m/s")
+print("Velocidad máxima:", np.max(modulo_vel), "m/s")
+
+# Distancia total y duración
+duracion_seg = time[-1] - time[0]
+distancia_total = np.linalg.norm(pos[-1])
+print("\nDuración (s):", duracion_seg)
+print("Distancia total estimada (m):", distancia_total)
+print("Velocidad media estimada:", distancia_total / duracion_seg, "m/s")
 
 # Mostrar todas las gracicas
 plt.show()

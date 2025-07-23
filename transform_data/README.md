@@ -2,89 +2,118 @@
 
 ## Description
 
-The `transform_data` folder contains scripts and classes designed to process IMU (Inertial Measurement Unit) and GPS data for motion tracking and trajectory estimation. The pipeline includes orientation estimation using filters such as **Madgwick** and **Mahony**, and position refinement via **Kalman**, **EKF**, complementary filters, and drift correction.
+## Description
 
-It also supports generation of static plots and interactive maps, making it a versatile tool for both analysis and visualization of movement data.
+This folder is intended for processing and evaluating gait data using IMU and GPS signals. It contains the script `stride_measurement.py`, which serves as the main entry point for executing a complete gait analysis pipeline—including sensor fusion, stride detection, and trajectory evaluation.
 
-## Folder Structure
+The script leverages multiple processing classes from the `msGeom` package to perform operations such as data resampling, Kalman filtering, peak detection, and stride validation. Users can control the pipeline through command-line arguments, specifying input files, configuration options, and output preferences.
+
+The folder also includes an `out_transform_data/ `directory, which is used to store the generated plots, evaluation reports, and optional Excel exports.
+
+
+## Structure
 
 ```text
 transform_data/
 │
-├── class_madwick.py              # Madgwick-based orientation + position estimation
-├── class_transform_imu.py        # Data preprocessing, filtering, and fusion functions
-├── test_data_feet.py             # Data inspection and diagnostic script
-├── transform_imu_madwick_v1.py   # Full Madgwick pipeline + ZUPT/ZUPH + filtering
-├── transform_imu_madwick_v2.py   # Kalman prediction test with split trajectory
-├── transform_imu_unif.py         # Unified comparison of Madgwick/Mahony with/without magnetometer
-│
-├── done/                         # Prototypes and tests using ahrs and skinematics
-└── out_transform_data/           # Output folder for plots and maps
+├── __init__.py               # Package initializer
+├── stride_measurement.py     # Main script for IMU+GPS data processing                             
+├── out_transform_data/       # Output directory for plots and exported data
+└── README.md            
 ```
 
+## How It Works
 
-##  File Descriptions
+The main script, `stride_measurement.py`, uses command-line arguments to control processing options such as:
 
-### `class_madwick.py`
-Implements orientation and position estimation from IMU data using:
-- Adaptive Madgwick filter (with ZUPT/ZUPH)
-- Drift correction strategies:
-  - Kalman filter
-  - EKF 2D
-  - Complementary filter
-  - Progressive linear correction
-- Visualization of acceleration, position, velocity, and 2D/3D trajectories
-
-### `class_transform_imu.py`
-Support functions for the full processing pipeline:
-- File loading and resampling to 40 Hz
-- Stationary period detection
-- Orientation estimation (Madgwick/Mahony)
-- Application of multiple filters (Kalman, EKF, Complementary)
-- Plotting with `matplotlib`, `plotly`, and mapping with `folium`
-
-### `test_data_feet.py`
-Diagnostic tool for IMU Excel files:
-- Verifies file structure, timestamps, null values, and outliers
-- Interpolates and compares data before and after resampling
-- Useful for validating raw sensor data
+- `--file_path` → Path to the input Excel file containing IMU and GPS data
+- `--verbose` → Verbosity level from 1 to 3 (default: 3)
+- `--config` → Path to the YAML configuration file
+- `--output_mode` → Plot display/save mode: screen, save, or both
+- `--output_dir` → Directory to save plots and data exports
+- `--export_excel` → Whether to export stride data to Excel (yes / no)
+- `--map_html` → Whether to generate an interactive HTML map (yes / no)
 
 ---
 
-## Main Scripts
-
-### `transform_imu_madwick_v1.py`
-Processes IMU + GPS files using Madgwick (with magnetometer):
-- Applies ZUPT/ZUPH strategies
-- Estimates IMU trajectory and fuses it with GPS
-- Compares multiple drift correction methods
-- Saves and/or displays visual outputs
-
-### `transform_imu_madwick_v2.py`
-Splits the dataset in two halves:
-- First half uses Kalman filter with GPS corrections
-- Second half estimates position without GPS (prediction mode)
-- Designed to test Kalman filter robustness
-
-### `transform_imu_unif.py`
-Unified algorithm comparator:
-- Runs multiple filters (Madgwick/Mahony) with and without magnetometer
-- Applies Kalman filtering to each estimation
-- Plots error metrics and trajectories
-- Supports interactive map visualization
-
-
-
-## Dependencies
-
-To install all required packages, run:
-
+## Example Usage
 ```bash
-pip install numpy pandas scipy matplotlib ahrs pyproj plotly folium filterpy pyyaml openpyxl
+python transform_data/stride_measurement.py \
+  -f test_InfluxDB/out/dat_2024_tabuenca_left_60.xlsx \
+  -v 3 \
+  -c config.yaml \
+  -om screen \
+  -o transform_data/out_transform_data \
+  -e no \
+  -m no
 ```
 
-## Notes
-- All scripts support the --help flag to display usage and parameters.
-- Use --output_mode both if you want to both show and save the output figures.
-- Output plots will be stored in the out_transform_data/ folder if the --output_dir parameter is specified.
-- The system assumes input data is in Excel format (.xlsx) with IMU and GPS columns like Ax, Gx, lat, lng, _time, etc.
+---
+
+## Debugging with VS Code
+
+The script is designed to run either from terminal or through a debugger (e.g., VSCode). Example debug configuration:
+
+```json
+{
+  "name": "Python Debugger: stride_measurement",
+  "type": "debugpy",
+  "request": "launch",
+  "program": "${file}",
+  "python": "${workspaceFolder}/venv/Scripts/python.exe",
+  "args": [
+    "-f", "${workspaceFolder}/test_InfluxDB/out/dat_2024_tabuenca_left_60.xlsx",
+    "-v", "3",
+    "-c", "${workspaceFolder}/.config.yaml",
+    "-om", "screen",
+    "-o", "${workspaceFolder}/transform_data/out_transform_data",
+    "-e", "no",
+    "-m", "no"
+  ],
+  "console": "integratedTerminal",
+  "cwd": "${workspaceFolder}"
+}
+```
+
+## Output
+
+Depending on selected options, the script can produce:
+
+- **Trajectory Plots**: IMU vs. Kalman vs. GPS
+- **Stride Statistics**: Per-step and per-minute metrics
+- **Stride Filtering Summary**: Valid/invalid stride lists
+- **Evaluation Results**: Quality score per segment
+- **Excel Reports** (if `-e yes` is enabled)
+- **Interactive HTML Map** (if `-m yes` is enabled)
+
+All outputs (except screen-only plots) are saved to `transform_data/out_transform_data/`.
+
+---
+
+
+
+#  Requirements
+
+Make sure the following Python packages are installed:
+
+```bash
+pip install numpy pandas matplotlib tabulate argsparse
+```
+
+Additionally, the script relies on an internal package named `msGeom` which must include:
+
+- `DataPreprocessor`
+- `IMUProcessor`
+- `KalmanProcessor`
+- `DetectPeaks`
+- `StrideProcessor`
+- `ResultsProcessor`
+- `PlotProcessor`
+
+---
+
+##  Notes
+
+- The GPS–IMU alignment assumes a walking distance of ~430 meters (can be configured).
+- Be sure to customize `.config.yaml` based on your sensor setup and desired filters.
+- Compatible with both Windows and Linux environments.
