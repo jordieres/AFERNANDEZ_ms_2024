@@ -11,7 +11,7 @@ class StrideProcessor:
     It includes tools for quality checks, spatial alignment, and segment-level diagnostics.
     """
 
-    def __init__(self, min_stride=0.2, max_stride=2.5, window_sec=6.0):
+    def __init__(self, min_stride=0.2, max_stride=2.5, window_sec=1.5):
         """
         Initialize the stride processor with stride length constraints.
 
@@ -289,4 +289,113 @@ class StrideProcessor:
 
         return results
 
-    
+    def compute_kalman_gps_error_and_jumps(self, time, pos_kalman, gps_pos, threshold=7.0, min_separation=0.5):
+        """
+        Compute Kalman-GPS error and detect GPS jumps.
+
+        :param time: Time vector.
+        :type time: np.ndarray
+        :param pos_kalman: Kalman-filtered positions (Nx2 or Nx3).
+        :type pos_kalman: np.ndarray
+        :param gps_pos: GPS positions (Nx2).
+        :type gps_pos: np.ndarray
+        :param threshold: Threshold for jump detection.
+        :type threshold: float
+        :param min_separation: Minimum time separation between jumps.
+        :type min_separation: float
+        :return: Tuple (error array, list of jump indices).
+        :rtype: Tuple[np.ndarray, List[int]]
+        """
+        pos_kalman = np.asarray(pos_kalman)
+        gps_pos = np.asarray(gps_pos)
+        time = np.asarray(time)
+
+        if pos_kalman.ndim == 1 or pos_kalman.shape[1] < 2:
+            raise ValueError("pos_kalman must have at least 2 columns (X, Y).")
+        if gps_pos.ndim == 1 or gps_pos.shape[1] != 2:
+            raise ValueError("gps_pos must be a (N x 2) matrix.")
+        if len(pos_kalman) != len(gps_pos) or len(pos_kalman) != len(time):
+            raise ValueError("time, pos_kalman, and gps_pos must have the same length.")
+
+        kalman_gps_error = np.linalg.norm(pos_kalman[:, :2] - gps_pos, axis=1)
+        jump_indices = np.where(kalman_gps_error > threshold)[0]
+
+        filtered_jump_indices = []
+        for idx in jump_indices:
+            t = time[idx]
+            if not filtered_jump_indices or (t - time[filtered_jump_indices[-1]]) > min_separation:
+                filtered_jump_indices.append(idx)
+
+        return kalman_gps_error, filtered_jump_indices
+
+    def plot_gps_jumps(self, time, kalman_gps_error, jump_indices, threshold=7.0):
+        """
+        Plot GPS jumps based on Kalman-GPS error.
+
+        :param time: Time vector.
+        :type time: np.ndarray
+        :param kalman_gps_error: Error vector.
+        :type kalman_gps_error: np.ndarray
+        :param jump_indices: Indices of GPS jumps.
+        :type jump_indices: List[int]
+        :param threshold: Threshold line to plot.
+        :type threshold: float
+        """
+        plt.figure(figsize=(10, 5))
+        plt.plot(time, kalman_gps_error, label="Kalman-GPS Error", color='blue')
+        plt.axhline(threshold, color='red', linestyle='--', label=f"Threshold ({threshold} m)")
+        plt.scatter(time[jump_indices], kalman_gps_error[jump_indices],
+                    color='red', edgecolor='black', label="Filtered Jumps")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Kalman vs GPS Error (m)")
+        plt.title("GPS Jump Detection based on Kalman-GPS Error")
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+
+    def plot_jumps_and_strides(self, time, kalman_gps_error, jump_times, stride_times, valid_strides, threshold = 7.0):
+        """
+        Plot Kalman-GPS error with marked GPS jumps and stride events.
+
+        :param time: Time vector.
+        :type time: np.ndarray
+        :param kalman_gps_error: Kalman-GPS error values.
+        :type kalman_gps_error: np.ndarray
+        :param jump_times: List of GPS jump timestamps.
+        :type jump_times: list[float]
+        :param stride_times: Dict mapping stride numbers to their times.
+                            e.g., {30: 39.10, 31: 40.08, ...}
+        :type stride_times: dict[int, float]
+        :param valid_strides: List of stride numbers considered valid.
+        :type valid_strides: list[int]
+        :param threshold: Threshold value for GPS error.
+        :type threshold: float
+        """
+        plt.figure(figsize=(12, 6))
+        plt.plot(time, kalman_gps_error, label='Kalman-GPS Error', color='blue')
+
+        # Plot GPS jumps
+        for jt in jump_times:
+            y = kalman_gps_error[np.argmin(np.abs(time - jt))]
+            plt.plot(jt, y, 'ro', label=f"GPS Jump at {jt:.2f}s")
+            plt.text(jt + 0.2, y + 0.5, f"Jump\n{jt:.2f}s", fontsize=9, color='red')
+
+        # Plot stride lines
+        for stride_num, t in stride_times.items():
+            if stride_num in valid_strides:
+                color = 'green'
+                label = f"Valid Stride #{stride_num} ({t:.2f}s)"
+            else:
+                color = 'red'
+                label = f"Invalid Stride #{stride_num} ({t:.2f}s)"
+            plt.axvline(t, color=color, linestyle='--', label=label)
+
+        # Plot threshold
+        plt.axhline(threshold, color='red', linestyle='--', label=f'Threshold ({threshold} m)')
+
+        plt.title("Kalman-GPS Error and Stride Events")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Error (m)")
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()

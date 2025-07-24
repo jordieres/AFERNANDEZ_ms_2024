@@ -1,5 +1,4 @@
 
-
 import numpy as np
 import os
 import argparse
@@ -79,7 +78,7 @@ def main():
     plotter = PlotProcessor()
     dp = DetectPeaks()
     rp = ResultsProcessor()
-    sp = StrideProcessor(min_stride=0.2, max_stride=2.5, window_sec=6.0)
+    sp = StrideProcessor(min_stride=0.2, max_stride=2.5, window_sec=1.5) # VENTANA DE (+-)3 -->DURACION DE LA MARCHA
 
 
     file_path = args.file_path
@@ -87,6 +86,7 @@ def main():
     foot_label = "Left Foot" if "left" in base_name.lower() else "Right Foot" if "right" in base_name.lower() else base_name
 
     try:
+        # Load and preprocess
         df = preprocessor.load_data(file_path)
         df_inter = preprocessor.resample_to_40hz(df)
         time, sample_rate, gyr, acc, mag = preprocessor.preprocess_data(df_inter)
@@ -95,23 +95,20 @@ def main():
         quats, acc_earth, vel, pos = imu_processor.estimate_position_madwick(time, gyr, acc, mag, stationary)
 
         df_gps, gps_pos, gps_final = preprocessor.compute_positions(df_inter, preprocessor.config)
-        
+
+        # Kalman fusion
         kp = KalmanProcessor(dt=sample_period, q=0.1, r=0.5)
         kp.initialize(gps_pos[0])
         fused_trajectory = kp.run_filter_with_acc_and_gps(acc_earth, gps_pos)
-
 
         pos_kalman = pos.copy()
         pos_kalman[:, :2] = fused_trajectory
 
         df_inter["modG"] = np.linalg.norm(gyr, axis=1)
-        df_inter["modA"] = np.linalg.norm(acc, axis=1)
         df_inter["time"] = time
 
-        df_imu = df_inter[["time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz"]].copy()      # Para posteriormente analizar la zancada
-
+        df_imu = df_inter[["time", "Ax", "Ay", "Az", "Gx", "Gy", "Gz"]].copy()
         triplets_gyr = dp.detect_triplet_peaks(df_inter, column='modG')
-        
 
         gps_lat = df_gps['lat'] if not df_gps.empty else np.full(len(pos_kalman), np.nan)
         gps_lng = df_gps['lng'] if not df_gps.empty else np.full(len(pos_kalman), np.nan)
@@ -120,51 +117,33 @@ def main():
         gps_lng = gps_lng[:len(time)] if len(gps_lng) >= len(time) else np.pad(gps_lng, (0, len(time) - len(gps_lng)), constant_values=np.nan)
 
         df_steps = rp.prepare_step_dataframe(time, gps_lat, gps_lng, pos_kalman, vel, df_inter)
-        df_steps["minute"] = (df_steps["time"] // 60).astype(int)  # Marcar minuto en datos de pasos
+        df_steps["minute"] = (df_steps["time"] // 60).astype(int)
 
+        # Step filtering
+        step_peaks = (triplets_gyr.loc[triplets_gyr['peak_type'] == 'main', 'orig_index']
+                      .dropna().astype(int).values)
+        step_peaks = np.sort(np.unique(step_peaks))
 
-        # FILTRACION
-        # === Paso 1: Detección de zancadas ===
-        step_peaks = (triplets_gyr.loc[triplets_gyr['peak_type'] == 'main', 'orig_index'].dropna().astype(int).values)
-        step_peaks = np.sort(np.unique(step_peaks))  # Elimina duplicados y ordena
-
-        # === Paso 2: Cálculo de estadísticas por minuto ===
         df_stride_stats, df_stride_raw = dp.compute_stride_stats_per_minute(df_steps, pos_kalman, step_peaks)
-
-        # === Paso 3: Filtro por longitud de zancada válida ===
-        
         df_stride_raw_clean = sp.clean_stride_data(df_stride_raw)
-
-        # Añadir columna 'minute' a zancadas filtradas
         df_stride_raw_clean["minute"] = (df_stride_raw_clean["time"] // 60).astype(int)
-
-        # Estadísticas limpias por minuto
         df_stride_stats_clean = sp.recompute_stats_per_minute(df_stride_raw_clean)
 
-        # === Paso 4: Comprobaciones de calidad ===
+        # Quality checks
         df_stats_checked = sp.check_distance_similarity(df_stride_stats_clean, gps_distance=430.04)
         df_stats_checked = sp.check_stride_length_range(df_stats_checked)
-
-        # Comprobación de suavidad de la trayectoria (velocidad razonable)
         df_steps_checked = sp.check_trajectory_smoothness(df_steps)
-
-
-
-        # Comprobación de alineación espacial con GPS
         alignment_mask, percent_ok = sp.check_spatial_alignment(pos_kalman[:, :2], gps_pos)
-        # === Paso 5: Evaluación conjunta por minuto ===
-        df_eval = sp.evaluate_quality_segments(df_stats_checked,df_steps,gps_pos,imu_pos=pos_kalman[:, :2],gps_distance=430.04)
+        df_eval = sp.evaluate_quality_segments(df_stats_checked, df_steps, gps_pos, imu_pos=pos_kalman[:, :2], gps_distance=430.04)
 
-        
-        
-        # Zancadas válidas (ya filtradas)
         df_stride_valid = df_stride_raw_clean[["time"]].copy()
-
-        # Zancadas inválidas = todas menos las válidas
         valid_times_set = set(df_stride_valid["time"])
         df_stride_invalid = df_stride_raw[~df_stride_raw["time"].isin(valid_times_set)][["time"]].copy()
-       
 
+        kalman_gps_error, jump_indices = sp.compute_kalman_gps_error_and_jumps(time, pos_kalman, gps_pos)
+        jump_times = time[jump_indices]
+
+        # Verbose outputs and plots
         if args.verbose >= 2:
             print(f"\n{'*'*58}  {foot_label}  {'*'*59}\n")
             print(f"{'-'*130}")
@@ -179,6 +158,11 @@ def main():
 
             step_count = len(triplets_gyr[triplets_gyr['peak_type'] == 'main'])
             print(f"- Steps detected (modG): {step_count}")
+
+            print("\nGPS jumps detected:\n")
+            for idx in jump_indices:
+                print(f"- Time: {time[idx]:.2f} s | Kalman-GPS Error: {kalman_gps_error[idx]:.2f} m")
+
 
             plotter.plot_macroscopic_comparision(
                 pos, gps_pos,
@@ -198,9 +182,17 @@ def main():
 
            
             dp.plot_peaks(df_inter, signal_column='modG', peak_df=triplets_gyr, signal_name='modG')
-            sp.plot_stride_filtering(df_stride_raw, df_stride_raw_clean,  y_max=3.0)
+            
+            sp.plot_gps_jumps(time, kalman_gps_error, jump_indices)
 
-
+            sp.plot_jumps_and_strides(
+                time=time,
+                kalman_gps_error=kalman_gps_error,
+                jump_times=jump_times,
+                stride_times={30: 39.10, 31: 40.08, 32: 41.25, 33: 42.40},
+                valid_strides=[31, 32, 33],
+                threshold=7.0
+            )
             
             # Extra details for verbose = 3
             if args.verbose >= 3:
@@ -212,118 +204,32 @@ def main():
                 print(f"- Average velocity (IMU): {np.mean(np.linalg.norm(vel, axis=1)):.3f} m/s")
                 print(f"\n{'-'*130}")
 
-                print(f"\n{'*'*56} RAW OUTPUT TABLES {'*'*55}")
-                print("\nFirst 5 rows of stride measurement results (position, velocity, distance per step):\n")
-                print(tabulate(df_steps.head(), headers='keys', tablefmt='github', floatfmt=".3f"))
+                vel_magnitudes = np.linalg.norm(vel, axis=1)
+                acc_magnitudes = np.linalg.norm(acc_earth, axis=1)
 
-                print("\n\nFirst 5 rows of per-minute stride statistics (summary table):\n")
-                print(tabulate(df_stride_stats.head(), headers='keys', tablefmt='github', floatfmt=".3f"))
-
-                print("\n\nirst 5 rows of raw stride data (individual strides):\n")
-                print(tabulate(df_stride_raw.head(), headers='keys', tablefmt='github', floatfmt=".3f"))
-                print(f"{'-'*130}\n")
-
-                print(f"\n{'*'*52} STRIDE CLEANING SUMMARY {'*'*53}") 
-                print(f"\n- Filtered out {len(df_stride_raw) - len(df_stride_raw_clean)} strides outside the valid range (0.2–2.5 m).")
-                print(f"- Estimated distance / GPS ratio: {df_stride_stats_clean['distance_m'].sum() / 430.04:.2f} ({'OK' if abs(df_stride_stats_clean['distance_m'].sum() / 430.04 - 1) <= 0.15 else 'NO'})")
-
-                print(f"- Detected {df_steps_checked['velocity_spike'].sum()} velocity spikes (> 3.0 m/s).")
-
-                print(f"- {percent_ok:.1f}% of points have spatial error < 10.0 m.")
-                print(f"\n- Points well aligned with GPS: {alignment_mask.sum()} / {len(alignment_mask)} ({percent_ok:.1f}%)")
-
-                well_aligned = df_eval[df_eval["all_criteria_ok"] == True]
-                if not well_aligned.empty:
-                    print("- Well-aligned segments detected:")
-                    print(tabulate(well_aligned, headers='keys', tablefmt='github', floatfmt=".3f"))
-                else:
-                    print("- No well-aligned segments detected.")
-                print("- Number of valid strides:", len(df_stride_raw_clean))
+                print(f"\n{'*'*52} DYNAMICS CHECK {'*'*52}")
+                print(f"- Max velocity (IMU): {np.max(vel_magnitudes):.2f} m/s")
+                print(f"- Max acceleration (earth frame): {np.max(acc_magnitudes):.2f} m/s²")
+                print(f"- % of samples with velocity > 3.0 m/s: {(vel_magnitudes > 3.0).sum() / len(vel_magnitudes) * 100:.1f}%")
                 print(f"\n{'-'*130}")
 
-                print(f"\n{'*'*54} VALID STRIDE DETAIL {'*'*55}") 
-                print("\nValid stride times and lengths:\n")
-                print(tabulate(df_stride_raw_clean[["time", "stride_length_m"]], headers='keys', tablefmt='github', floatfmt=".3f"))
-                print("\n\nFirst 5 rows of filtered per-minute stride statistics:\n")
-                print(tabulate(df_stride_stats_clean.head(), headers='keys', tablefmt='github', floatfmt=".3f"))
-                print("\n\nFirst 5 rows of filtered individual strides:\n")
-                print(tabulate(df_stride_raw_clean.head(), headers='keys', tablefmt='github', floatfmt=".3f"))
+                errors = np.linalg.norm(pos_kalman[:, :2] - gps_pos, axis=1)
+                print(f"\n{'*'*52} SPATIAL ERROR ANALYSIS {'*'*52}")
+                print(f"- Mean Kalman-GPS error: {np.mean(errors):.2f} m")
+                print(f"- Median error: {np.median(errors):.2f} m")
+                print(f"- Max error: {np.max(errors):.2f} m")
+                print(f"- Std dev of error: {np.std(errors):.2f} m")
+                print(f"- % of points with error < 5.0 m: {(errors < 5.0).sum() / len(errors) * 100:.1f}%")
+                print(f"- % of points with error < 2.0 m: {(errors < 2.0).sum() / len(errors) * 100:.1f}%")
                 print(f"\n{'-'*130}")
-
-
-                # Extraer regiones para inspección manual en Grafana 
-                valid_results = sp.analyze_strides(df_imu, df_gps, df_stride_valid,  stride_type="valid")
-                invalid_results = sp.analyze_strides(df_imu, df_gps, df_stride_invalid,  stride_type="invalid")
-
-                print(f"\n{'*'*51} GRAFANA INSPECTION WINDOWS {'*'*51}\n")
-
-                valid_dists = [r["gps_distance_m"] for r in valid_results if r["gps_distance_m"] is not None]
-                invalid_dists = [r["gps_distance_m"] for r in invalid_results if r["gps_distance_m"] is not None]
-
-                print(f"- Average GPS distance (valid strides): {np.mean(valid_dists):.2f} m")
-                print(f"- Average GPS distance (invalid strides): {np.mean(invalid_dists):.2f} m")
-                print("\nVALID STRIDES:")
-                for r in valid_results:
-                    stride_idx = np.searchsorted(df_inter["time"].values, r["stride_time"])
-                    stride_dt = df_inter["_time"].values[stride_idx]  
-                    print(f"- Stride #{r['stride_index']:<3} | Time: {r['stride_time']:6.2f}s | Datetime: {stride_dt:<26} | Window: [{r['time_window_start']:6.2f}s – {r['time_window_end']:6.2f}s] | GPS Distance: {r['gps_distance_m']:6.2f} m")
-
-                print("\nINVALID STRIDES:")
-                for r in invalid_results:
-                    stride_idx = np.searchsorted(df_inter["time"].values, r["stride_time"])
-                    stride_dt = df_inter["_time"].values[stride_idx]  
-                    print(f"- Stride #{r['stride_index']:<3} | Time: {r['stride_time']:6.2f}s | Datetime: {stride_dt:<26} | Window: [{r['time_window_start']:6.2f}s – {r['time_window_end']:6.2f}s] | GPS Distance: {r['gps_distance_m']:6.2f} m")
-
-            
-                print(f"{'-'*130}\n")
-
-                # dp.plot_trajectory_with_strides(pos_kalman,gps_pos,time,df_stride_raw_clean, title=f"Trajectory - {foot_label} (Kalman + Valid Strides)", traj_label="Kalman" )
-
-                start_dt = pd.to_datetime(df_inter["_time"].iloc[0])
-
-                df_event_table = dp.generate_stride_and_gps_jump_table1(
-                    df_stride_raw_clean=df_stride_raw_clean,
-                    gps_pos=gps_pos,
-                    gps_time=time,
-                    gps_jump_threshold=10.0,
-                    start_datetime=start_dt,
-                    gps_lat=gps_lat,
-                    gps_lon=gps_lng
-                )
-                # Define el rango de tiempo que quieres visualizar
-                start_time = pd.to_datetime("2024-04-25T14:21:32")
-                end_time = pd.to_datetime("2024-04-25 14:21:45")
-
-                # Filtra la tabla
-                df_filtered = df_event_table[(df_event_table["datetime"] >= start_time) & (df_event_table["datetime"] <= end_time)]
-                print(tabulate(df[['_time', 'lat', 'lng']], headers="keys", tablefmt="github", floatfmt=".20f"))
-
-                # Muestra el resultado
-                print(tabulate(df_filtered.head(400), headers="keys", tablefmt="github", floatfmt=".9f"))
-
-                print("\n\nDatos del GPS:\n")
-                print(df[['_time', 'lat', 'lng']])
-                # Filtra solo las muestras GPS reales
-                df_gps_raw = df_event_table[df_event_table['source'] == 'gps_sample']
-
-                # Selecciona las columnas deseadas
-                df_gps_export = df_gps_raw[['datetime', 'lat', 'lon', 'delta_dist']]
-
-                # Guarda en Excel con precisión de 8 decimales
-                df_gps_export.to_excel("gps_raw_data.xlsx", index=False, float_format="%.9f")
 
 
         if args.export_excel == "yes":
             rp.export_to_excel(df_steps, rp.get_output_path(f"{base_name}_stride.xlsx", args))
-            # rp.export_to_excel(df_stride_stats, rp.get_output_path(f"{base_name}_stride_stats_per_minute.xlsx", args))
-            # rp.export_to_excel(df_stride_raw, rp.get_output_path(f"{base_name}_individual_strides.xlsx", args))
 
         if args.map_html == "yes":
             map_out_path = os.path.join(args.output_dir or ".", f"{base_name}_map.html")
-            resultados_mapa = {
-                "IMU": pos[:, :2],
-                "Kalman": pos_kalman[:, :2]
-            }
+            resultados_mapa = {"IMU": pos[:, :2], "Kalman": pos_kalman[:, :2]}
             plotter.generate_map_with_estimates(df_gps, resultados_mapa, map_out_path, preprocessor.config)
 
     except Exception as e:
