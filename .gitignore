@@ -1,23 +1,26 @@
-# Ignora todos los archivos .txt excepto requirements.txt
+# Ignore all .txt files except requirements.txt
 *.txt
 !requirements.txt
 
-# Ignora archivos Excel
+# Ignore Excel files
 *.xlsx
 
-# Ignora entornos virtuales
+# Ignore virtual environments
 venv/
 vpy/
 
-# Ignora configuraciones de VSCode
+# Ignore VSCode settings
 .vscode/
 
-# Ignora bytecode
+# Ignore Python bytecode
 *.pyc
+__pycache__/
 
-# Ignora configuración sensible
+# Ignore sensitive config
 .config.yaml
 
-# Ignora salidas o resultados
-out/
-done/
+# Ignore outputs or temp processing folders
+transform_data/done/
+
+# Include output folder explicitly
+!transform_data/out_transform_data/

@@ -40,17 +40,32 @@ AFERNANDEZ_ms_2024/
 
 ## Requirements
 
-This project uses [Poetry](https://python-poetry.org/) for dependency management:
+To use the full gait analysis pipeline, you need to install the required Python packages.
+
+You have two options:
+
+### Option 1: Install via `requirements.txt`
+
+```bash
+pip install -r requirements.txt
+```
+
+### Option 2: Install manually
+
+```bash
+pip install numpy>=1.24.0 pandas>=2.2.3 PyYAML>=6.0.2 matplotlib>=3.10.1 plotly>=5.20.0 \
+folium>=0.15.1 ahrs>=0.4.0 pyproj>=3.6.1 filterpy>=1.4.5 scipy>=1.12.0 geopy>=2.4.0 \
+tabulate argparse
+```
+
+You can also use [Poetry](https://python-poetry.org/) as an alternative for dependency management:
 
 ```bash
 pip install poetry
-```
-
-To install dependencies:
-
-```bash
 poetry install
 ```
+
+---
 
 ## Module Descriptions
 

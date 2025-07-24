@@ -39,7 +39,7 @@ The main script, `stride_measurement.py`, uses command-line arguments to control
 ## Example Usage
 ```bash
 python transform_data/stride_measurement.py \
-  -f test_InfluxDB/out/dat_2024_tabuenca_left_60.xlsx \
+  -f  file_path\test.xlsx \
   -v 3 \
   -c config.yaml \
   -om screen \
@@ -62,9 +62,9 @@ The script is designed to run either from terminal or through a debugger (e.g., 
   "program": "${file}",
   "python": "${workspaceFolder}/venv/Scripts/python.exe",
   "args": [
-    "-f", "${workspaceFolder}/test_InfluxDB/out/dat_2024_tabuenca_left_60.xlsx",
+    "-f", "${workspaceFolder}/file/path/test.xlsx",
     "-v", "3",
-    "-c", "${workspaceFolder}/.config.yaml",
+    "-c", "${workspaceFolder}/config.yaml",
     "-om", "screen",
     "-o", "${workspaceFolder}/transform_data/out_transform_data",
     "-e", "no",
