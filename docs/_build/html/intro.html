@@ -85,15 +85,9 @@ supporting both clinical evaluation and rehabilitation monitoring.</p>
 </section>
 <section id="motivation">
 <h1>Motivation<a class="headerlink" href="#motivation" title="Link to this heading"></a></h1>
-<p>Multiple Sclerosis is a chronic neurological disorder that can cause significant gait impairments,
-including reduced balance, altered cadence, and shorter stride length.
-Traditional gait analysis methods —often performed in controlled laboratory settings—
-are limited by their high cost, sporadic measurements, and lack of representation of a patient’s
-everyday mobility.</p>
-<p>Wearable technology, such as instrumented socks with embedded IMUs, pressure sensors, and GPS modules,
-opens new possibilities for continuous, non-invasive gait monitoring in the patient’s daily environment.</p>
-<p>This project, developed in collaboration between the Universidad Politécnica de Madrid and the Hospital Público de Getafe,
-integrates high-frequency inertial and positional data to build a processing pipeline that:</p>
+<p>Multiple Sclerosis is a chronic neurological disorder that can cause significant gait impairments, including reduced balance, altered cadence, and shorter stride length. Traditional gait analysis methods —often performed in controlled laboratory settings— are limited by their high cost, sporadic measurements, and lack of representation of a patient’s everyday mobility.</p>
+<p>This project focuses on seamlessly integrating data collected at the edge. High-frequency sensor data from Sensoria Health© instrumented socks, which embed IMUs, pressure sensors, and GPS modules, is transmitted via Bluetooth Low Energy (BLE) through custom Android or iOS applications and uploaded into an InfluxDB time-series database.</p>
+<p>This wearable technology enables continuous, non-invasive gait monitoring in the patient’s daily environment. The data pipeline developed in collaboration between the Polytechnic University of Madrid and the Public Hospital of Getafe integrates high-frequency inertial and positional data to:</p>
 <ul class="simple">
 <li><p>Captures raw acceleration, angular velocity, magnetic field, pressure, and GPS coordinates.</p></li>
 <li><p>Synchronizes and preprocesses multi-sensor data for accurate alignment.</p></li>

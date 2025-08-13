@@ -11,17 +11,11 @@ supporting both clinical evaluation and rehabilitation monitoring.
 Motivation
 ==========
 
-Multiple Sclerosis is a chronic neurological disorder that can cause significant gait impairments, 
-including reduced balance, altered cadence, and shorter stride length.  
-Traditional gait analysis methods —often performed in controlled laboratory settings— 
-are limited by their high cost, sporadic measurements, and lack of representation of a patient’s 
-everyday mobility.
+Multiple Sclerosis is a chronic neurological disorder that can cause significant gait impairments, including reduced balance, altered cadence, and shorter stride length. Traditional gait analysis methods —often performed in controlled laboratory settings— are limited by their high cost, sporadic measurements, and lack of representation of a patient’s everyday mobility.
 
-Wearable technology, such as instrumented socks with embedded IMUs, pressure sensors, and GPS modules, 
-opens new possibilities for continuous, non-invasive gait monitoring in the patient’s daily environment.  
+This project focuses on seamlessly integrating data collected at the edge. High-frequency sensor data from Sensoria Health© instrumented socks, which embed IMUs, pressure sensors, and GPS modules, is transmitted via Bluetooth Low Energy (BLE) through custom Android or iOS applications and uploaded into an InfluxDB time-series database.
 
-This project, developed in collaboration between the Universidad Politécnica de Madrid and the Hospital Público de Getafe, 
-integrates high-frequency inertial and positional data to build a processing pipeline that:
+This wearable technology enables continuous, non-invasive gait monitoring in the patient’s daily environment. The data pipeline developed in collaboration between the Polytechnic University of Madrid and the Public Hospital of Getafe integrates high-frequency inertial and positional data to:
 
 * Captures raw acceleration, angular velocity, magnetic field, pressure, and GPS coordinates.
 * Synchronizes and preprocesses multi-sensor data for accurate alignment.
