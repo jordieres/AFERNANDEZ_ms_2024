@@ -1,5 +1,5 @@
-InfluxDBms package
-==================
+InfluxDBms 
+==========
 
 The ``cInfluxDB`` class
 -----------------------

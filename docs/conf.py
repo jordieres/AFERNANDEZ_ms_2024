@@ -21,12 +21,14 @@ release = '1.1'
 extensions = [
 'sphinx.ext.autodoc',
 'sphinx.ext.viewcode',
-'sphinx.ext.napoleon'
+'sphinx.ext.napoleon',
+"sphinx.ext.viewcode",
 ]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
+autosummary_generate = True
+autodoc_typehints = "description"
 
 
 # -- Options for HTML output -------------------------------------------------

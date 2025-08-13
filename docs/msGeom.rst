@@ -1,5 +1,5 @@
-msGeom package
-==============
+msGeom 
+======
 
 The ``DataPreprocessor`` class
 ------------------------------

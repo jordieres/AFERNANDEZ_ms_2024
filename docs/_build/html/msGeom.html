@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>msGeom package &mdash; Gait-Measurement 1.1 documentation</title>
+  <title>msGeom &mdash; Gait-Measurement 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="test_InfluxDB module" href="test_InfluxDB.html" />
-    <link rel="prev" title="InfluxDBms package" href="InfluxDBms.html" /> 
+    <link rel="next" title="transform_data" href="transform_data.html" />
+    <link rel="prev" title="test_InfluxDB" href="test_InfluxDB.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,48 +42,115 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#general-structure">General Structure</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">AFERNANDEZ_ms_2024</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="InfluxDBms.html">InfluxDBms package</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">msGeom package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#the-datapreprocessor-class">The <code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general_structure.html">General Structure</a></li>
 </ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#the-imuprocessor-class">The <code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor"><code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code></a></li>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 </ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#the-kalmanprocessor-class">The <code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code></a></li>
+<p class="caption" role="heading"><span class="caption-text">System Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 </ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#the-detectpeaks-class">The <code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#the-strideprocessor-class">The <code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor"><code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#the-resultsprocessor-class">The <code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#the-plotprocessor-class">The <code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code> class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor"><code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code></a></li>
+<p class="caption" role="heading"><span class="caption-text">Packages and Modules</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="InfluxDBms.html">InfluxDBms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">msGeom</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-datapreprocessor-class">The <code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor.compute_positions"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.compute_positions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor.load_config"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.load_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor.load_data"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.load_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor.preprocess_data"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.preprocess_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.data_preprocessor.DataPreprocessor.resample_to_40hz"><code class="docutils literal notranslate"><span class="pre">DataPreprocessor.resample_to_40hz()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="test_InfluxDB.html">test_InfluxDB module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transfom_data.html">transform_data module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-imuprocessor-class">The <code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor"><code class="docutils literal notranslate"><span class="pre">IMUProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor.detect_no_rotation"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.detect_no_rotation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor.detect_stationary"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.detect_stationary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor.estimate_gravity_vector"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.estimate_gravity_vector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor.estimate_position_generic"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.estimate_position_generic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.imu_processor.IMUProcessor.estimate_position_madwick"><code class="docutils literal notranslate"><span class="pre">IMUProcessor.estimate_position_madwick()</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-kalmanprocessor-class">The <code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor.initialize"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor.initialize_kalman"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.initialize_kalman()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor.predict"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor.run_filter_with_acc_and_gps"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.run_filter_with_acc_and_gps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.kalman_processor.KalmanProcessor.update"><code class="docutils literal notranslate"><span class="pre">KalmanProcessor.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-detectpeaks-class">The <code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks.analyze_step_robustness"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.analyze_step_robustness()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks.compute_stride_stats_per_minute"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.compute_stride_stats_per_minute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks.detect_triplet_peaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.detect_triplet_peaks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks.generate_stride_and_gps_jump_table1"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.generate_stride_and_gps_jump_table1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks.plot_peaks"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.plot_peaks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.peak_detector.DetectPeaks.plot_trajectory_with_strides"><code class="docutils literal notranslate"><span class="pre">DetectPeaks.plot_trajectory_with_strides()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-strideprocessor-class">The <code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor"><code class="docutils literal notranslate"><span class="pre">StrideProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.analyze_strides"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.analyze_strides()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.check_distance_similarity"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_distance_similarity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.check_spatial_alignment"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_spatial_alignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.check_stride_length_range"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_stride_length_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.check_trajectory_smoothness"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.check_trajectory_smoothness()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.clean_stride_data"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.clean_stride_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.compute_kalman_gps_error_and_jumps"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.compute_kalman_gps_error_and_jumps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.evaluate_quality_segments"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.evaluate_quality_segments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.extract_region"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.extract_region()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.plot_gps_jumps"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.plot_gps_jumps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.plot_jumps_and_strides"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.plot_jumps_and_strides()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.plot_stride_filtering"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.plot_stride_filtering()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.stride_processor.StrideProcessor.recompute_stats_per_minute"><code class="docutils literal notranslate"><span class="pre">StrideProcessor.recompute_stats_per_minute()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-resultsprocessor-class">The <code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor.export_to_excel"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.export_to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor.get_output_path"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.get_output_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor.prepare_step_dataframe"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.prepare_step_dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.result_processor.ResultsProcessor.print_metrics"><code class="docutils literal notranslate"><span class="pre">ResultsProcessor.print_metrics()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-plotprocessor-class">The <code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code> class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor"><code class="docutils literal notranslate"><span class="pre">PlotProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.generate_map_with_estimates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.plot_macroscopic_comparision"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_macroscopic_comparision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.plot_resume"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_resume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_all"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories_interactive()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_split"><code class="docutils literal notranslate"><span class="pre">PlotProcessor.plot_trajectories_split()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transform_data.html">transform_data</a></li>
 </ul>
 
         </div>
@@ -100,8 +167,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">AFERNANDEZ_ms_2024</a></li>
-      <li class="breadcrumb-item active">msGeom package</li>
+      <li class="breadcrumb-item active">msGeom</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/msGeom.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -111,8 +177,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="msgeom-package">
-<h1>msGeom package<a class="headerlink" href="#msgeom-package" title="Link to this heading"></a></h1>
+  <section id="msgeom">
+<h1>msGeom<a class="headerlink" href="#msgeom" title="Link to this heading"></a></h1>
 <section id="the-datapreprocessor-class">
 <h2>The <code class="docutils literal notranslate"><span class="pre">DataPreprocessor</span></code> class<a class="headerlink" href="#the-datapreprocessor-class" title="Link to this heading"></a></h2>
 <dl class="py class">
@@ -472,7 +538,7 @@ correction using GPS measurements. It’s useful for sensor fusion in pedestrian
 <p>Class for detecting step-related peaks in IMU signals and computing stride statistics.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.analyze_step_robustness">
-<span class="sig-name descname"><span class="pre">analyze_step_robustness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">triplets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.analyze_step_robustness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.analyze_step_robustness" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">analyze_step_robustness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">triplets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.analyze_step_robustness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.analyze_step_robustness" title="Link to this definition"></a></dt>
 <dd><p>Evaluate the consistency of detected steps over time using a sliding window approach.</p>
 <p>The function divides the total duration into time windows and counts the number
 of main peaks (representing steps) in each window, printing the result.</p>
@@ -524,7 +590,7 @@ mean stride length, standard deviation, and total distance covered per minute.</
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.detect_triplet_peaks">
-<span class="sig-name descname"><span class="pre">detect_triplet_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prominence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.detect_triplet_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.detect_triplet_peaks" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">detect_triplet_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prominence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.detect_triplet_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.detect_triplet_peaks" title="Link to this definition"></a></dt>
 <dd><p>Detects triplets of peaks (entry-secondary, main, exit-secondary) in gyroscope data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -551,7 +617,7 @@ mean stride length, standard deviation, and total distance covered per minute.</
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.plot_peaks">
-<span class="sig-name descname"><span class="pre">plot_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.plot_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.plot_peaks" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.plot_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.plot_peaks" title="Link to this definition"></a></dt>
 <dd><p>Plot a time series signal with overlaid labeled peak triplets (entry, main, exit).</p>
 <p>This function visualizes a gyroscope or accelerometer signal along with the detected
 peaks classified as entry, main, or exit, using different colors for each label.</p>
@@ -656,7 +722,7 @@ It includes tools for quality checks, spatial alignment, and segment-level diagn
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.stride_processor.StrideProcessor.check_spatial_alignment">
-<span class="sig-name descname"><span class="pre">check_spatial_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos_est</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_gps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.check_spatial_alignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.check_spatial_alignment" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">check_spatial_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos_est</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_gps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/stride_processor.html#StrideProcessor.check_spatial_alignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.stride_processor.StrideProcessor.check_spatial_alignment" title="Link to this definition"></a></dt>
 <dd><p>Evaluate spatial error between estimated and GPS positions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1119,8 +1185,8 @@ Depending on the verbosity level and output directory, plots can also be saved.<
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="InfluxDBms.html" class="btn btn-neutral float-left" title="InfluxDBms package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="test_InfluxDB.html" class="btn btn-neutral float-right" title="test_InfluxDB module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="test_InfluxDB.html" class="btn btn-neutral float-left" title="test_InfluxDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="transform_data.html" class="btn btn-neutral float-right" title="transform_data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

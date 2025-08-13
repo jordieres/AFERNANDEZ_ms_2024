@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Introduction &mdash; Gait-Measurement 1.1 documentation</title>
+  <title>Motivation &mdash; Gait-Measurement 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Motivation" href="motivation.html" />
-    <link rel="prev" title="AFERNANDEZ_ms_2024 — Documentation" href="index.html" /> 
+    <link rel="next" title="General Structure" href="general_structure.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,8 +44,8 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="general_structure.html">General Structure</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
@@ -78,9 +78,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Introduction</li>
+      <li class="breadcrumb-item active">Motivation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/motivation.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -88,22 +88,35 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
-<p>The main purpose of this repository is to support the estimation of foot orientation and trajectory during walking,
-using data from inertial measurement units (IMUs) and pressure sensors embedded in smart socks.
-The system is designed to enable detailed gait analysis for individuals affected by Multiple Sclerosis (MS),
-providing accurate measurements of stride length, stride duration, and other spatiotemporal metrics.
-By combining IMU and GPS data, the solution aims to deliver reliable mobility assessments in real-world conditions,
-supporting both clinical evaluation and rehabilitation monitoring.</p>
+  <section id="motivation">
+<h1>Motivation<a class="headerlink" href="#motivation" title="Link to this heading"></a></h1>
+<p>Multiple Sclerosis is a chronic neurological disorder that can cause significant gait impairments, including reduced
+balance, altered cadence, and shorter stride length. Traditional gait analysis methods —often performed in controlled
+laboratory settings— are limited by their high cost, sporadic measurements, and lack of representation of a patient’s
+everyday mobility.</p>
+<p>This project focuses on seamlessly integrating data collected at the edge. High-frequency sensor data from
+Sensoria Health© instrumented socks, which embed IMUs, pressure sensors, and GPS modules, is transmitted via
+Bluetooth Low Energy (BLE) through custom Android or iOS applications and uploaded into an InfluxDB time-series database.</p>
+<p>This wearable technology enables continuous, non-invasive gait monitoring in the patient’s daily environment.
+The data pipeline developed in collaboration between the Polytechnic University of Madrid and the Public Hospital of
+Getafe integrates high-frequency inertial and positional data to:</p>
+<ul class="simple">
+<li><p>Capture raw acceleration, angular velocity, magnetic field, pressure, and GPS coordinates.</p></li>
+<li><p>Synchronize and preprocess multi-sensor data for accurate alignment.</p></li>
+<li><p>Estimate foot orientation using sensor fusion algorithms (e.g., Madgwick filter).</p></li>
+<li><p>Compute 3D foot trajectory and correct drift using techniques such as ZUPT and ZUPH.</p></li>
+<li><p>Detect and segment strides, calculating spatiotemporal gait metrics.</p></li>
+</ul>
+<p>The system enables early detection of gait alterations, supports clinical decision-making, and facilitates
+personalized rehabilitation plans.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="AFERNANDEZ_ms_2024 — Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="motivation.html" class="btn btn-neutral float-right" title="Motivation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="intro.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="general_structure.html" class="btn btn-neutral float-right" title="General Structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
