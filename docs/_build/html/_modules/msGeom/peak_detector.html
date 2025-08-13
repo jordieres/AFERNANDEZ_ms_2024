@@ -74,9 +74,10 @@
   <h1>Source code for msGeom.peak_detector</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-
+<span class="kn">from</span> <span class="nn">geopy.distance</span> <span class="kn">import</span> <span class="n">geodesic</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">find_peaks</span>
+<span class="kn">from</span> <span class="nn">tabulate</span> <span class="kn">import</span> <span class="n">tabulate</span>
 
 <div class="viewcode-block" id="DetectPeaks">
 <a class="viewcode-back" href="../../msGeom.html#msGeom.peak_detector.DetectPeaks">[docs]</a>
@@ -264,6 +265,199 @@
 
         <span class="n">df_stats</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_stats</span><span class="p">,</span> <span class="n">df_stride</span></div>
+
+    
+
+
+<div class="viewcode-block" id="DetectPeaks.plot_trajectory_with_strides">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.peak_detector.DetectPeaks.plot_trajectory_with_strides">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_trajectory_with_strides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">pos</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">time_pos</span><span class="p">,</span> <span class="n">df_stride_raw_clean</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Trajectory with Valid Strides&quot;</span><span class="p">,</span> <span class="n">traj_label</span><span class="o">=</span><span class="s2">&quot;Kalman&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot the estimated trajectory versus GPS and mark valid strides as green points.</span>
+
+<span class="sd">        This function displays the macroscopic comparison between an estimated trajectory (e.g., from a Kalman filter)</span>
+<span class="sd">        and the GPS reference path. Additionally, it highlights the positions of valid strides by interpolating their</span>
+<span class="sd">        timestamps onto the trajectory.</span>
+
+<span class="sd">        :param pos: Estimated trajectory with shape (N, 3) or (N, 2). If 3D, only X and Y are used.</span>
+<span class="sd">        :type pos: np.ndarray</span>
+<span class="sd">        :param gps_pos: GPS reference trajectory with shape (N, 2).</span>
+<span class="sd">        :type gps_pos: np.ndarray</span>
+<span class="sd">        :param time_pos: Timestamps associated with the estimated trajectory.</span>
+<span class="sd">        :type time_pos: np.ndarray</span>
+<span class="sd">        :param df_stride_raw_clean: DataFrame containing valid strides. Must include a &quot;time&quot; column.</span>
+<span class="sd">        :type df_stride_raw_clean: pd.DataFrame</span>
+<span class="sd">        :param title: Title of the plot. Default is &quot;Trajectory with Valid Strides&quot;.</span>
+<span class="sd">        :type title: str</span>
+<span class="sd">        :param traj_label: Label for the estimated trajectory line. Default is &quot;Kalman&quot;.</span>
+<span class="sd">        :type traj_label: str</span>
+<span class="sd">        :return: None. The function produces a matplotlib plot of the trajectory and valid stride points.</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Ensure that `pos` has only X, Y if it comes with Z</span>
+        <span class="k">if</span> <span class="n">pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+  
+        <span class="n">stride_times</span> <span class="o">=</span> <span class="n">df_stride_raw_clean</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">stride_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">stride_times</span><span class="p">,</span> <span class="n">time_pos</span><span class="p">,</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">stride_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">stride_times</span><span class="p">,</span> <span class="n">time_pos</span><span class="p">,</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">stride_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">stride_x</span><span class="p">,</span> <span class="n">stride_y</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c1"># Plot</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">traj_label</span><span class="si">}</span><span class="s1"> Trajectory&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;GPS Reference&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">gps_pos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Final GPS&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">stride_positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">stride_positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Valid Strides&#39;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;X (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Y (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
+
+
+
+
+    <span class="c1"># def generate_stride_and_gps_jump_table1(self, df_stride_raw_clean, gps_pos, gps_time, gps_jump_threshold=10.0, start_datetime=None):</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     Generate a table showing valid stride times and significant GPS jumps.</span>
+
+    <span class="c1">#     This function combines:</span>
+    <span class="c1">#     - The timestamps of valid strides (typically shown as green points).</span>
+    <span class="c1">#     - The timestamps and locations where GPS shows a sudden jump (e.g., &gt;10 meters).</span>
+    <span class="c1">#     - Optionally includes a datetime column if start_datetime is provided.</span>
+
+    <span class="c1">#     :param df_stride_raw_clean: DataFrame with valid strides. Must include &#39;time&#39;.</span>
+    <span class="c1">#     :type df_stride_raw_clean: pd.DataFrame</span>
+    <span class="c1">#     :param gps_pos: Numpy array of GPS positions (shape: Nx2).</span>
+    <span class="c1">#     :type gps_pos: np.ndarray</span>
+    <span class="c1">#     :param gps_time: Numpy array of timestamps corresponding to gps_pos (shape: N,).</span>
+    <span class="c1">#     :type gps_time: np.ndarray</span>
+    <span class="c1">#     :param gps_jump_threshold: Minimum distance (in meters) to consider a GPS jump.</span>
+    <span class="c1">#     :type gps_jump_threshold: float</span>
+    <span class="c1">#     :param start_datetime: Optional starting datetime (as pandas.Timestamp or datetime). If given, adds a datetime column.</span>
+    <span class="c1">#     :type start_datetime: pd.Timestamp or datetime.datetime or None</span>
+    <span class="c1">#     :return: Combined DataFrame with event type, time, coordinates, and optionally datetime.</span>
+    <span class="c1">#     :rtype: pd.DataFrame</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     # Detect GPS jumps</span>
+    <span class="c1">#     gps_diff = np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)</span>
+    <span class="c1">#     jump_indices = np.where(gps_diff &gt; gps_jump_threshold)[0] + 1  # +1 to get point *after* jump</span>
+
+    <span class="c1">#     gps_jump_times = gps_time[jump_indices]</span>
+    <span class="c1">#     gps_jump_coords = gps_pos[jump_indices]</span>
+
+    <span class="c1">#     df_jumps = pd.DataFrame({</span>
+    <span class="c1">#         &quot;type&quot;: &quot;GPS Jump&quot;,</span>
+    <span class="c1">#         &quot;time&quot;: gps_jump_times,</span>
+    <span class="c1">#         &quot;x&quot;: gps_jump_coords[:, 0],</span>
+    <span class="c1">#         &quot;y&quot;: gps_jump_coords[:, 1],</span>
+    <span class="c1">#         &quot;delta_dist&quot;: gps_diff[jump_indices - 1]</span>
+    <span class="c1">#     })</span>
+
+    <span class="c1">#     # Valid strides</span>
+    <span class="c1">#     stride_times = df_stride_raw_clean[&quot;time&quot;].values</span>
+    <span class="c1">#     stride_x = np.interp(stride_times, gps_time, gps_pos[:, 0])</span>
+    <span class="c1">#     stride_y = np.interp(stride_times, gps_time, gps_pos[:, 1])</span>
+
+    <span class="c1">#     df_strides = pd.DataFrame({</span>
+    <span class="c1">#         &quot;type&quot;: &quot;Valid Stride&quot;,</span>
+    <span class="c1">#         &quot;time&quot;: stride_times,</span>
+    <span class="c1">#         &quot;x&quot;: stride_x,</span>
+    <span class="c1">#         &quot;y&quot;: stride_y,</span>
+    <span class="c1">#         &quot;delta_dist&quot;: np.nan</span>
+    <span class="c1">#     })</span>
+
+    <span class="c1">#     # Combine</span>
+    <span class="c1">#     df_combined = pd.concat([df_strides, df_jumps], ignore_index=True)</span>
+    <span class="c1">#     df_combined.sort_values(by=&quot;time&quot;, inplace=True)</span>
+    <span class="c1">#     df_combined.reset_index(drop=True, inplace=True)</span>
+
+    <span class="c1">#     # Add datetime if reference provided</span>
+    <span class="c1">#     if start_datetime is not None:</span>
+    <span class="c1">#         df_combined[&quot;datetime&quot;] = pd.to_datetime(start_datetime) + pd.to_timedelta(df_combined[&quot;time&quot;], unit=&quot;s&quot;)</span>
+
+    <span class="c1">#     return df_combined</span>
+
+
+<div class="viewcode-block" id="DetectPeaks.generate_stride_and_gps_jump_table1">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.peak_detector.DetectPeaks.generate_stride_and_gps_jump_table1">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_stride_and_gps_jump_table1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">df_stride_raw_clean</span><span class="p">,</span>
+                <span class="n">gps_pos</span><span class="p">,</span>
+                <span class="n">gps_time</span><span class="p">,</span>
+                <span class="n">gps_jump_threshold</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+                <span class="n">start_datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">gps_lat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">gps_lon</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">):</span>
+   
+        <span class="c1"># --- 1. Detect GPS jumps ---</span>
+        <span class="n">gps_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">jump_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gps_diff</span> <span class="o">&gt;</span> <span class="n">gps_jump_threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="n">df_jumps</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;GPS Jump&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">gps_time</span><span class="p">[</span><span class="n">jump_indices</span><span class="p">],</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">gps_pos</span><span class="p">[</span><span class="n">jump_indices</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">gps_pos</span><span class="p">[</span><span class="n">jump_indices</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;delta_dist&quot;</span><span class="p">:</span> <span class="n">gps_diff</span><span class="p">[</span><span class="n">jump_indices</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;event&quot;</span>
+        <span class="p">})</span>
+
+        <span class="c1"># --- 2. Add Valid Strides ---</span>
+        <span class="k">if</span> <span class="n">df_stride_raw_clean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">df_stride_raw_clean</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">stride_times</span> <span class="o">=</span> <span class="n">df_stride_raw_clean</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">stride_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">stride_times</span><span class="p">,</span> <span class="n">gps_time</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+            <span class="n">stride_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">stride_times</span><span class="p">,</span> <span class="n">gps_time</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">df_strides</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Valid Stride&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">stride_times</span><span class="p">,</span>
+                <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">stride_x</span><span class="p">,</span>
+                <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">stride_y</span><span class="p">,</span>
+                <span class="s2">&quot;delta_dist&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;event&quot;</span>
+            <span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df_strides</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;delta_dist&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">])</span>
+
+        <span class="c1"># --- 3. GPS Samples ---</span>
+        <span class="n">delta_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">df_samples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;GPS Sample&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">gps_time</span><span class="p">,</span>
+            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;delta_dist&quot;</span><span class="p">:</span> <span class="n">delta_d</span><span class="p">,</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;gps_sample&quot;</span>
+        <span class="p">})</span>
+
+        <span class="k">if</span> <span class="n">gps_lat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gps_lon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_samples</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gps_lat</span>
+            <span class="n">df_samples</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gps_lon</span>
+
+        <span class="c1"># --- 4. Merge ---</span>
+        <span class="n">df_combined</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_samples</span><span class="p">,</span> <span class="n">df_strides</span><span class="p">,</span> <span class="n">df_jumps</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df_combined</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df_combined</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># --- 5. Datetime ---</span>
+        <span class="k">if</span> <span class="n">start_datetime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gps_datetime</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start_datetime</span><span class="p">)</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="n">gps_time</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+            <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;datetime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span>
+                <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">gps_time</span><span class="p">,</span> <span class="n">gps_datetime</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;datetime64[ns]&quot;</span><span class="p">)</span>
+
+        <span class="c1"># --- 6. Lat/lon interpolation ---</span>
+        <span class="k">if</span> <span class="n">gps_lat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gps_lon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">gps_time</span><span class="p">,</span> <span class="n">gps_lat</span><span class="p">)</span>
+            <span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">df_combined</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">gps_time</span><span class="p">,</span> <span class="n">gps_lon</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df_combined</span></div>
 </div>
 
 </pre></div>

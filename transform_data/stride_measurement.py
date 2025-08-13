@@ -1,4 +1,3 @@
-
 import numpy as np
 import os
 import argparse
@@ -48,6 +47,7 @@ def main():
     Main execution function for the IMU + GPS gait analysis pipeline.
 
     This function performs the following steps:
+
     - Parses command-line arguments.
     - Loads and resamples sensor data from Excel.
     - Detects stationary periods.
@@ -57,7 +57,9 @@ def main():
     - Evaluates trajectory quality and segment-level metrics.
     - Optionally exports data to Excel and generates plots/maps.
 
+
     Dependencies include several processors from the ``msGeom`` package, including:
+
     - DataPreprocessor
     - IMUProcessor
     - KalmanProcessor

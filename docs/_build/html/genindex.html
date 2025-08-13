@@ -114,13 +114,15 @@
 </li>
       <li><a href="msGeom.html#msGeom.stride_processor.StrideProcessor.check_trajectory_smoothness">check_trajectory_smoothness() (msGeom.stride_processor.StrideProcessor method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB">cInfluxDB (class in InfluxDBms.influxdb_tools)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="msGeom.html#msGeom.stride_processor.StrideProcessor.clean_stride_data">clean_stride_data() (msGeom.stride_processor.StrideProcessor method)</a>
 </li>
       <li><a href="InfluxDBms.html#InfluxDBms.influxdb_tools.cInfluxDB.close">close() (InfluxDBms.influxdb_tools.cInfluxDB method)</a>
+</li>
+      <li><a href="msGeom.html#msGeom.stride_processor.StrideProcessor.compute_kalman_gps_error_and_jumps">compute_kalman_gps_error_and_jumps() (msGeom.stride_processor.StrideProcessor method)</a>
 </li>
       <li><a href="msGeom.html#msGeom.data_preprocessor.DataPreprocessor.compute_positions">compute_positions() (msGeom.data_preprocessor.DataPreprocessor method)</a>
 </li>
@@ -174,6 +176,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates">generate_map_with_estimates() (msGeom.plot_processor.PlotProcessor method)</a>
 </li>
+      <li><a href="msGeom.html#msGeom.peak_detector.DetectPeaks.generate_stride_and_gps_jump_table1">generate_stride_and_gps_jump_table1() (msGeom.peak_detector.DetectPeaks method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="InfluxDBms.html#InfluxDBms.influxdb_tools.InfluxHelper.get_default_dates">get_default_dates() (InfluxDBms.influxdb_tools.InfluxHelper method)</a>
@@ -223,7 +227,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="test_InfluxDB.html#test_InfluxDB.extract_data.main">main() (in module test_InfluxDB.extract_data)</a>
+
+      <ul>
+        <li><a href="transfom_data.html#transform_data.stride_measurement.main">(in module transform_data.stride_measurement)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
@@ -231,6 +239,8 @@
 
       <ul>
         <li><a href="test_InfluxDB.html#module-test_InfluxDB.extract_data">test_InfluxDB.extract_data</a>
+</li>
+        <li><a href="transfom_data.html#module-transform_data.stride_measurement">transform_data.stride_measurement</a>
 </li>
       </ul></li>
   </ul></td>
@@ -240,8 +250,16 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="test_InfluxDB.html#test_InfluxDB.extract_data.parse_args">parse_args() (in module test_InfluxDB.extract_data)</a>
+
+      <ul>
+        <li><a href="transfom_data.html#transform_data.stride_measurement.parse_args">(in module transform_data.stride_measurement)</a>
 </li>
+      </ul></li>
       <li><a href="InfluxDBms.html#InfluxDBms.influxdb_tools.InfluxHelper.parse_datetime">parse_datetime() (InfluxDBms.influxdb_tools.InfluxHelper method)</a>
+</li>
+      <li><a href="msGeom.html#msGeom.stride_processor.StrideProcessor.plot_gps_jumps">plot_gps_jumps() (msGeom.stride_processor.StrideProcessor method)</a>
+</li>
+      <li><a href="msGeom.html#msGeom.stride_processor.StrideProcessor.plot_jumps_and_strides">plot_jumps_and_strides() (msGeom.stride_processor.StrideProcessor method)</a>
 </li>
       <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_macroscopic_comparision">plot_macroscopic_comparision() (msGeom.plot_processor.PlotProcessor method)</a>
 </li>
@@ -251,15 +269,17 @@
 </li>
       <li><a href="msGeom.html#msGeom.stride_processor.StrideProcessor.plot_stride_filtering">plot_stride_filtering() (msGeom.stride_processor.StrideProcessor method)</a>
 </li>
-      <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories">plot_trajectories() (msGeom.plot_processor.PlotProcessor method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories">plot_trajectories() (msGeom.plot_processor.PlotProcessor method)</a>
+</li>
       <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_all">plot_trajectories_all() (msGeom.plot_processor.PlotProcessor method)</a>
 </li>
       <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive">plot_trajectories_interactive() (msGeom.plot_processor.PlotProcessor method)</a>
 </li>
       <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_split">plot_trajectories_split() (msGeom.plot_processor.PlotProcessor method)</a>
+</li>
+      <li><a href="msGeom.html#msGeom.peak_detector.DetectPeaks.plot_trajectory_with_strides">plot_trajectory_with_strides() (msGeom.peak_detector.DetectPeaks method)</a>
 </li>
       <li><a href="msGeom.html#msGeom.plot_processor.PlotProcessor">PlotProcessor (class in msGeom.plot_processor)</a>
 </li>
@@ -322,6 +342,15 @@
 
       <ul>
         <li><a href="test_InfluxDB.html#module-test_InfluxDB.extract_data">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    transform_data.stride_measurement
+
+      <ul>
+        <li><a href="transfom_data.html#module-transform_data.stride_measurement">module</a>
 </li>
       </ul></li>
   </ul></td>

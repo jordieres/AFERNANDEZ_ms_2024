@@ -87,7 +87,7 @@
 <span class="sd">    It includes tools for quality checks, spatial alignment, and segment-level diagnostics.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_stride</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_stride</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">6.0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_stride</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_stride</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">1.5</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the stride processor with stride length constraints.</span>
 
@@ -393,10 +393,128 @@
             <span class="p">})</span>
 
         <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="StrideProcessor.compute_kalman_gps_error_and_jumps">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.compute_kalman_gps_error_and_jumps">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_kalman_gps_error_and_jumps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">pos_kalman</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span> <span class="n">min_separation</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute Kalman-GPS error and detect GPS jumps.</span>
+
+<span class="sd">        :param time: Time vector.</span>
+<span class="sd">        :type time: np.ndarray</span>
+<span class="sd">        :param pos_kalman: Kalman-filtered positions (Nx2 or Nx3).</span>
+<span class="sd">        :type pos_kalman: np.ndarray</span>
+<span class="sd">        :param gps_pos: GPS positions (Nx2).</span>
+<span class="sd">        :type gps_pos: np.ndarray</span>
+<span class="sd">        :param threshold: Threshold for jump detection.</span>
+<span class="sd">        :type threshold: float</span>
+<span class="sd">        :param min_separation: Minimum time separation between jumps.</span>
+<span class="sd">        :type min_separation: float</span>
+<span class="sd">        :return: Tuple (error array, list of jump indices).</span>
+<span class="sd">        :rtype: Tuple[np.ndarray, List[int]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pos_kalman</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pos_kalman</span><span class="p">)</span>
+        <span class="n">gps_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">)</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pos_kalman</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">pos_kalman</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pos_kalman must have at least 2 columns (X, Y).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gps_pos</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">gps_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;gps_pos must be a (N x 2) matrix.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_kalman</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_kalman</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;time, pos_kalman, and gps_pos must have the same length.&quot;</span><span class="p">)</span>
+
+        <span class="n">kalman_gps_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">pos_kalman</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">jump_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kalman_gps_error</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">filtered_jump_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">jump_indices</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">filtered_jump_indices</span> <span class="ow">or</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">time</span><span class="p">[</span><span class="n">filtered_jump_indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span> <span class="o">&gt;</span> <span class="n">min_separation</span><span class="p">:</span>
+                <span class="n">filtered_jump_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">kalman_gps_error</span><span class="p">,</span> <span class="n">filtered_jump_indices</span></div>
+
+
+<div class="viewcode-block" id="StrideProcessor.plot_gps_jumps">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.plot_gps_jumps">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_gps_jumps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">kalman_gps_error</span><span class="p">,</span> <span class="n">jump_indices</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">7.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot GPS jumps based on Kalman-GPS error.</span>
+
+<span class="sd">        :param time: Time vector.</span>
+<span class="sd">        :type time: np.ndarray</span>
+<span class="sd">        :param kalman_gps_error: Error vector.</span>
+<span class="sd">        :type kalman_gps_error: np.ndarray</span>
+<span class="sd">        :param jump_indices: Indices of GPS jumps.</span>
+<span class="sd">        :type jump_indices: List[int]</span>
+<span class="sd">        :param threshold: Threshold line to plot.</span>
+<span class="sd">        :type threshold: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">kalman_gps_error</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Kalman-GPS Error&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Threshold (</span><span class="si">{</span><span class="n">threshold</span><span class="si">}</span><span class="s2"> m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">time</span><span class="p">[</span><span class="n">jump_indices</span><span class="p">],</span> <span class="n">kalman_gps_error</span><span class="p">[</span><span class="n">jump_indices</span><span class="p">],</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Filtered Jumps&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Kalman vs GPS Error (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;GPS Jump Detection based on Kalman-GPS Error&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="StrideProcessor.plot_jumps_and_strides">
+<a class="viewcode-back" href="../../msGeom.html#msGeom.stride_processor.StrideProcessor.plot_jumps_and_strides">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_jumps_and_strides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">kalman_gps_error</span><span class="p">,</span> <span class="n">jump_times</span><span class="p">,</span> <span class="n">stride_times</span><span class="p">,</span> <span class="n">valid_strides</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">7.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot Kalman-GPS error with marked GPS jumps and stride events.</span>
+
+<span class="sd">        :param time: Time vector.</span>
+<span class="sd">        :type time: np.ndarray</span>
+<span class="sd">        :param kalman_gps_error: Kalman-GPS error values.</span>
+<span class="sd">        :type kalman_gps_error: np.ndarray</span>
+<span class="sd">        :param jump_times: List of GPS jump timestamps.</span>
+<span class="sd">        :type jump_times: list[float]</span>
+<span class="sd">        :param stride_times: Dict mapping stride numbers to their times.</span>
+<span class="sd">                            e.g., {30: 39.10, 31: 40.08, ...}</span>
+<span class="sd">        :type stride_times: dict[int, float]</span>
+<span class="sd">        :param valid_strides: List of stride numbers considered valid.</span>
+<span class="sd">        :type valid_strides: list[int]</span>
+<span class="sd">        :param threshold: Threshold value for GPS error.</span>
+<span class="sd">        :type threshold: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">kalman_gps_error</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Kalman-GPS Error&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Plot GPS jumps</span>
+        <span class="k">for</span> <span class="n">jt</span> <span class="ow">in</span> <span class="n">jump_times</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">kalman_gps_error</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">jt</span><span class="p">))]</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">jt</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;GPS Jump at </span><span class="si">{</span><span class="n">jt</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">jt</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Jump</span><span class="se">\n</span><span class="si">{</span><span class="n">jt</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Plot stride lines</span>
+        <span class="k">for</span> <span class="n">stride_num</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">stride_times</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">stride_num</span> <span class="ow">in</span> <span class="n">valid_strides</span><span class="p">:</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Valid Stride #</span><span class="si">{</span><span class="n">stride_num</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s)&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Invalid Stride #</span><span class="si">{</span><span class="n">stride_num</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s)&quot;</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+
+        <span class="c1"># Plot threshold</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Threshold (</span><span class="si">{</span><span class="n">threshold</span><span class="si">}</span><span class="s1"> m)&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Kalman-GPS Error and Stride Events&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Error (m)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
 </div>
 
-
-    
 </pre></div>
 
            </div>

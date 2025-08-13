@@ -1,8 +1,3 @@
-
-"""
-extract_data.py : Test_DB_Connection to InfluxDB for Gait
-"""
-
 import argparse
 from InfluxDBms.influxdb_tools import cInfluxDB,InfluxHelper
 
