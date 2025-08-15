@@ -80,7 +80,7 @@ def main():
     plotter = PlotProcessor()
     dp = DetectPeaks()
     rp = ResultsProcessor()
-    sp = StrideProcessor(min_stride=0.2, max_stride=2.5, window_sec=1.5) # VENTANA DE (+-)3 -->DURACION DE LA MARCHA
+    sp = StrideProcessor(min_stride=0.2, max_stride=2.5, window_sec=1.5) 
 
 
     file_path = args.file_path
@@ -187,15 +187,6 @@ def main():
             
             sp.plot_gps_jumps(time, kalman_gps_error, jump_indices)
 
-            sp.plot_jumps_and_strides(
-                time=time,
-                kalman_gps_error=kalman_gps_error,
-                jump_times=jump_times,
-                stride_times={30: 39.10, 31: 40.08, 32: 41.25, 33: 42.40},
-                valid_strides=[31, 32, 33],
-                threshold=7.0
-            )
-            
             # Extra details for verbose = 3
             if args.verbose >= 3:
                 print("\n\nAdditional Metrics and Debug Info (verbose 3):\n")

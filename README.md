@@ -162,29 +162,6 @@ Both are compared to GPS reference paths.
 
 ---
 
-### Step Detection using modG Signal
-
-The signal below shows the modG magnitude from the IMU accelerometer. Steps are detected as peak triplets: entry (blue), main (red), and exit (green).
-
-<img src="figures/detected_peak_modG.png" width="1000"/>
-
----
-
-### Valid Stride Samples (After Filtering)
-
-Six valid strides were detected after applying distance and GPS consistency filters:
-
-| Time (s) | Stride Length (m) |
-| -------- | ----------------- |
-| 4.65     | 0.423             |
-| 34.75    | 0.215             |
-| 40.08    | 0.543             |
-| 41.25    | 0.376             |
-| 42.40    | 0.229             |
-| 45.38    | 0.204             |
-
----
-
 ### Summary
 
 The combination of sensor fusion (Kalman filtering), peak detection, and stride validation yielded reliable gait metrics with high alignment to GPS reference data. The Kalman-based trajectory estimation showed strong spatial accuracy, suggesting that this pipeline is viable for detailed gait feature extraction in real-world walking scenarios.

@@ -24,6 +24,7 @@ transform_data/done/
 transform_data/prueba_saltos_validos_GPS.py
 transform_data/prueba_saltos_validos_1.py
 transform_data/stride_measurement_old.py
+transform_data/stride_measurement_complete.py
 
 # Include output folder explicitly
 !transform_data/out_transform_data/
