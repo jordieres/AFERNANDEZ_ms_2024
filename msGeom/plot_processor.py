@@ -1,6 +1,5 @@
 import plotly.graph_objects as go
 import folium
-import os
 
 from matplotlib import pyplot as plt
 from pyproj import Proj, Transformer
@@ -149,7 +148,7 @@ class PlotProcessor:
 
 
 
-    def plot_trajectories(self, results, errores, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
+    def plot_trajectories(self, results, errors, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
         """
         Plot estimated and GPS trajectories.
 
@@ -168,7 +167,7 @@ class PlotProcessor:
         """
         plt.figure(figsize=(10, 8))
         for name, pos in results.items():
-            plt.plot(pos[:, 0], pos[:, 1], label=f"{name} ({errores[name]:.2f} m)")
+            plt.plot(pos[:, 0], pos[:, 1], label=f"{name} ({errors[name]:.2f} m)")
         plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label="GPS (reference)")
         plt.plot(gps_final[0], gps_final[1], 'ko', label="GPS final")
         plt.title(title)
@@ -181,7 +180,7 @@ class PlotProcessor:
             plt.savefig(save_path)
 
         
-    def plot_macroscopic_comparision(self, pos, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", traj_label= None ):
+    def plot_macroscopic_comparison(self, pos, gps_pos=None, output_dir=None, title="Trajectory Comparison", base_name="trajectory", traj_label= None ):
         """
         Plot diagnostic and trajectory figures for IMU data, and optionally save them.
 
