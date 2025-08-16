@@ -136,7 +136,7 @@ This dataset illustrates the complete workflow: stride detection, trajectory est
 | Steps detected (modG)   | 47                                                      |
 | Mean Kalman-GPS error   | 0.65 m (99.7% of points < 5 m)                          |
 
-➡️ **Key insight:** Kalman filtering strongly reduces drift, aligning the estimated path with GPS while maintaining stride-level resolution.
+> **Key insight:** Kalman filtering strongly reduces drift, aligning the estimated path with GPS while maintaining stride-level resolution.
 
 ---
 
