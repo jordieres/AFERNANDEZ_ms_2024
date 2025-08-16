@@ -8,34 +8,3 @@ providing accurate measurements of stride length, stride duration, and other spa
 By combining IMU and GPS data, the solution aims to deliver reliable mobility assessments in real-world conditions, 
 supporting both clinical evaluation and rehabilitation monitoring.
 
-.. Motivation
-.. ==========
-
-.. Multiple Sclerosis is a chronic neurological disorder that can cause significant gait impairments, including reduced balance, altered cadence, and shorter stride length. Traditional gait analysis methods —often performed in controlled laboratory settings— are limited by their high cost, sporadic measurements, and lack of representation of a patient’s everyday mobility.
-
-.. This project focuses on seamlessly integrating data collected at the edge. High-frequency sensor data from Sensoria Health© instrumented socks, which embed IMUs, pressure sensors, and GPS modules, is transmitted via Bluetooth Low Energy (BLE) through custom Android or iOS applications and uploaded into an InfluxDB time-series database.
-
-.. This wearable technology enables continuous, non-invasive gait monitoring in the patient’s daily environment. The data pipeline developed in collaboration between the Polytechnic University of Madrid and the Public Hospital of Getafe integrates high-frequency inertial and positional data to:
-
-.. * Captures raw acceleration, angular velocity, magnetic field, pressure, and GPS coordinates.
-.. * Synchronizes and preprocesses multi-sensor data for accurate alignment.
-.. * Estimates foot orientation using sensor fusion algorithms (e.g., Madgwick filter).
-.. * Computes 3D foot trajectory and corrects drift using techniques such as ZUPT and ZUPH.
-.. * Detects and segments strides, calculating spatiotemporal gait metrics.
-
-.. The system enables early detection of gait alterations, supports clinical decision-making, and 
-.. facilitates personalized rehabilitation plans.
-
-.. General Structure
-.. =================
-
-.. The application includes:
-
-.. * A package named ``InfluxDBms`` for managing and querying time-series data.
-.. * A package named ``msGeom`` for IMU + GPS fusion, orientation estimation, stride detection, 
-..   trajectory reconstruction, and gait metric calculation.
-.. * A main execution script ``test_InfluxDB/extract_data.py`` to retrieve raw data from InfluxDB.
-.. * A main execution script ``transform_data/stride_measurement.py`` to run the full processing pipeline, 
-..   from preprocessing to gait metrics output.
-
-.. Detailed descriptions of the modules and algorithms can be found in the following sections.

@@ -39,12 +39,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../general_structure.html">General Structure</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">System Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Packages and Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../InfluxDBms.html">InfluxDBms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_InfluxDB.html">test_InfluxDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../msGeom.html">msGeom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transform_data.html">transform_data</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Results</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../results.html">Results</a></li>
 </ul>
 
         </div>
@@ -92,14 +110,14 @@
 
 <div class="viewcode-block" id="PlotProcessor.plot_trajectories_interactive">
 <a class="viewcode-back" href="../../msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot_trajectories_interactive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultados</span><span class="p">,</span> <span class="n">errores</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_final</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Trajectory Comparison&quot;</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">plot_trajectories_interactive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_final</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Trajectory Comparison&quot;</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create an interactive Plotly plot comparing estimated and GPS trajectories.</span>
 
-<span class="sd">        :param resultados: Dictionary of estimated positions.</span>
-<span class="sd">        :type resultados: dict[str, np.ndarray]</span>
-<span class="sd">        :param errores: Dictionary of position errors.</span>
-<span class="sd">        :type errores: dict[str, float]</span>
+<span class="sd">        :param results: Dictionary of estimated positions.</span>
+<span class="sd">        :type results: dict[str, np.ndarray]</span>
+<span class="sd">        :param errors: Dictionary of position errors.</span>
+<span class="sd">        :type errors: dict[str, float]</span>
 <span class="sd">        :param gps_pos: GPS positions array.</span>
 <span class="sd">        :type gps_pos: np.ndarray</span>
 <span class="sd">        :param gps_final: Final GPS position.</span>
@@ -110,8 +128,8 @@
 <span class="sd">        :type save_path: str or None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">resultados</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;lines&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">errores</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m)&quot;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;lines&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">errors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m)&quot;</span><span class="p">))</span>
 
         <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;lines&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;GPS (reference)&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">dash</span><span class="o">=</span><span class="s1">&#39;dash&#39;</span><span class="p">)))</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="n">gps_final</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">gps_final</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;markers&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;GPS final&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">)))</span>
@@ -154,14 +172,14 @@
 
 <div class="viewcode-block" id="PlotProcessor.plot_trajectories_split">
 <a class="viewcode-back" href="../../msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories_split">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot_trajectories_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultados</span><span class="p">,</span> <span class="n">errores</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_final</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">plot_trajectories_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_final</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot each estimated trajectory separately using Matplotlib.</span>
 
-<span class="sd">        :param resultados: Dictionary of estimated positions.</span>
-<span class="sd">        :type resultados: dict[str, np.ndarray]</span>
-<span class="sd">        :param errores: Dictionary of errors per method.</span>
-<span class="sd">        :type errores: dict[str, float]</span>
+<span class="sd">        :param results: Dictionary of estimated positions.</span>
+<span class="sd">        :type results: dict[str, np.ndarray]</span>
+<span class="sd">        :param errors: Dictionary of errors per method.</span>
+<span class="sd">        :type errors: dict[str, float]</span>
 <span class="sd">        :param gps_pos: GPS positions array.</span>
 <span class="sd">        :type gps_pos: np.ndarray</span>
 <span class="sd">        :param gps_final: Final GPS point.</span>
@@ -172,8 +190,8 @@
 <span class="sd">        :type save_path: str or None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">resultados</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">errores</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m)&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">errors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m)&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GPS (reference)&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gps_final</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gps_final</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GPS final&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
@@ -188,14 +206,14 @@
 
 <div class="viewcode-block" id="PlotProcessor.generate_map_with_estimates">
 <a class="viewcode-back" href="../../msGeom.html#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_map_with_estimates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_gps</span><span class="p">,</span> <span class="n">resultados</span><span class="p">,</span> <span class="n">output_html_path</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">generate_map_with_estimates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_gps</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">output_html_path</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates an interactive map with GPS and estimated IMU/Kalman trajectories using Folium.</span>
 
 <span class="sd">        :param df_gps: DataFrame with &#39;lat&#39; and &#39;lng&#39; columns.</span>
 <span class="sd">        :type df_gps: pd.DataFrame</span>
-<span class="sd">        :param resultados: Dictionary of trajectory name to estimated XY positions.</span>
-<span class="sd">        :type resultados: dict[str, np.ndarray]</span>
+<span class="sd">        :param results: Dictionary of trajectory name to estimated XY positions.</span>
+<span class="sd">        :type results: dict[str, np.ndarray]</span>
 <span class="sd">        :param output_html_path: Path to save HTML map.</span>
 <span class="sd">        :type output_html_path: str</span>
 <span class="sd">        :param config: YAML configuration with &#39;Location&#39; projection info.</span>
@@ -217,7 +235,7 @@
         <span class="n">gps_group</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">fmap</span><span class="p">)</span>
 
         <span class="n">color_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cadetblue&#39;</span><span class="p">,</span><span class="s1">&#39;#F04BF0&#39;</span><span class="p">,</span><span class="s1">&#39;#FAA43A&#39;</span><span class="p">,</span> <span class="s2">&quot;#056641&quot;</span><span class="p">,</span><span class="s1">&#39;#F17CB0&#39;</span><span class="p">,</span><span class="s1">&#39;#DECF3F&#39;</span><span class="p">,</span><span class="s1">&#39;#F15854&#39;</span><span class="p">,</span><span class="s1">&#39;#5DA5DA&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">traj</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">resultados</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">traj</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="n">x_coords</span> <span class="o">=</span> <span class="n">traj</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
             <span class="n">y_coords</span> <span class="o">=</span> <span class="n">traj</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
             <span class="n">lon_est</span><span class="p">,</span> <span class="n">lat_est</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
@@ -239,14 +257,14 @@
 
 <div class="viewcode-block" id="PlotProcessor.plot_trajectories">
 <a class="viewcode-back" href="../../msGeom.html#msGeom.plot_processor.PlotProcessor.plot_trajectories">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot_trajectories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resultados</span><span class="p">,</span> <span class="n">errores</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_final</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Trajectory Comparison&quot;</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">plot_trajectories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">errores</span><span class="p">,</span> <span class="n">gps_pos</span><span class="p">,</span> <span class="n">gps_final</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Trajectory Comparison&quot;</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot estimated and GPS trajectories.</span>
 
-<span class="sd">        :param resultados: Dictionary of estimated positions.</span>
-<span class="sd">        :type resultados: dict[str, np.ndarray]</span>
-<span class="sd">        :param errores: Dictionary of position errors.</span>
-<span class="sd">        :type errores: dict[str, float]</span>
+<span class="sd">        :param results: Dictionary of estimated positions.</span>
+<span class="sd">        :type results: dict[str, np.ndarray]</span>
+<span class="sd">        :param errors: Dictionary of position errors.</span>
+<span class="sd">        :type errors: dict[str, float]</span>
 <span class="sd">        :param gps_pos: GPS positions array.</span>
 <span class="sd">        :type gps_pos: np.ndarray</span>
 <span class="sd">        :param gps_final: Final GPS position.</span>
@@ -257,7 +275,7 @@
 <span class="sd">        :type save_path: str or None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">resultados</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">errores</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m)&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">gps_pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GPS (reference)&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">gps_final</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gps_final</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GPS final&quot;</span><span class="p">)</span>

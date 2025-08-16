@@ -39,12 +39,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../general_structure.html">General Structure</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">System Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Packages and Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../InfluxDBms.html">InfluxDBms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_InfluxDB.html">test_InfluxDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../msGeom.html">msGeom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transform_data.html">transform_data</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Results</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../results.html">Results</a></li>
 </ul>
 
         </div>
@@ -321,69 +339,6 @@
 
 
 
-
-    <span class="c1"># def generate_stride_and_gps_jump_table1(self, df_stride_raw_clean, gps_pos, gps_time, gps_jump_threshold=10.0, start_datetime=None):</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-    <span class="c1">#     Generate a table showing valid stride times and significant GPS jumps.</span>
-
-    <span class="c1">#     This function combines:</span>
-    <span class="c1">#     - The timestamps of valid strides (typically shown as green points).</span>
-    <span class="c1">#     - The timestamps and locations where GPS shows a sudden jump (e.g., &gt;10 meters).</span>
-    <span class="c1">#     - Optionally includes a datetime column if start_datetime is provided.</span>
-
-    <span class="c1">#     :param df_stride_raw_clean: DataFrame with valid strides. Must include &#39;time&#39;.</span>
-    <span class="c1">#     :type df_stride_raw_clean: pd.DataFrame</span>
-    <span class="c1">#     :param gps_pos: Numpy array of GPS positions (shape: Nx2).</span>
-    <span class="c1">#     :type gps_pos: np.ndarray</span>
-    <span class="c1">#     :param gps_time: Numpy array of timestamps corresponding to gps_pos (shape: N,).</span>
-    <span class="c1">#     :type gps_time: np.ndarray</span>
-    <span class="c1">#     :param gps_jump_threshold: Minimum distance (in meters) to consider a GPS jump.</span>
-    <span class="c1">#     :type gps_jump_threshold: float</span>
-    <span class="c1">#     :param start_datetime: Optional starting datetime (as pandas.Timestamp or datetime). If given, adds a datetime column.</span>
-    <span class="c1">#     :type start_datetime: pd.Timestamp or datetime.datetime or None</span>
-    <span class="c1">#     :return: Combined DataFrame with event type, time, coordinates, and optionally datetime.</span>
-    <span class="c1">#     :rtype: pd.DataFrame</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-    <span class="c1">#     # Detect GPS jumps</span>
-    <span class="c1">#     gps_diff = np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)</span>
-    <span class="c1">#     jump_indices = np.where(gps_diff &gt; gps_jump_threshold)[0] + 1  # +1 to get point *after* jump</span>
-
-    <span class="c1">#     gps_jump_times = gps_time[jump_indices]</span>
-    <span class="c1">#     gps_jump_coords = gps_pos[jump_indices]</span>
-
-    <span class="c1">#     df_jumps = pd.DataFrame({</span>
-    <span class="c1">#         &quot;type&quot;: &quot;GPS Jump&quot;,</span>
-    <span class="c1">#         &quot;time&quot;: gps_jump_times,</span>
-    <span class="c1">#         &quot;x&quot;: gps_jump_coords[:, 0],</span>
-    <span class="c1">#         &quot;y&quot;: gps_jump_coords[:, 1],</span>
-    <span class="c1">#         &quot;delta_dist&quot;: gps_diff[jump_indices - 1]</span>
-    <span class="c1">#     })</span>
-
-    <span class="c1">#     # Valid strides</span>
-    <span class="c1">#     stride_times = df_stride_raw_clean[&quot;time&quot;].values</span>
-    <span class="c1">#     stride_x = np.interp(stride_times, gps_time, gps_pos[:, 0])</span>
-    <span class="c1">#     stride_y = np.interp(stride_times, gps_time, gps_pos[:, 1])</span>
-
-    <span class="c1">#     df_strides = pd.DataFrame({</span>
-    <span class="c1">#         &quot;type&quot;: &quot;Valid Stride&quot;,</span>
-    <span class="c1">#         &quot;time&quot;: stride_times,</span>
-    <span class="c1">#         &quot;x&quot;: stride_x,</span>
-    <span class="c1">#         &quot;y&quot;: stride_y,</span>
-    <span class="c1">#         &quot;delta_dist&quot;: np.nan</span>
-    <span class="c1">#     })</span>
-
-    <span class="c1">#     # Combine</span>
-    <span class="c1">#     df_combined = pd.concat([df_strides, df_jumps], ignore_index=True)</span>
-    <span class="c1">#     df_combined.sort_values(by=&quot;time&quot;, inplace=True)</span>
-    <span class="c1">#     df_combined.reset_index(drop=True, inplace=True)</span>
-
-    <span class="c1">#     # Add datetime if reference provided</span>
-    <span class="c1">#     if start_datetime is not None:</span>
-    <span class="c1">#         df_combined[&quot;datetime&quot;] = pd.to_datetime(start_datetime) + pd.to_timedelta(df_combined[&quot;time&quot;], unit=&quot;s&quot;)</span>
-
-    <span class="c1">#     return df_combined</span>
-
-
 <div class="viewcode-block" id="DetectPeaks.generate_stride_and_gps_jump_table1">
 <a class="viewcode-back" href="../../msGeom.html#msGeom.peak_detector.DetectPeaks.generate_stride_and_gps_jump_table1">[docs]</a>
     <span class="k">def</span> <span class="nf">generate_stride_and_gps_jump_table1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -395,6 +350,33 @@
                 <span class="n">gps_lat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">gps_lon</span><span class="o">=</span><span class="kc">None</span>
             <span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a combined event table including GPS samples, valid strides, and detected GPS jumps.</span>
+
+<span class="sd">        This function merges stride events, raw GPS samples, and large GPS deviations (&quot;jumps&quot;)</span>
+<span class="sd">        into a single DataFrame sorted by time. Optionally, latitude/longitude and datetime</span>
+<span class="sd">        interpolation can be added.</span>
+
+<span class="sd">        :param df_stride_raw_clean: DataFrame of detected strides with timestamps.</span>
+<span class="sd">        :type df_stride_raw_clean: pandas.DataFrame</span>
+<span class="sd">        :param gps_pos: GPS positions as an array of shape (N, 2) with x, y coordinates.</span>
+<span class="sd">        :type gps_pos: numpy.ndarray</span>
+<span class="sd">        :param gps_time: Array of GPS timestamps (in seconds).</span>
+<span class="sd">        :type gps_time: numpy.ndarray</span>
+<span class="sd">        :param gps_jump_threshold: Distance threshold (in meters) to detect GPS jumps. Default is 10.0.</span>
+<span class="sd">        :type gps_jump_threshold: float, optional</span>
+<span class="sd">        :param start_datetime: Starting datetime reference for converting gps_time to absolute timestamps.</span>
+<span class="sd">        :type start_datetime: str or pandas.Timestamp, optional</span>
+<span class="sd">        :param gps_lat: GPS latitude samples, aligned with gps_time.</span>
+<span class="sd">        :type gps_lat: numpy.ndarray, optional</span>
+<span class="sd">        :param gps_lon: GPS longitude samples, aligned with gps_time.</span>
+<span class="sd">        :type gps_lon: numpy.ndarray, optional</span>
+
+<span class="sd">        :returns: Combined DataFrame containing GPS samples, strides, and GPS jumps.</span>
+<span class="sd">                Columns include [&quot;type&quot;, &quot;time&quot;, &quot;x&quot;, &quot;y&quot;, &quot;delta_dist&quot;, &quot;source&quot;, &quot;lat&quot;, &quot;lon&quot;, &quot;datetime&quot;].</span>
+<span class="sd">        :rtype: pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
    
         <span class="c1"># --- 1. Detect GPS jumps ---</span>
         <span class="n">gps_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gps_pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>

@@ -617,7 +617,31 @@ mean stride length, standard deviation, and total distance covered per minute.</
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.generate_stride_and_gps_jump_table1">
 <span class="sig-name descname"><span class="pre">generate_stride_and_gps_jump_table1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_stride_raw_clean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_jump_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_datetime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_lat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_lon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/peak_detector.html#DetectPeaks.generate_stride_and_gps_jump_table1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.peak_detector.DetectPeaks.generate_stride_and_gps_jump_table1" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Generate a combined event table including GPS samples, valid strides, and detected GPS jumps.</p>
+<p>This function merges stride events, raw GPS samples, and large GPS deviations (“jumps”)
+into a single DataFrame sorted by time. Optionally, latitude/longitude and datetime
+interpolation can be added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_stride_raw_clean</strong> (<em>pandas.DataFrame</em>) – DataFrame of detected strides with timestamps.</p></li>
+<li><p><strong>gps_pos</strong> (<em>numpy.ndarray</em>) – GPS positions as an array of shape (N, 2) with x, y coordinates.</p></li>
+<li><p><strong>gps_time</strong> (<em>numpy.ndarray</em>) – Array of GPS timestamps (in seconds).</p></li>
+<li><p><strong>gps_jump_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – Distance threshold (in meters) to detect GPS jumps. Default is 10.0.</p></li>
+<li><p><strong>start_datetime</strong> (<em>str</em><em> or </em><em>pandas.Timestamp</em><em>, </em><em>optional</em>) – Starting datetime reference for converting gps_time to absolute timestamps.</p></li>
+<li><p><strong>gps_lat</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – GPS latitude samples, aligned with gps_time.</p></li>
+<li><p><strong>gps_lon</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – GPS longitude samples, aligned with gps_time.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Combined DataFrame containing GPS samples, strides, and GPS jumps.
+Columns include [“type”, “time”, “x”, “y”, “delta_dist”, “source”, “lat”, “lon”, “datetime”].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.peak_detector.DetectPeaks.plot_peaks">
@@ -1059,13 +1083,13 @@ velocity, and GPS data. Supports exporting results to Excel and computing key me
 display diagnostic plots, and export results to interactive maps or static images.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.generate_map_with_estimates">
-<span class="sig-name descname"><span class="pre">generate_map_with_estimates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_gps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_html_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.generate_map_with_estimates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">generate_map_with_estimates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_gps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_html_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.generate_map_with_estimates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.generate_map_with_estimates" title="Link to this definition"></a></dt>
 <dd><p>Generates an interactive map with GPS and estimated IMU/Kalman trajectories using Folium.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>df_gps</strong> (<em>pd.DataFrame</em>) – DataFrame with ‘lat’ and ‘lng’ columns.</p></li>
-<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of trajectory name to estimated XY positions.</p></li>
+<li><p><strong>results</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of trajectory name to estimated XY positions.</p></li>
 <li><p><strong>output_html_path</strong> (<em>str</em>) – Path to save HTML map.</p></li>
 <li><p><strong>config</strong> (<em>dict</em>) – YAML configuration with ‘Location’ projection info.</p></li>
 </ul>
@@ -1112,13 +1136,13 @@ Depending on the verbosity level and output directory, plots can also be saved.<
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories">
-<span class="sig-name descname"><span class="pre">plot_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories" title="Link to this definition"></a></dt>
 <dd><p>Plot estimated and GPS trajectories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
-<li><p><strong>errores</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of position errors.</p></li>
+<li><p><strong>results</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
+<li><p><strong>errors</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of position errors.</p></li>
 <li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
 <li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS position.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Title for the plot.</p></li>
@@ -1146,13 +1170,13 @@ Depending on the verbosity level and output directory, plots can also be saved.<
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive">
-<span class="sig-name descname"><span class="pre">plot_trajectories_interactive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_interactive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_trajectories_interactive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Trajectory</span> <span class="pre">Comparison'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_interactive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_interactive" title="Link to this definition"></a></dt>
 <dd><p>Create an interactive Plotly plot comparing estimated and GPS trajectories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
-<li><p><strong>errores</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of position errors.</p></li>
+<li><p><strong>results</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
+<li><p><strong>errors</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of position errors.</p></li>
 <li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
 <li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS position.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title.</p></li>
@@ -1164,13 +1188,13 @@ Depending on the verbosity level and output directory, plots can also be saved.<
 
 <dl class="py method">
 <dt class="sig sig-object py" id="msGeom.plot_processor.PlotProcessor.plot_trajectories_split">
-<span class="sig-name descname"><span class="pre">plot_trajectories_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultados</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_split" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_trajectories_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/msGeom/plot_processor.html#PlotProcessor.plot_trajectories_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#msGeom.plot_processor.PlotProcessor.plot_trajectories_split" title="Link to this definition"></a></dt>
 <dd><p>Plot each estimated trajectory separately using Matplotlib.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>resultados</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
-<li><p><strong>errores</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of errors per method.</p></li>
+<li><p><strong>results</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) – Dictionary of estimated positions.</p></li>
+<li><p><strong>errors</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary of errors per method.</p></li>
 <li><p><strong>gps_pos</strong> (<em>np.ndarray</em>) – GPS positions array.</p></li>
 <li><p><strong>gps_final</strong> (<em>np.ndarray</em>) – Final GPS point.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title.</p></li>

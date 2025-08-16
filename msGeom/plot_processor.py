@@ -14,14 +14,14 @@ class PlotProcessor:
     display diagnostic plots, and export results to interactive maps or static images.
     """
 
-    def plot_trajectories_interactive(self, resultados, errores, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
+    def plot_trajectories_interactive(self, results, errors, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
         """
         Create an interactive Plotly plot comparing estimated and GPS trajectories.
 
-        :param resultados: Dictionary of estimated positions.
-        :type resultados: dict[str, np.ndarray]
-        :param errores: Dictionary of position errors.
-        :type errores: dict[str, float]
+        :param results: Dictionary of estimated positions.
+        :type results: dict[str, np.ndarray]
+        :param errors: Dictionary of position errors.
+        :type errors: dict[str, float]
         :param gps_pos: GPS positions array.
         :type gps_pos: np.ndarray
         :param gps_final: Final GPS position.
@@ -32,8 +32,8 @@ class PlotProcessor:
         :type save_path: str or None
         """
         fig = go.Figure()
-        for name, pos in resultados.items():
-            fig.add_trace(go.Scatter(x=pos[:, 0], y=pos[:, 1], mode='lines', name=f"{name} ({errores[name]:.2f} m)"))
+        for name, pos in results.items():
+            fig.add_trace(go.Scatter(x=pos[:, 0], y=pos[:, 1], mode='lines', name=f"{name} ({errors[name]:.2f} m)"))
 
         fig.add_trace(go.Scatter(x=gps_pos[:, 0], y=gps_pos[:, 1], mode='lines', name="GPS (reference)", line=dict(dash='dash')))
         fig.add_trace(go.Scatter(x=[gps_final[0]], y=[gps_final[1]], mode='markers', name="GPS final", marker=dict(color='black', size=10)))
@@ -70,14 +70,14 @@ class PlotProcessor:
         plt.legend()
         plt.grid()
 
-    def plot_trajectories_split(self, resultados, errores, gps_pos, gps_final, title, save_path=None):
+    def plot_trajectories_split(self, results, errors, gps_pos, gps_final, title, save_path=None):
         """
         Plot each estimated trajectory separately using Matplotlib.
 
-        :param resultados: Dictionary of estimated positions.
-        :type resultados: dict[str, np.ndarray]
-        :param errores: Dictionary of errors per method.
-        :type errores: dict[str, float]
+        :param results: Dictionary of estimated positions.
+        :type results: dict[str, np.ndarray]
+        :param errors: Dictionary of errors per method.
+        :type errors: dict[str, float]
         :param gps_pos: GPS positions array.
         :type gps_pos: np.ndarray
         :param gps_final: Final GPS point.
@@ -88,8 +88,8 @@ class PlotProcessor:
         :type save_path: str or None
         """
         plt.figure(figsize=(10, 8))
-        for name, pos in resultados.items():
-            plt.plot(pos[:, 0], pos[:, 1], label=f"{name} ({errores[name]:.2f} m)")
+        for name, pos in results.items():
+            plt.plot(pos[:, 0], pos[:, 1], label=f"{name} ({errors[name]:.2f} m)")
         plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label="GPS (reference)")
         plt.plot(gps_final[0], gps_final[1], 'ko', label="GPS final")
         plt.title(title)
@@ -101,14 +101,14 @@ class PlotProcessor:
         if save_path:
             plt.savefig(save_path)
 
-    def generate_map_with_estimates(self, df_gps, resultados, output_html_path, config):
+    def generate_map_with_estimates(self, df_gps, results, output_html_path, config):
         """
         Generates an interactive map with GPS and estimated IMU/Kalman trajectories using Folium.
 
         :param df_gps: DataFrame with 'lat' and 'lng' columns.
         :type df_gps: pd.DataFrame
-        :param resultados: Dictionary of trajectory name to estimated XY positions.
-        :type resultados: dict[str, np.ndarray]
+        :param results: Dictionary of trajectory name to estimated XY positions.
+        :type results: dict[str, np.ndarray]
         :param output_html_path: Path to save HTML map.
         :type output_html_path: str
         :param config: YAML configuration with 'Location' projection info.
@@ -130,7 +130,7 @@ class PlotProcessor:
         gps_group.add_to(fmap)
 
         color_list = ['cadetblue','#F04BF0','#FAA43A', "#056641",'#F17CB0','#DECF3F','#F15854','#5DA5DA']
-        for i, (name, traj) in enumerate(resultados.items()):
+        for i, (name, traj) in enumerate(results.items()):
             x_coords = traj[:, 0]
             y_coords = traj[:, 1]
             lon_est, lat_est = transformer.transform(
@@ -149,14 +149,14 @@ class PlotProcessor:
 
 
 
-    def plot_trajectories(self, resultados, errores, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
+    def plot_trajectories(self, results, errores, gps_pos, gps_final, title="Trajectory Comparison", save_path=None):
         """
         Plot estimated and GPS trajectories.
 
-        :param resultados: Dictionary of estimated positions.
-        :type resultados: dict[str, np.ndarray]
-        :param errores: Dictionary of position errors.
-        :type errores: dict[str, float]
+        :param results: Dictionary of estimated positions.
+        :type results: dict[str, np.ndarray]
+        :param errors: Dictionary of position errors.
+        :type errors: dict[str, float]
         :param gps_pos: GPS positions array.
         :type gps_pos: np.ndarray
         :param gps_final: Final GPS position.
@@ -167,7 +167,7 @@ class PlotProcessor:
         :type save_path: str or None
         """
         plt.figure(figsize=(10, 8))
-        for name, pos in resultados.items():
+        for name, pos in results.items():
             plt.plot(pos[:, 0], pos[:, 1], label=f"{name} ({errores[name]:.2f} m)")
         plt.plot(gps_pos[:, 0], gps_pos[:, 1], 'k--', label="GPS (reference)")
         plt.plot(gps_final[0], gps_final[1], 'ko', label="GPS final")

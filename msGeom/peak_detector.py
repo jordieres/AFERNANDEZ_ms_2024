@@ -230,69 +230,6 @@ class DetectPeaks:
         plt.tight_layout()
 
 
-
-    # def generate_stride_and_gps_jump_table1(self, df_stride_raw_clean, gps_pos, gps_time, gps_jump_threshold=10.0, start_datetime=None):
-    #     """
-    #     Generate a table showing valid stride times and significant GPS jumps.
-
-    #     This function combines:
-    #     - The timestamps of valid strides (typically shown as green points).
-    #     - The timestamps and locations where GPS shows a sudden jump (e.g., >10 meters).
-    #     - Optionally includes a datetime column if start_datetime is provided.
-
-    #     :param df_stride_raw_clean: DataFrame with valid strides. Must include 'time'.
-    #     :type df_stride_raw_clean: pd.DataFrame
-    #     :param gps_pos: Numpy array of GPS positions (shape: Nx2).
-    #     :type gps_pos: np.ndarray
-    #     :param gps_time: Numpy array of timestamps corresponding to gps_pos (shape: N,).
-    #     :type gps_time: np.ndarray
-    #     :param gps_jump_threshold: Minimum distance (in meters) to consider a GPS jump.
-    #     :type gps_jump_threshold: float
-    #     :param start_datetime: Optional starting datetime (as pandas.Timestamp or datetime). If given, adds a datetime column.
-    #     :type start_datetime: pd.Timestamp or datetime.datetime or None
-    #     :return: Combined DataFrame with event type, time, coordinates, and optionally datetime.
-    #     :rtype: pd.DataFrame
-    #     """
-    #     # Detect GPS jumps
-    #     gps_diff = np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)
-    #     jump_indices = np.where(gps_diff > gps_jump_threshold)[0] + 1  # +1 to get point *after* jump
-
-    #     gps_jump_times = gps_time[jump_indices]
-    #     gps_jump_coords = gps_pos[jump_indices]
-
-    #     df_jumps = pd.DataFrame({
-    #         "type": "GPS Jump",
-    #         "time": gps_jump_times,
-    #         "x": gps_jump_coords[:, 0],
-    #         "y": gps_jump_coords[:, 1],
-    #         "delta_dist": gps_diff[jump_indices - 1]
-    #     })
-
-    #     # Valid strides
-    #     stride_times = df_stride_raw_clean["time"].values
-    #     stride_x = np.interp(stride_times, gps_time, gps_pos[:, 0])
-    #     stride_y = np.interp(stride_times, gps_time, gps_pos[:, 1])
-
-    #     df_strides = pd.DataFrame({
-    #         "type": "Valid Stride",
-    #         "time": stride_times,
-    #         "x": stride_x,
-    #         "y": stride_y,
-    #         "delta_dist": np.nan
-    #     })
-
-    #     # Combine
-    #     df_combined = pd.concat([df_strides, df_jumps], ignore_index=True)
-    #     df_combined.sort_values(by="time", inplace=True)
-    #     df_combined.reset_index(drop=True, inplace=True)
-
-    #     # Add datetime if reference provided
-    #     if start_datetime is not None:
-    #         df_combined["datetime"] = pd.to_datetime(start_datetime) + pd.to_timedelta(df_combined["time"], unit="s")
-
-    #     return df_combined
-
-
     def generate_stride_and_gps_jump_table1(self,
                 df_stride_raw_clean,
                 gps_pos,
@@ -302,6 +239,33 @@ class DetectPeaks:
                 gps_lat=None,
                 gps_lon=None
             ):
+        
+        """
+        Generate a combined event table including GPS samples, valid strides, and detected GPS jumps.
+
+        This function merges stride events, raw GPS samples, and large GPS deviations ("jumps")
+        into a single DataFrame sorted by time. Optionally, latitude/longitude and datetime
+        interpolation can be added.
+
+        :param df_stride_raw_clean: DataFrame of detected strides with timestamps.
+        :type df_stride_raw_clean: pandas.DataFrame
+        :param gps_pos: GPS positions as an array of shape (N, 2) with x, y coordinates.
+        :type gps_pos: numpy.ndarray
+        :param gps_time: Array of GPS timestamps (in seconds).
+        :type gps_time: numpy.ndarray
+        :param gps_jump_threshold: Distance threshold (in meters) to detect GPS jumps. Default is 10.0.
+        :type gps_jump_threshold: float, optional
+        :param start_datetime: Starting datetime reference for converting gps_time to absolute timestamps.
+        :type start_datetime: str or pandas.Timestamp, optional
+        :param gps_lat: GPS latitude samples, aligned with gps_time.
+        :type gps_lat: numpy.ndarray, optional
+        :param gps_lon: GPS longitude samples, aligned with gps_time.
+        :type gps_lon: numpy.ndarray, optional
+
+        :returns: Combined DataFrame containing GPS samples, strides, and GPS jumps.
+                Columns include ["type", "time", "x", "y", "delta_dist", "source", "lat", "lon", "datetime"].
+        :rtype: pandas.DataFrame
+        """
    
         # --- 1. Detect GPS jumps ---
         gps_diff = np.linalg.norm(np.diff(gps_pos, axis=0), axis=1)
