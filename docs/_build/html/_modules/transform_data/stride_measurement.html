@@ -39,12 +39,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../intro.html#general-structure">General Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../modules.html">AFERNANDEZ_ms_2024</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../general_structure.html">General Structure</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">System Design</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Packages and Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../InfluxDBms.html">InfluxDBms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_InfluxDB.html">test_InfluxDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../msGeom.html">msGeom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../transform_data.html">transform_data</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Results</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../results.html">Results</a></li>
 </ul>
 
         </div>
@@ -89,7 +107,7 @@
 
 
 <div class="viewcode-block" id="parse_args">
-<a class="viewcode-back" href="../../transfom_data.html#transform_data.stride_measurement.parse_args">[docs]</a>
+<a class="viewcode-back" href="../../transform_data.html#transform_data.stride_measurement.parse_args">[docs]</a>
 <span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parse command-line arguments for the IMU data processing pipeline.</span>
@@ -120,7 +138,7 @@
 
 
 <div class="viewcode-block" id="main">
-<a class="viewcode-back" href="../../transfom_data.html#transform_data.stride_measurement.main">[docs]</a>
+<a class="viewcode-back" href="../../transform_data.html#transform_data.stride_measurement.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Main execution function for the IMU + GPS gait analysis pipeline.</span>
@@ -159,7 +177,7 @@
     <span class="n">plotter</span> <span class="o">=</span> <span class="n">PlotProcessor</span><span class="p">()</span>
     <span class="n">dp</span> <span class="o">=</span> <span class="n">DetectPeaks</span><span class="p">()</span>
     <span class="n">rp</span> <span class="o">=</span> <span class="n">ResultsProcessor</span><span class="p">()</span>
-    <span class="n">sp</span> <span class="o">=</span> <span class="n">StrideProcessor</span><span class="p">(</span><span class="n">min_stride</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_stride</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span> <span class="c1"># VENTANA DE (+-)3 --&gt;DURACION DE LA MARCHA</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">StrideProcessor</span><span class="p">(</span><span class="n">min_stride</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_stride</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span> 
 
 
     <span class="n">file_path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">file_path</span>
@@ -266,15 +284,6 @@
             
             <span class="n">sp</span><span class="o">.</span><span class="n">plot_gps_jumps</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">kalman_gps_error</span><span class="p">,</span> <span class="n">jump_indices</span><span class="p">)</span>
 
-            <span class="n">sp</span><span class="o">.</span><span class="n">plot_jumps_and_strides</span><span class="p">(</span>
-                <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
-                <span class="n">kalman_gps_error</span><span class="o">=</span><span class="n">kalman_gps_error</span><span class="p">,</span>
-                <span class="n">jump_times</span><span class="o">=</span><span class="n">jump_times</span><span class="p">,</span>
-                <span class="n">stride_times</span><span class="o">=</span><span class="p">{</span><span class="mi">30</span><span class="p">:</span> <span class="mf">39.10</span><span class="p">,</span> <span class="mi">31</span><span class="p">:</span> <span class="mf">40.08</span><span class="p">,</span> <span class="mi">32</span><span class="p">:</span> <span class="mf">41.25</span><span class="p">,</span> <span class="mi">33</span><span class="p">:</span> <span class="mf">42.40</span><span class="p">},</span>
-                <span class="n">valid_strides</span><span class="o">=</span><span class="p">[</span><span class="mi">31</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">33</span><span class="p">],</span>
-                <span class="n">threshold</span><span class="o">=</span><span class="mf">7.0</span>
-            <span class="p">)</span>
-            
             <span class="c1"># Extra details for verbose = 3</span>
             <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Additional Metrics and Debug Info (verbose 3):</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>

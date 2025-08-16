@@ -3,8 +3,6 @@
 ..    You can adapt this file completely to your liking, but it should at least
 ..    contain the root `toctree` directive.
 
-
-
 AFERNANDEZ_ms_2024 — Documentation
 ==================================
 
@@ -36,6 +34,12 @@ AFERNANDEZ_ms_2024 — Documentation
    test_InfluxDB
    msGeom
    transform_data
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Results
+
+   results
 
 Indices and tables
 ==================

@@ -121,50 +121,65 @@ This folder contains scripts and classes for processing IMU and GPS data. It inc
    * The main analysis script is `transform_data/stride_measurement.py`, which performs stride detection, filtering, and feature extraction.
 
 
-## Results and Visualizations
+## Example Results (1-minute window)
 
-This section presents a summary of the results obtained using sensor data collected from the left foot during a 60-second walking session. The pipeline involves IMU signal preprocessing, Kalman filtering, trajectory estimation, and step detection using modG peak analysis.
+To validate the pipeline, we processed a 1-minute recording from the **left foot** using Sensoria IMU9 socks.  
+This dataset illustrates the complete workflow: stride detection, trajectory estimation, GPS correction, and error analysis.
+
+### Quantitative Summary
+
+- **Total GPS distance:** 70.44 m  
+- **IMU-only trajectory:** Final error = 61.32 m | Distance = 110.20 m  
+- **Kalman trajectory:** Final error = 0.82 m | Distance = 76.48 m  
+- **Steps detected (modG):** 47  
+- **GPS jumps detected:** at 1.62 s (22.17 m error) and 38.55 s (8.14 m error)  
+- **Kalman-GPS mean error:** 0.65 m (99.7% of points < 5 m)  
+
+The following table summarizes the main distance and error metrics obtained from GPS, raw IMU integration, and the Kalman filter, as well as stride detection results.
+
+| Metric                 | Value                                                   |
+|------------------------|---------------------------------------------------------|
+| Total distance (GPS)   | 70.44 m                                                 |
+| IMU trajectory         | Distance = 110.20 m  \|  Final error with GPS = 61.32 m |
+| Kalman trajectory      | Distance = 76.48 m   \|  Final error with GPS = 0.82 m  |
+| Steps detected (modG)  | 47                                                      |
+| Mean Kalman-GPS error  | 0.65 m (99.7% of points < 5 m)                          |
+
+
+
+These results confirm that **Kalman filtering strongly reduces drift**, aligning the estimated path with GPS while maintaining step-level resolution.
+
+#### Visual Results
+
+#### Stride Detection (modG)
+![Stride Detection](docs/_static/modG_60s_left.png)
+
+#### Raw IMU vs GPS Trajectory
+![IMU vs GPS](docs/_static/result_imu.png)
+
+#### Kalman-corrected Trajectory vs GPS
+![Kalman vs GPS](docs/_static/result_kalman.png)
 
 ---
 
-### Trajectory Estimation: IMU vs. GPS
+#### GPS Jump Detection
 
-The two plots below compare estimated 2D trajectories using:
+The next table reports abnormal GPS deviations (“jumps”) detected during the trial.  
+Each row indicates the timestamp of the anomaly and the associated Kalman-GPS error.
 
-* Raw IMU double integration
-* Kalman-filtered estimation
+| Metric               | Time (s) | Error (m) |
+|----------------------|----------|-----------|
+| GPS jumps detected   | 1.62     | 22.17     |
+|                      | 38.55    | 8.14      |
 
-Both are compared to GPS reference paths.
 
-<img src="figures/trajectory.png" width="1000"/>
-
-**Key insights:**
-
-* IMU-only trajectory shows substantial drift.
-* Kalman filtering aligns closely with the actual GPS trajectory.
-
----
-
-### Quantitative Comparison Summary
-
-| Metric                          | IMU       | Kalman Filter |
-| ------------------------------- | --------- | ------------- |
-| Final position error (vs. GPS)  | 61.32 m   | **0.82 m**    |
-| Estimated total distance        | 110.20 m  | 76.48 m       |
-| Total GPS reference distance    | -         | 70.44 m       |
-| Average step length             | 0.046 m   | 0.032 m       |
-| Average velocity                | 2.209 m/s | -             |
-| Steps detected (modG method)    | 47        | -             |
-| Valid strides (after filtering) | -         | 6             |
-| GPS-aligned points (Kalman)     | -         | 99.9%         |
-
-> **Result:** The Kalman filter reduced trajectory error by more than 98% compared to raw IMU integration.
+![GPS Jumps](docs/_static/saltos_60.png)
 
 ---
 
 ### Summary
 
-The combination of sensor fusion (Kalman filtering), peak detection, and stride validation yielded reliable gait metrics with high alignment to GPS reference data. The Kalman-based trajectory estimation showed strong spatial accuracy, suggesting that this pipeline is viable for detailed gait feature extraction in real-world walking scenarios.
+This example demonstrates the system’s ability to process continuous gait data, correct GPS errors, and output accurate stride-level metrics in real-world walking conditions. The combination of sensor fusion (Kalman filtering), peak detection, and stride validation yielded reliable gait metrics with strong spatial accuracy and high alignment to GPS reference data, confirming the viability of this pipeline for detailed gait feature extraction.
 
 
 ## License

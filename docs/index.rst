@@ -35,6 +35,12 @@ AFERNANDEZ_ms_2024 — Documentation
    msGeom
    transform_data
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Results
+
+   results
+
 Indices and tables
 ==================
 
