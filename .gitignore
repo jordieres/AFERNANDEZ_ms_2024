@@ -29,3 +29,9 @@ transform_data/stride_measurement_complete.py
 # Include output folder explicitly
 !transform_data/out_transform_data/
 !transform_data/out_transform_data/dat_2024_tabuenca_left_60_stride.xlsx
+# Sphinx caches
+docs/_build/
+docs/.doctrees*
+**/.doctrees/
+**/doctrees/
+*.pickle
