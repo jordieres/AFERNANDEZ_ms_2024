@@ -9,11 +9,12 @@
 import os
 import sys
 sys.path.insert(0,os.path.abspath('../'))
+sys.path.insert(0,os.path.abspath('../InfluxDBms'))
 
 project = 'Gait-Measurement'
-copyright = '2024, Ángela Fernández'
+copyright = '2025, Ángela Fernández'
 author = 'Ángela Fernández'
-release = '1.1'
+release = '1.3'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
